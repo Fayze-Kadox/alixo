@@ -12,10 +12,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<script>(function(){try{var t=localStorage.getItem('alixo-theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;}catch(e){}})();</script>
 <link rel="stylesheet" href="styles.css">
 <link rel="icon" type="image/png" href="img/logo.png">
 <link rel="apple-touch-icon" href="img/logo.png">
-<meta property="og:image" content="img/shot-droit.jpg">
+<meta property="og:image" content="img/shot-droit-light.jpg">
 </head>
 <body>
 
@@ -28,6 +29,7 @@
     <nav class="nav-links" aria-label="Sections">
       <a href="#fonctions">Fonctionnalités</a>
       <a href="#plus">Nouveautés</a>
+      <a href="#alixo-plus">Alixo+</a>
       <a href="#seance">En amphi</a>
       <a href="#filieres">Filières</a>
       <a href="#telecharger">Télécharger</a>
@@ -65,7 +67,7 @@
       <a class="btn primary big" href="#telecharger" data-download>
         <svg class="win-logo" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" stroke="none" d="M3 5.1 10.6 4v7.6H3V5.1Zm0 13.8L10.6 20v-7.5H3v6.4ZM11.6 3.9 21 2.5v9.1h-9.4V3.9Zm0 16.2L21 21.5v-9h-9.4v7.6Z"/></svg>
         Télécharger pour Windows
-        <small class="btn-meta">Gratuit · <span class="js-size">71 Mo</span></small>
+        <small class="btn-meta">Gratuit · <span class="js-size">72 Mo</span></small>
       </a>
       <a class="btn ghost big mac-soon" id="hero-mac" href="#telecharger" aria-label="macOS — bientôt disponible">
         <svg class="apple-logo" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" stroke="none" d="M16.4 12.7c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.8 0-1.9-.9-3.2-.8-1.6 0-3.1 1-4 2.4-1.7 3-.4 7.3 1.2 9.7.8 1.2 1.8 2.5 3 2.4 1.2 0 1.7-.8 3.2-.8s1.9.8 3.2.8 2.1-1.2 2.9-2.4c.9-1.4 1.3-2.7 1.3-2.8 0 0-2.5-1-2.5-3.8ZM14 5.5c.7-.8 1.1-1.9 1-3-1 0-2.1.7-2.8 1.5-.6.7-1.2 1.8-1 2.9 1.1.1 2.2-.6 2.8-1.4Z"/></svg>
@@ -92,25 +94,25 @@
     <div class="shots-tabs" role="tablist" aria-label="Choisir un écran de l'application">
       <button class="shots-tab active" data-shot="droit" role="tab" aria-selected="true">⚖️ Droit</button>
       <button class="shots-tab" data-shot="eco" role="tab" aria-selected="false">📈 Économie</button>
+      <button class="shots-tab" data-shot="sheet" role="tab" aria-selected="false">🧮 Tableur</button>
       <button class="shots-tab" data-shot="galaxy" role="tab" aria-selected="false">🪐 Galaxie</button>
       <button class="shots-tab" data-shot="slides" role="tab" aria-selected="false">🎞️ Présentations</button>
       <button class="shots-tab" data-shot="agenda" role="tab" aria-selected="false">📅 Agenda</button>
       <button class="shots-tab" data-shot="search" role="tab" aria-selected="false">⌕ Recherche</button>
-      <button class="shots-tab" data-shot="dark" role="tab" aria-selected="false">🌙 Sombre</button>
     </div>
     <div class="shots-frame">
-      <div class="shots-bar"><span class="dots"><i></i><i></i><i></i></span><span class="shots-title" id="shots-title">Droit des obligations — fiche d'arrêt, définition, références Légifrance</span></div>
+      <div class="shots-bar"><span class="dots"><i></i><i></i><i></i></span><span class="shots-title" id="shots-title">Droit des obligations — fiche d'arrêt, définition, références Légifrance</span><span class="shots-theme-hint" id="shots-theme-hint">Les captures suivent le thème du site</span></div>
       <div class="shots-stage">
-        <img class="shot on" data-shot="droit" src="img/shot-droit.jpg" width="2880" height="1800" alt="Alixo — séance de droit des obligations avec plan automatique, encadré définition, références d'articles et fiche d'arrêt" fetchpriority="high">
-        <img class="shot" data-shot="eco" src="img/shot-eco.jpg" width="2880" height="1800" alt="Alixo — séance de macroéconomie avec formules rendues et graphique IS-LM" loading="lazy">
-        <img class="shot" data-shot="galaxy" src="img/shot-galaxy.jpg" width="2880" height="1800" alt="Alixo — vue Galaxie de la bibliothèque : dossiers et séances en orbite" loading="lazy">
-        <img class="shot" data-shot="slides" src="img/shot-slides.jpg" width="2880" height="1800" alt="Alixo — éditeur de présentations avec palette de blocs et notes" loading="lazy">
-        <img class="shot" data-shot="agenda" src="img/shot-agenda.jpg" width="2880" height="1800" alt="Alixo — agenda mensuel des cours" loading="lazy">
-        <img class="shot" data-shot="search" src="img/shot-search.jpg" width="2880" height="1800" alt="Alixo — recherche universelle Ctrl+K dans tous les cours" loading="lazy">
-        <img class="shot" data-shot="dark" src="img/shot-dark.jpg" width="2880" height="1800" alt="Alixo — la même séance en thème sombre" loading="lazy">
+        <img class="shot on timg" data-shot="droit" data-light="img/shot-droit-light.jpg" data-dark="img/shot-droit-dark.jpg" width="2880" height="1800" alt="Alixo — séance de droit des obligations avec plan automatique, encadré définition, références d'articles et fiche d'arrêt" fetchpriority="high">
+        <img class="shot timg" data-shot="eco" data-light="img/shot-eco-light.jpg" data-dark="img/shot-eco-dark.jpg" width="2880" height="1800" alt="Alixo — séance de macroéconomie avec formules rendues et graphique IS-LM" loading="lazy">
+        <img class="shot timg" data-shot="sheet" data-light="img/shot-sheet-light.jpg" data-dark="img/shot-sheet-dark.jpg" width="2880" height="1800" alt="Alixo — tableur avec formules SOMME et graphique de la sélection" loading="lazy">
+        <img class="shot timg" data-shot="galaxy" data-light="img/shot-galaxy-light.jpg" data-dark="img/shot-galaxy-dark.jpg" width="2880" height="1800" alt="Alixo — vue Galaxie de la bibliothèque : dossiers et séances en orbite" loading="lazy">
+        <img class="shot timg" data-shot="slides" data-light="img/shot-slides-light.jpg" data-dark="img/shot-slides-dark.jpg" width="2880" height="1800" alt="Alixo — éditeur de présentations avec palette de blocs et notes" loading="lazy">
+        <img class="shot timg" data-shot="agenda" data-light="img/shot-agenda-light.jpg" data-dark="img/shot-agenda-dark.jpg" width="2880" height="1800" alt="Alixo — agenda mensuel des cours" loading="lazy">
+        <img class="shot timg" data-shot="search" data-light="img/shot-search-light.jpg" data-dark="img/shot-search-dark.jpg" width="2880" height="1800" alt="Alixo — recherche universelle Ctrl+K dans tous les cours" loading="lazy">
       </div>
     </div>
-    <div class="mock-caption">Captures réelles de l'application · clique sur un onglet pour changer d'écran</div>
+    <div class="mock-caption">Captures réelles de l'application · clique sur un onglet pour changer d'écran · bascule le thème en haut à droite, les captures suivent</div>
   </div>
 </section>
 
@@ -165,7 +167,7 @@
           <div class="v-ai-pop">✨ Orthographe · <kbd>Tab</kbd> pour corriger</div>
         </div>
       </div>
-      <h3>IA qui corrige pendant que tu tapes</h3>
+      <h3>IA qui corrige pendant que tu tapes <span class="plus-badge">Alixo+</span></h3>
       <p>Fautes, grammaire et mise en forme proposées sous le paragraphe. <kbd>Tab</kbd> accepte, <kbd>Échap</kbd> ignore. Désactivable.</p>
     </article>
 
@@ -240,7 +242,7 @@
         </div>
       </div>
       <h3>Tes fichiers, à côté du cours</h3>
-      <p>Glisse un PDF, un Word, un PowerPoint, une image ou un audio dans un dossier&nbsp;: il s'ouvre dans Alixo, à côté de tes notes, et se synchronise avec ton compte.</p>
+      <p>Glisse un PDF, un Word, un PowerPoint, une image ou un audio dans un dossier&nbsp;: il s'ouvre dans Alixo, à côté de tes notes, se synchronise avec ton compte et se partage comme une séance.</p>
     </article>
 
     <!-- Agenda -->
@@ -334,7 +336,7 @@
         </div>
       </div>
       <h3>Mode sombre</h3>
-      <p>Pour les amphis à 8h comme pour les révisions à 2h du matin. Et 80 teintes pour surligner, colorer, dessiner.</p>
+      <p>Clair, sombre ou automatique, gratuitement. Pour les amphis à 8h comme pour les révisions à 2h du matin. Et 80 teintes pour surligner, colorer, dessiner.</p>
     </article>
   </div>
 </section>
@@ -344,11 +346,21 @@
   <div class="section-head reveal">
     <div class="eyebrow">Nouveau</div>
     <h2>Bien plus qu'un <em>éditeur.</em></h2>
-    <p>Les dernières versions d'Alixo ajoutent tout ce qu'il faut pour organiser, présenter et travailler à plusieurs.</p>
+    <p>Les dernières versions d'Alixo ajoutent tout ce qu'il faut pour calculer, organiser, présenter et travailler à plusieurs.</p>
   </div>
 
   <div class="feat-row reveal">
-    <div class="feat-img"><img src="img/shot-galaxy.jpg" width="2880" height="1800" alt="Vue Galaxie de la bibliothèque Alixo" loading="lazy"></div>
+    <div class="feat-img"><img class="timg" data-light="img/shot-sheet-light.jpg" data-dark="img/shot-sheet-dark.jpg" width="2880" height="1800" alt="Tableur Alixo avec formules et graphique" loading="lazy"></div>
+    <div class="feat-txt">
+      <div class="feat-tag">Nouveau · Tableurs</div>
+      <h3>Un vrai tableur, à côté de tes cours</h3>
+      <p>Budget, données de TD, séries statistiques&nbsp;: crée un tableur dans n'importe quel dossier. Formules <code>=SOMME(B2:B5)</code>, une cinquantaine de fonctions en français et en anglais (SOMME, MOYENNE, SI, RECHERCHEV, NB.SI…), plusieurs feuilles par classeur, tri, formats monnaie et pourcentage, et un graphique de la sélection dans le volet de droite.</p>
+      <ul class="feat-list"><li>Copier-coller avec Excel, LibreOffice et Google Sheets</li><li>Import et export CSV, export PDF</li><li>Synchronisé, partageable, cherchable avec Ctrl+K</li></ul>
+    </div>
+  </div>
+
+  <div class="feat-row reveal">
+    <div class="feat-img"><img class="timg" data-light="img/shot-galaxy-light.jpg" data-dark="img/shot-galaxy-dark.jpg" width="2880" height="1800" alt="Vue Galaxie de la bibliothèque Alixo" loading="lazy"></div>
     <div class="feat-txt">
       <div class="feat-tag">Bibliothèque</div>
       <h3>Ta bibliothèque en Galaxie, en 2D ou en 3D</h3>
@@ -358,7 +370,7 @@
   </div>
 
   <div class="feat-row rev reveal">
-    <div class="feat-img"><img src="img/shot-slides.jpg" width="2880" height="1800" alt="Éditeur de présentations Alixo" loading="lazy"></div>
+    <div class="feat-img"><img class="timg" data-light="img/shot-slides-light.jpg" data-dark="img/shot-slides-dark.jpg" width="2880" height="1800" alt="Éditeur de présentations Alixo" loading="lazy"></div>
     <div class="feat-txt">
       <div class="feat-tag">Présentations</div>
       <h3>Des diapos dans le style de tes cours</h3>
@@ -384,13 +396,13 @@
       <div class="feat-tag">Alixo Share</div>
       <h3>Travaillez à plusieurs, en direct</h3>
       <p>Partage une séance, un dossier ou un événement par e-mail ou pseudo. Les cours reçus apparaissent dans «&nbsp;Partagés avec moi&nbsp;», les membres présents s'affichent dans la barre, et le bloc qu'un camarade modifie se colore. Les modifications se fondent bloc par bloc, sans jamais couper ta saisie.</p>
-      <ul class="feat-list"><li>Lecture ou écriture, par membre</li><li>Journal de qui a rejoint, consulté, modifié</li><li>Présentations partageables aussi</li></ul>
+      <ul class="feat-list"><li>Lecture ou écriture, par membre</li><li>Journal de qui a rejoint, consulté, modifié</li><li>Présentations, tableurs et fichiers (PDF, Word, images…) partageables aussi</li></ul>
     </div>
   </div>
 
   <div class="feat-row rev reveal">
     <div class="feat-img phone-wrap">
-      <div class="phone"><img src="img/shot-mobile.jpg" width="780" height="1688" alt="Alixo sur téléphone" loading="lazy"></div>
+      <div class="phone"><img class="timg" data-light="img/shot-mobile-light.jpg" data-dark="img/shot-mobile-dark.jpg" width="780" height="1688" alt="Alixo sur téléphone" loading="lazy"></div>
     </div>
     <div class="feat-txt">
       <div class="feat-tag">Partout</div>
@@ -406,12 +418,12 @@
   <div class="mini-grid reveal">
     <div class="mini">
       <div class="mini-visual swatches"><i style="background:#f6f7f9"></i><i style="background:#141414"></i><i style="background:#0f1a33"></i><i style="background:#1b3a2f"></i><i style="background:#2c3440"></i><i style="background:#e6f0fb"></i><i style="background:#e5f0e6"></i><i style="background:#fbe6ee"></i><i style="background:#f3ead9"></i><i style="background:#ece6f7"></i></div>
-      <h4>12 thèmes de couleurs</h4>
-      <p>Clair, sombre, Bleu galaxie, Nuit d'encre, Forêt, Ardoise, Azur, Sauge, Rose, Sable, Lavande… et 11 polices pour tes cours.</p>
+      <h4>12 thèmes de couleurs <span class="plus-badge">Alixo+</span></h4>
+      <p>Clair, sombre et automatique pour tous. Bleu galaxie, Nuit d'encre, Forêt, Ardoise, Azur, Sauge, Rose, Sable, Lavande et 11 polices avec Alixo+.</p>
     </div>
     <div class="mini">
       <div class="mini-visual"><div class="todo"><span class="done">Fiche d'arrêt Derguini</span><span>Relire IS-LM avant jeudi <b>urgent</b></span><span>Rendre le TD 3</span></div></div>
-      <h4>Tâches &amp; rappels</h4>
+      <h4>Tâches &amp; rappels <span class="plus-badge">Alixo+</span></h4>
       <p>Catégories, échéances, priorités, rappel quotidien dans la cloche. Synchronisées avec ton compte.</p>
     </div>
     <div class="mini">
@@ -503,7 +515,7 @@
         <tr><td>Présentations intégrées au cours</td><td class="me">✓</td><td class="part">Autre logiciel</td><td class="no">✕</td></tr>
         <tr><td>Travail à plusieurs en direct</td><td class="me">✓</td><td class="part">✓</td><td class="part">✓</td></tr>
         <tr><td>Hors-ligne complet</td><td class="me">✓</td><td class="part">Selon l'abonnement</td><td class="part">Partiel</td></tr>
-        <tr><td>Prix</td><td class="me">Gratuit</td><td class="part">Abonnement</td><td class="part">Freemium</td></tr>
+        <tr><td>Prix</td><td class="me">Gratuit · Alixo+ en option</td><td class="part">Abonnement</td><td class="part">Freemium</td></tr>
       </tbody>
     </table>
   </div>
@@ -516,7 +528,42 @@
     <div class="stat"><span class="stat-n" data-count="34">0</span><span class="stat-l">blocs de présentation</span></div>
     <div class="stat"><span class="stat-n" data-count="15">0</span><span class="stat-l">scores cliniques calculés</span></div>
     <div class="stat"><span class="stat-n" data-count="12">0</span><span class="stat-l">thèmes de couleurs</span></div>
-    <div class="stat"><span class="stat-n" data-count="0" data-suffix="€">0</span><span class="stat-l">pendant toute la bêta</span></div>
+    <div class="stat"><span class="stat-n" data-count="0" data-suffix="€">0</span><span class="stat-l">pour l'essentiel, sans limite de temps</span></div>
+  </div>
+</section>
+
+<!-- ================= Gratuit / Alixo+ ================= -->
+<section id="alixo-plus" class="section">
+  <div class="section-head reveal">
+    <div class="eyebrow">Formules</div>
+    <h2>L'essentiel est gratuit.<br><em>Alixo+ pour aller plus loin.</em></h2>
+    <p>Le compte gratuit garde tout ce qu'il faut pour prendre des notes en amphi. Alixo+ suit ton compte&nbsp;: une seule fois pour le PC, le Mac, le web et le téléphone.</p>
+  </div>
+  <div class="plans reveal">
+    <div class="plan">
+      <div class="plan-head"><img src="img/logo.png" alt="" width="36" height="36"><div><h3>Gratuit</h3><span>Pour toujours, sans carte</span></div></div>
+      <ul class="plan-list">
+        <li>Cours, présentations, tableurs, dossiers, fichiers</li>
+        <li>Structure I. A. 1. a., fiches d'arrêt, formules, graphiques</li>
+        <li>Agenda, dictionnaire, export PDF et Word</li>
+        <li>Alixo Share et travail à plusieurs en direct</li>
+        <li>Synchronisation PC, Mac, web, mobile</li>
+        <li>3 Go de stockage</li>
+        <li>Thèmes clair, sombre, automatique · 3 polices</li>
+      </ul>
+      <a class="btn ghost full" href="#telecharger" data-download>Commencer gratuitement</a>
+    </div>
+    <div class="plan plus">
+      <div class="plan-head"><img src="img/logo-plus.png" alt="" width="36" height="36"><div><h3>Alixo+</h3><span>Tout le compte gratuit, plus&nbsp;:</span></div></div>
+      <ul class="plan-list">
+        <li><strong>Intelligence artificielle</strong> : correction, mise en forme et reformulations pendant la frappe</li>
+        <li><strong>Tâches à faire</strong> : catégories, échéances, priorités, rappel du matin</li>
+        <li><strong>Tous les thèmes de couleurs</strong> : Bleu galaxie, Nuit d'encre, Forêt, Ardoise, Azur…</li>
+        <li><strong>Toutes les polices</strong> : Georgia, Garamond, Cambria, Calibri, Verdana…</li>
+        <li><strong>Stockage au-delà de 3 Go</strong></li>
+      </ul>
+      <div class="plan-note">Le prix et l'abonnement sont indiqués dans l'application, dans Paramètres › Alixo+. Un thème ou une police Alixo+ choisis restent mémorisés et reviennent dès la réactivation.</div>
+    </div>
   </div>
 </section>
 
@@ -544,7 +591,7 @@
       <ul class="dl-list">
         <li>Mises à jour automatiques au démarrage</li>
         <li>Fonctionne hors-ligne</li>
-        <li>Gratuit, sans carte ni compte</li>
+        <li>Gratuit pour l'essentiel, sans carte ni compte</li>
       </ul>
       <div class="dl-hint">
         Windows affiche un avertissement SmartScreen&nbsp;? C'est normal pour une app récente&nbsp;:
@@ -607,10 +654,10 @@
     </div>
     <div class="cl-body" id="cl-body">
       <ul>
-        <li><strong>Galaxie 3D</strong>, 12 thèmes de couleurs, nouveau logo, polices des cours.</li>
-        <li><strong>Présentations</strong> : 34 blocs, 12 thèmes, sélection multiple, mode présentation, export PDF.</li>
-        <li><strong>Travail à plusieurs en direct</strong> : présence, fusion bloc par bloc, «&nbsp;Partagés avec moi&nbsp;».</li>
-        <li><strong>Version web et mobile</strong>, réglages de l'IA, questionnaire de bienvenue, macOS.</li>
+        <li><strong>Tableurs</strong> : formules, une cinquantaine de fonctions, plusieurs feuilles, tri, formats, graphique de la sélection, CSV et PDF.</li>
+        <li><strong>Partage des fichiers</strong> : PDF, Word, diaporamas, images et audio se partagent comme une séance.</li>
+        <li><strong>Alixo+</strong> et logo Alixo+, Paramètres › Compte redessinés.</li>
+        <li><strong>Version web et mobile</strong>, travail à plusieurs en direct, Galaxie 3D, présentations, macOS.</li>
       </ul>
     </div>
     <a class="cl-more" href="https://github.com/Fayze-Kadox/alixo/releases" target="_blank" rel="noopener">Voir toutes les versions →</a>
@@ -626,7 +673,7 @@
   <div class="faq reveal">
     <details open>
       <summary>Alixo est-il vraiment gratuit&nbsp;?</summary>
-      <p>Oui. L'intégralité d'Alixo est gratuite pendant la bêta, sans carte bancaire ni compte pour télécharger. L'objectif est de construire le meilleur outil possible avec les premiers utilisateurs.</p>
+      <p>Oui, l'essentiel l'est, sans limite de temps et sans carte&nbsp;: cours, présentations, tableurs, dossiers, fichiers jusqu'à 3 Go, agenda, partage, dictionnaire, export PDF, synchronisation. <a href="#alixo-plus">Alixo+</a>, en option, ajoute l'intelligence artificielle, les tâches, tous les thèmes et toutes les polices, et lève la limite de stockage.</p>
     </details>
     <details>
       <summary>Je peux essayer sans rien installer&nbsp;?</summary>
@@ -646,7 +693,7 @@
     </details>
     <details>
       <summary>L'IA, c'est obligatoire&nbsp;?</summary>
-      <p>Non. Les corrections et suggestions de mise en forme peuvent être désactivées dans les paramètres. Elles sont proposées, jamais imposées&nbsp;: <kbd>Tab</kbd> accepte, <kbd>Échap</kbd> ignore.</p>
+      <p>Non. L'IA fait partie d'Alixo+ et, même avec un abonnement, chaque fonction (analyse pendant la frappe, fautes, mise en forme, reformulations) s'active ou se coupe dans Paramètres › Intelligence artificielle, avec un niveau de correction léger, standard ou strict. Les propositions ne sont jamais imposées&nbsp;: <kbd>Tab</kbd> accepte, <kbd>Échap</kbd> ignore.</p>
     </details>
     <details>
       <summary>Je suis en double licence, comment ça marche&nbsp;?</summary>
@@ -664,7 +711,7 @@
   <div class="cta-card reveal">
     <div class="cta-glow" aria-hidden="true"></div>
     <h2>Le prochain cours<br>se prend en notes avec <em>Alixo.</em></h2>
-    <p>Gratuit pendant toute la bêta. Aucun engagement, tes notes t'appartiennent.</p>
+    <p>L'essentiel est gratuit, sans limite de temps. Aucun engagement, tes notes t'appartiennent.</p>
     <div class="cta-btns">
       <a class="btn invert big" href="#telecharger" data-download>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 19h16"/></svg>

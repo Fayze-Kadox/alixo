@@ -650,3 +650,24 @@ footer { border-top: 1px solid var(--border); margin-top: 40px; }
 .btn.mac-ready { border-color: rgba(46,139,106,.5); color: var(--ink); }
 .dl-meta-mac { font-size: 12.5px; color: var(--ink-3); text-align: center; margin-top: -6px; }
 .cta-mac a { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- Images qui suivent le thème ---------- */
+.timg { transition: opacity .25s; }
+.shots-theme-hint { margin-left: auto; font-size: 11.5px; color: var(--ink-3); white-space: nowrap; }
+.feat-txt code { font-family: var(--font-mono); font-size: .9em; background: var(--surface); border: 1px solid var(--border); padding: 0 5px; border-radius: 4px; }
+
+/* ---------- Alixo+ ---------- */
+.plus-badge { display: inline-block; vertical-align: middle; font-size: 10.5px; font-weight: 800; letter-spacing: .04em; padding: 2px 7px; border-radius: 999px; background: linear-gradient(135deg, #f59e0b, #ef6c1a); color: #fff; margin-left: 6px; }
+.plans { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; max-width: 900px; margin: 0 auto; }
+.plan { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-xl); padding: 26px; display: flex; flex-direction: column; gap: 16px; box-shadow: var(--shadow-sm); }
+.plan.plus { border-color: rgba(239,108,26,.45); box-shadow: 0 0 0 4px rgba(245,158,11,.10), var(--shadow); background: linear-gradient(180deg, rgba(245,158,11,.07), var(--surface) 40%); }
+.plan-head { display: flex; align-items: center; gap: 12px; }
+.plan-head img { width: 36px; height: 36px; object-fit: contain; }
+.plan-head h3 { font-size: 22px; font-weight: 800; }
+.plan-head span { font-size: 13px; color: var(--ink-3); }
+.plan-list { list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 14.5px; color: var(--ink-2); flex: 1; }
+.plan-list li::before { content: "✓"; color: var(--ok); font-weight: 800; margin-right: 8px; }
+.plan.plus .plan-list li::before { color: #ef6c1a; }
+.plan-list strong { color: var(--ink); }
+.plan-note { font-size: 12.5px; color: var(--ink-3); border-top: 1px solid var(--border); padding-top: 12px; line-height: 1.5; }
+@media (max-width: 760px) { .plans { grid-template-columns: 1fr; } .shots-theme-hint { display: none; } }

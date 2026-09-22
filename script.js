@@ -146,15 +146,32 @@ fetch(`https://api.github.com/repos/${REPO}/releases/latest`)
   })
   .catch(() => {});
 
-/* ---------- Thème ---------- */
+/* ---------- Thème (déjà posé par le script inline du <head>) ---------- */
 const root = document.documentElement;
-const savedTheme = localStorage.getItem('alixo-theme');
-if (savedTheme) root.dataset.theme = savedTheme;
-else if (window.matchMedia('(prefers-color-scheme: dark)').matches) root.dataset.theme = 'dark';
+if (!root.dataset.theme) {
+  let saved = null; try { saved = localStorage.getItem('alixo-theme'); } catch (e) {}
+  root.dataset.theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+}
+/* Les captures de l'application suivent le thème du site : clair ↔ sombre */
+function applyThemeImages() {
+  const dark = root.dataset.theme === 'dark';
+  document.querySelectorAll('img.timg').forEach(img => {
+    const want = dark ? img.dataset.dark : img.dataset.light;
+    if (want && img.getAttribute('src') !== want) img.setAttribute('src', want);
+  });
+}
+applyThemeImages();
 document.getElementById('btn-theme').addEventListener('click', () => {
   const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
   root.dataset.theme = next;
-  localStorage.setItem('alixo-theme', next);
+  try { localStorage.setItem('alixo-theme', next); } catch (e) {}
+  applyThemeImages();
+});
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+  let saved = null; try { saved = localStorage.getItem('alixo-theme'); } catch (err) {}
+  if (saved) return;
+  root.dataset.theme = e.matches ? 'dark' : 'light';
+  applyThemeImages();
 });
 
 /* ---------- Nav ---------- */
@@ -198,11 +215,11 @@ document.querySelectorAll('.stat-n').forEach(el => countObs.observe(el));
 const SHOT_TITLES = {
   droit: "Droit des obligations — fiche d'arrêt, définition, références Légifrance",
   eco: 'Macroéconomie — formules rendues et graphique IS-LM',
+  sheet: 'Tableur — formules, SOMME, graphique de la sélection',
   galaxy: 'Bibliothèque — vue Galaxie de tes dossiers et séances',
   slides: 'Présentations — blocs à glisser-déposer, thèmes, notes',
   agenda: 'Agenda — tes cours du mois, événement en cours dans la barre',
   search: 'Recherche universelle — Ctrl+K dans tous les cours et fichiers',
-  dark: 'Thème sombre — et 11 autres thèmes dans Paramètres › Apparence',
 };
 const shotTabs = [...document.querySelectorAll('.shots-tab')];
 const shotImgs = [...document.querySelectorAll('.shot')];
