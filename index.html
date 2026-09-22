@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Alixo — L'app de prise de notes des étudiants en Droit, Éco et Santé</title>
-<meta name="description" content="Alixo est le cockpit d'amphi des étudiants : numérotation juridique automatique, fiches d'arrêt, formules, graphiques économiques, IA de correction, agenda, fichiers et recherche instantanée. Gratuit sur Windows. Bientôt sur macOS.">
+<meta name="description" content="Alixo est le cockpit d'amphi des étudiants : numérotation juridique automatique, fiches d'arrêt, formules, graphiques, IA de correction, présentations, agenda, partage en direct et recherche instantanée. Gratuit sur Windows et dans le navigateur. Bientôt sur macOS.">
 <meta property="og:title" content="Alixo — Ton cours va vite. Alixo va plus vite.">
 <meta property="og:description" content="La prise de notes pensée pour l'amphi. Gratuit sur Windows, bientôt sur macOS.">
 <meta property="og:type" content="website">
@@ -13,7 +13,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%2333658a'/%3E%3Ctext x='50' y='70' font-size='58' font-weight='700' text-anchor='middle' fill='white' font-family='Inter,Arial'%3EA%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/png" href="img/logo.png">
+<link rel="apple-touch-icon" href="img/logo.png">
+<meta property="og:image" content="img/shot-droit.jpg">
 </head>
 <body>
 
@@ -21,13 +23,14 @@
 <header id="nav">
   <div class="nav-inner">
     <a class="logo" href="#top" aria-label="Alixo — accueil">
-      <span class="logo-mark">A</span><span class="logo-name">Alixo</span>
+      <img class="logo-img" src="img/logo.png" alt="" width="30" height="30"><span class="logo-name">Alixo</span>
     </a>
     <nav class="nav-links" aria-label="Sections">
       <a href="#fonctions">Fonctionnalités</a>
+      <a href="#plus">Nouveautés</a>
       <a href="#seance">En amphi</a>
       <a href="#filieres">Filières</a>
-      <a href="#nouveautes">Nouveautés</a>
+      <a href="#telecharger">Télécharger</a>
       <a href="#faq">FAQ</a>
     </nav>
     <div class="nav-actions">
@@ -55,8 +58,8 @@
     <h1 class="reveal">Ton cours va vite.<br><em>Alixo va plus vite.</em></h1>
     <p class="hero-sub reveal">
       L'application de prise de notes conçue pour l'amphi&nbsp;: structure juridique automatique,
-      fiches d'arrêt, formules, graphiques, IA de correction, agenda et recherche instantanée.
-      Tout au clavier, même hors-ligne.
+      fiches d'arrêt, formules, graphiques, IA de correction, présentations, agenda, partage en direct
+      et recherche instantanée. Tout au clavier, même hors-ligne.
     </p>
     <div class="hero-ctas reveal">
       <a class="btn primary big" href="#telecharger" data-download>
@@ -70,64 +73,44 @@
         <span class="soon-badge">Bientôt</span>
       </a>
     </div>
+    <a class="hero-web reveal" href="https://fayze-kadox.github.io/alixo-src/" target="_blank" rel="noopener">
+      Pas envie d'installerPas envie d'installer&nbsp;? <strong>Essayer dans le navigateur →</strong>nbsp;? <strong>Essayer dans le navigateur&nbsp;→</strong>
+    </a>
     <div class="hero-trust reveal">
       <span>✓ Sans compte pour télécharger</span>
       <span>✓ Mises à jour automatiques</span>
       <span>✓ Fonctionne hors-ligne</span>
-      <span>✓ Windows 10 / 11</span>
+      <span>✓ Aussi sur le web et mobile</span>
     </div>
     <div id="mac-notice" class="mac-notice reveal" hidden>
        Tu es sur Mac&nbsp;? La version macOS arrive bientôt. <a href="https://github.com/Fayze-Kadox/alixo/releases" target="_blank" rel="noopener">Être prévenu de la sortie →</a>
     </div>
   </div>
 
-  <!-- ================= Maquette de l'application ================= -->
-  <div class="mock-wrap reveal" id="demo">
-    <div class="mock-window" role="img" aria-label="Aperçu de l'interface d'Alixo">
-      <div class="mock-titlebar">
-        <span class="dots"><i></i><i></i><i></i></span>
-        <div class="mock-tabs" role="tablist" aria-label="Choisir la filière de la démo">
-          <button class="mock-tab active" data-demo="droit" role="tab" aria-selected="true">⚖️ Droit</button>
-          <button class="mock-tab" data-demo="eco" role="tab" aria-selected="false">📈 Économie</button>
-          <button class="mock-tab" data-demo="sante" role="tab" aria-selected="false">🩺 Santé</button>
-        </div>
-        <span class="mock-sync"><i class="sync-dot"></i> Synchronisé</span>
-      </div>
-      <div class="mock-body">
-        <aside class="mock-side">
-          <div class="ms-search">⌕ Rechercher <kbd>Ctrl K</kbd></div>
-          <div class="ms-group">Mes cours</div>
-          <div class="ms-tree" id="mock-tree"></div>
-          <div class="ms-group">Cette semaine</div>
-          <div class="ms-agenda">
-            <div class="ms-ev"><i style="--c:#3d6bb5"></i><span>Mar. 8h — Amphi A</span></div>
-            <div class="ms-ev"><i style="--c:#b3762a"></i><span>Jeu. 14h — TD</span></div>
-          </div>
-        </aside>
-        <div class="mock-main">
-          <div class="mock-toolbar">
-            <span class="mt-crumb" id="mock-chip">Droit des obligations</span>
-            <span class="mt-sep">›</span>
-            <span class="mt-session">Séance 4</span>
-            <span class="mt-spacer"></span>
-            <span class="mt-btn">B</span><span class="mt-btn"><i>I</i></span><span class="mt-btn">§</span><span class="mt-btn">✎</span><span class="mt-btn ai">✨ IA</span>
-          </div>
-          <div class="mock-doc" id="mock-doc"></div>
-          <div class="mock-ai" id="mock-ai">
-            <span class="ai-ico">✨</span>
-            <span class="ai-txt"><strong>2 corrections</strong> et <strong>1 mise en forme</strong> proposées</span>
-            <span class="ai-keys"><kbd>Tab</kbd> appliquer · <kbd>Échap</kbd> ignorer</span>
-          </div>
-        </div>
-        <aside class="mock-plan">
-          <div class="mp-title">Plan <span class="mp-pct" id="mock-pct">42 %</span></div>
-          <div class="mp-progress"><span id="mock-progress"></span></div>
-          <div class="mp-items" id="mock-plan"></div>
-          <div class="mp-insert">/ Insérer un bloc</div>
-        </aside>
+  <!-- ================= Captures réelles de l'application ================= -->
+  <div class="shots reveal" id="demo">
+    <div class="shots-tabs" role="tablist" aria-label="Choisir un écran de l'application">
+      <button class="shots-tab active" data-shot="droit" role="tab" aria-selected="true">⚖️ Droit</button>
+      <button class="shots-tab" data-shot="eco" role="tab" aria-selected="false">📈 Économie</button>
+      <button class="shots-tab" data-shot="galaxy" role="tab" aria-selected="false">🪐 Galaxie</button>
+      <button class="shots-tab" data-shot="slides" role="tab" aria-selected="false">🎞️ Présentations</button>
+      <button class="shots-tab" data-shot="agenda" role="tab" aria-selected="false">📅 Agenda</button>
+      <button class="shots-tab" data-shot="search" role="tab" aria-selected="false">⌕ Recherche</button>
+      <button class="shots-tab" data-shot="dark" role="tab" aria-selected="false">🌙 Sombre</button>
+    </div>
+    <div class="shots-frame">
+      <div class="shots-bar"><span class="dots"><i></i><i></i><i></i></span><span class="shots-title" id="shots-title">Droit des obligations — fiche d'arrêt, définition, références Légifrance</span></div>
+      <div class="shots-stage">
+        <img class="shot on" data-shot="droit" src="img/shot-droit.jpg" width="2880" height="1800" alt="Alixo — séance de droit des obligations avec plan automatique, encadré définition, références d'articles et fiche d'arrêt" fetchpriority="high">
+        <img class="shot" data-shot="eco" src="img/shot-eco.jpg" width="2880" height="1800" alt="Alixo — séance de macroéconomie avec formules rendues et graphique IS-LM" loading="lazy">
+        <img class="shot" data-shot="galaxy" src="img/shot-galaxy.jpg" width="2880" height="1800" alt="Alixo — vue Galaxie de la bibliothèque : dossiers et séances en orbite" loading="lazy">
+        <img class="shot" data-shot="slides" src="img/shot-slides.jpg" width="2880" height="1800" alt="Alixo — éditeur de présentations avec palette de blocs et notes" loading="lazy">
+        <img class="shot" data-shot="agenda" src="img/shot-agenda.jpg" width="2880" height="1800" alt="Alixo — agenda mensuel des cours" loading="lazy">
+        <img class="shot" data-shot="search" src="img/shot-search.jpg" width="2880" height="1800" alt="Alixo — recherche universelle Ctrl+K dans tous les cours" loading="lazy">
+        <img class="shot" data-shot="dark" src="img/shot-dark.jpg" width="2880" height="1800" alt="Alixo — la même séance en thème sombre" loading="lazy">
       </div>
     </div>
-    <div class="mock-caption">Aperçu de l'éditeur · change de filière pour voir les blocs dédiés</div>
+    <div class="mock-caption">Captures réelles de l'application · clique sur un onglet pour changer d'écran</div>
   </div>
 </section>
 
@@ -356,6 +339,94 @@
   </div>
 </section>
 
+<!-- ================= Bien plus qu'un éditeur ================= -->
+<section id="plus" class="section alt">
+  <div class="section-head reveal">
+    <div class="eyebrow">Nouveau</div>
+    <h2>Bien plus qu'un <em>éditeur.</em></h2>
+    <p>Les dernières versions d'Alixo ajoutent tout ce qu'il faut pour organiser, présenter et travailler à plusieurs.</p>
+  </div>
+
+  <div class="feat-row reveal">
+    <div class="feat-img"><img src="img/shot-galaxy.jpg" width="2880" height="1800" alt="Vue Galaxie de la bibliothèque Alixo" loading="lazy"></div>
+    <div class="feat-txt">
+      <div class="feat-tag">Bibliothèque</div>
+      <h3>Ta bibliothèque en Galaxie, en 2D ou en 3D</h3>
+      <p>Chaque dossier devient un soleil, ses sous-dossiers des planètes, tes séances des étoiles en orbite. Tout flotte, les liens s'illuminent, tu tournes, tu zoomes, tu ouvres un cours d'un clic. Grille et arbre restent à un clic pour les jours sérieux.</p>
+      <ul class="feat-list"><li>Rendu 3D avec anneaux, halos et champ d'étoiles</li><li>Glisser un astre pour le ranger ailleurs</li><li>Clic droit&nbsp;: les mêmes menus que partout</li></ul>
+    </div>
+  </div>
+
+  <div class="feat-row rev reveal">
+    <div class="feat-img"><img src="img/shot-slides.jpg" width="2880" height="1800" alt="Éditeur de présentations Alixo" loading="lazy"></div>
+    <div class="feat-txt">
+      <div class="feat-tag">Présentations</div>
+      <h3>Des diapos dans le style de tes cours</h3>
+      <p>Un exposé à rendre&nbsp;? Crée une présentation à côté de ta séance&nbsp;: 34 blocs à glisser-déposer (titre, liste, fiche d'arrêt, formule, tableau, graphique, frise, QCM, QR code…), 12 thèmes de couleurs et polices, notes pour l'orateur, mode présentation plein écran avec <kbd>F5</kbd>.</p>
+      <ul class="feat-list"><li>Export PDF une page 16:9 par diapositive</li><li>Sélection multiple, alignement, duplication</li><li>Se partage comme une séance</li></ul>
+    </div>
+  </div>
+
+  <div class="feat-row reveal">
+    <div class="feat-img collab">
+      <div class="collab-card">
+        <div class="collab-head">
+          <span class="collab-title">Séance 4 — La formation</span>
+          <span class="collab-avatars"><i style="--c:#3d6bb5">M</i><i style="--c:#2e8b6a">L</i><i style="--c:#b3762a">T</i></span>
+        </div>
+        <div class="collab-line"><span class="hnum">A.</span> L'offre</div>
+        <div class="collab-line edited" data-who="Léa est dessus">L'offre doit être ferme et précise, faute de quoi elle ne constitue qu'une invitation à entrer en pourparlers.</div>
+        <div class="collab-line">La rétractation de l'offre avant l'expiration du délai…<span class="mock-caret"></span></div>
+        <div class="collab-foot"><span class="collab-dot"></span> 3 personnes en direct · droits lecture / écriture par membre</div>
+      </div>
+    </div>
+    <div class="feat-txt">
+      <div class="feat-tag">Alixo Share</div>
+      <h3>Travaillez à plusieurs, en direct</h3>
+      <p>Partage une séance, un dossier ou un événement par e-mail ou pseudo. Les cours reçus apparaissent dans «&nbsp;Partagés avec moi&nbsp;», les membres présents s'affichent dans la barre, et le bloc qu'un camarade modifie se colore. Les modifications se fondent bloc par bloc, sans jamais couper ta saisie.</p>
+      <ul class="feat-list"><li>Lecture ou écriture, par membre</li><li>Journal de qui a rejoint, consulté, modifié</li><li>Présentations partageables aussi</li></ul>
+    </div>
+  </div>
+
+  <div class="feat-row rev reveal">
+    <div class="feat-img phone-wrap">
+      <div class="phone"><img src="img/shot-mobile.jpg" width="780" height="1688" alt="Alixo sur téléphone" loading="lazy"></div>
+    </div>
+    <div class="feat-txt">
+      <div class="feat-tag">Partout</div>
+      <h3>Sur PC, dans le navigateur, sur ton téléphone</h3>
+      <p>L'application PC pour l'amphi, la version web pour la BU sans installer, la version mobile pour relire dans le tram. Même compte, mêmes cours, synchronisés. Sur téléphone, l'explorateur devient un tiroir et un bouton «&nbsp;+&nbsp;» flotte en bas de l'écran.</p>
+      <div class="feat-btns">
+        <a class="btn ghost small" href="https://fayze-kadox.github.io/alixo-src/" target="_blank" rel="noopener">Ouvrir la version web →</a>
+        <a class="btn ghost small" href="https://fayze-kadox.github.io/alixo-src/mobile.html" target="_blank" rel="noopener">Version mobile →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="mini-grid reveal">
+    <div class="mini">
+      <div class="mini-visual swatches"><i style="background:#f6f7f9"></i><i style="background:#141414"></i><i style="background:#0f1a33"></i><i style="background:#1b3a2f"></i><i style="background:#2c3440"></i><i style="background:#e6f0fb"></i><i style="background:#e5f0e6"></i><i style="background:#fbe6ee"></i><i style="background:#f3ead9"></i><i style="background:#ece6f7"></i></div>
+      <h4>12 thèmes de couleurs</h4>
+      <p>Clair, sombre, Bleu galaxie, Nuit d'encre, Forêt, Ardoise, Azur, Sauge, Rose, Sable, Lavande… et 11 polices pour tes cours.</p>
+    </div>
+    <div class="mini">
+      <div class="mini-visual"><div class="todo"><span class="done">Fiche d'arrêt Derguini</span><span>Relire IS-LM avant jeudi <b>urgent</b></span><span>Rendre le TD 3</span></div></div>
+      <h4>Tâches &amp; rappels</h4>
+      <p>Catégories, échéances, priorités, rappel quotidien dans la cloche. Synchronisées avec ton compte.</p>
+    </div>
+    <div class="mini">
+      <div class="mini-visual"><div class="bilan"><b>Bonjour Nathan</b><span>Cette semaine&nbsp;: <strong>4 820 mots</strong> ↑ 18 %</span><span>6 séances · 11 h de cours · série de 5 jours 🔥</span></div></div>
+      <h4>Bilan de la semaine</h4>
+      <p>À chaque ouverture, tes mots écrits, tes séances, ton agenda et ta série de jours consécutifs.</p>
+    </div>
+    <div class="mini">
+      <div class="mini-visual"><div class="tabs-v"><span>Cours</span><span class="on">TD</span><span>Fiches</span><span>＋</span></div></div>
+      <h4>Onglets dans une séance</h4>
+      <p>Comme Google Docs&nbsp;: plusieurs pages dans une même séance, chacune avec son plan. Ctrl+K et l'export couvrent tout.</p>
+    </div>
+  </div>
+</section>
+
 <!-- ================= Une séance type ================= -->
 <section id="seance" class="section alt">
   <div class="section-head reveal">
@@ -429,6 +500,8 @@
         <tr><td>IA de correction en tapant, sans quitter le clavier</td><td class="me">✓</td><td class="part">Correcteur</td><td class="part">Variable</td></tr>
         <tr><td>Recherche dans tous les cours et fichiers</td><td class="me">✓</td><td class="part">Fichier par fichier</td><td class="part">✓</td></tr>
         <tr><td>Scores cliniques et calculatrices intégrés</td><td class="me">✓</td><td class="no">✕</td><td class="no">✕</td></tr>
+        <tr><td>Présentations intégrées au cours</td><td class="me">✓</td><td class="part">Autre logiciel</td><td class="no">✕</td></tr>
+        <tr><td>Travail à plusieurs en direct</td><td class="me">✓</td><td class="part">✓</td><td class="part">✓</td></tr>
         <tr><td>Hors-ligne complet</td><td class="me">✓</td><td class="part">Selon l'abonnement</td><td class="part">Partiel</td></tr>
         <tr><td>Prix</td><td class="me">Gratuit</td><td class="part">Abonnement</td><td class="part">Freemium</td></tr>
       </tbody>
@@ -440,9 +513,9 @@
 <section class="section stats-band">
   <div class="stats reveal">
     <div class="stat"><span class="stat-n" data-count="7">0</span><span class="stat-l">filières avec leurs blocs dédiés</span></div>
-    <div class="stat"><span class="stat-n" data-count="20" data-suffix="+">0</span><span class="stat-l">types de fiches spécialisées</span></div>
+    <div class="stat"><span class="stat-n" data-count="34">0</span><span class="stat-l">blocs de présentation</span></div>
     <div class="stat"><span class="stat-n" data-count="15">0</span><span class="stat-l">scores cliniques calculés</span></div>
-    <div class="stat"><span class="stat-n" data-count="100" data-suffix="%">0</span><span class="stat-l">pilotable au clavier</span></div>
+    <div class="stat"><span class="stat-n" data-count="12">0</span><span class="stat-l">thèmes de couleurs</span></div>
     <div class="stat"><span class="stat-n" data-count="0" data-suffix="€">0</span><span class="stat-l">pendant toute la bêta</span></div>
   </div>
 </section>
@@ -452,7 +525,7 @@
   <div class="section-head reveal">
     <div class="eyebrow">Télécharger</div>
     <h2>Alixo sur ton ordinateur.<br><em>En un clic.</em></h2>
-    <p>Pas de compte, pas de page intermédiaire&nbsp;: tu cliques, le fichier se télécharge.</p>
+    <p>Pas de compte, pas de page intermédiaire&nbsp;: tu cliques, le fichier se télécharge. Ou tu l'ouvres directement dans ton navigateur.</p>
   </div>
 
   <div class="dl-grid reveal">
@@ -493,9 +566,27 @@
         🔔 Être prévenu de la sortie
       </a>
       <ul class="dl-list muted">
-        <li>Apple Silicon et Intel</li>
+        <li>Universel&nbsp;: Apple Silicon et Intel</li>
         <li>Synchronisation avec ton compte existant</li>
         <li>Linux&nbsp;: à l'étude</li>
+      </ul>
+      <div class="dl-hint" id="mac-hint" hidden>
+        Au premier lancement, macOS peut bloquer l'application (non signée)&nbsp;: clic droit sur Alixo › «&nbsp;Ouvrir&nbsp;».
+      </div>
+    </div>
+
+    <!-- Web -->
+    <div class="dl-card web">
+      <div class="dl-head">
+        <svg class="os-logo" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.8 3 2.8 15 0 18M12 3c-2.8 3-2.8 15 0 18"/></svg>
+        <div><h3>Navigateur</h3><span class="dl-avail">Disponible · sans installation</span></div>
+      </div>
+      <p class="dl-mac-txt">La même application, dans Chrome, Edge, Firefox ou Safari. Idéal pour essayer, ou pour la BU. Sur téléphone, la version mobile s'ouvre toute seule.</p>
+      <a class="btn ghost big full" href="https://fayze-kadox.github.io/alixo-src/" target="_blank" rel="noopener">Ouvrir Alixo dans le navigateur</a>
+      <ul class="dl-list">
+        <li>Même compte, mêmes cours que sur PC</li>
+        <li>Version mobile pour relire partout</li>
+        <li>Toujours au niveau de la version PC</li>
       </ul>
     </div>
   </div>
@@ -515,10 +606,10 @@
     </div>
     <div class="cl-body" id="cl-body">
       <ul>
-        <li><strong>Formules enrichies</strong> : matrices, systèmes, limites, racines n-ièmes, plusieurs lignes.</li>
-        <li><strong>Fichiers dans les dossiers</strong> : PDF, Word, PowerPoint, Excel, images, audio, ouverts dans Alixo.</li>
-        <li><strong>Blocs dans des blocs</strong>, copie de tableaux vers Word / Excel, calculatrices TI-83 et Casio.</li>
-        <li><strong>Spécialités Santé</strong>, scores cliniques, Alixo Share.</li>
+        <li><strong>Galaxie 3D</strong>, 12 thèmes de couleurs, nouveau logo, polices des cours.</li>
+        <li><strong>Présentations</strong> : 34 blocs, 12 thèmes, sélection multiple, mode présentation, export PDF.</li>
+        <li><strong>Travail à plusieurs en direct</strong> : présence, fusion bloc par bloc, «&nbsp;Partagés avec moi&nbsp;».</li>
+        <li><strong>Version web et mobile</strong>, réglages de l'IA, questionnaire de bienvenue, macOS.</li>
       </ul>
     </div>
     <a class="cl-more" href="https://github.com/Fayze-Kadox/alixo/releases" target="_blank" rel="noopener">Voir toutes les versions →</a>
@@ -537,8 +628,12 @@
       <p>Oui. L'intégralité d'Alixo est gratuite pendant la bêta, sans carte bancaire ni compte pour télécharger. L'objectif est de construire le meilleur outil possible avec les premiers utilisateurs.</p>
     </details>
     <details>
+      <summary>Je peux essayer sans rien installer&nbsp;?</summary>
+      <p>Oui. <a href="https://fayze-kadox.github.io/alixo-src/" target="_blank" rel="noopener">La version web</a> est la même application, dans ton navigateur, toujours au niveau de la version PC. Sur téléphone, la version mobile s'ouvre automatiquement. Avec un compte, tes cours sont partagés entre le web, le mobile et l'application PC.</p>
+    </details>
+    <details>
       <summary>Quand sort la version macOS&nbsp;?</summary>
-      <p>Bientôt. Elle est en cours de finalisation et sera publiée sur la même page de téléchargement, avec le même compte et les mêmes cours. Pour être prévenu, suis les <a href="https://github.com/Fayze-Kadox/alixo/releases" target="_blank" rel="noopener">sorties sur GitHub</a>. Cette page se mettra à jour automatiquement le jour de la sortie.</p>
+      <p>Bientôt. Elle est en cours de finalisation (application universelle Intel et Apple Silicon) et sera publiée sur la même page de téléchargement, avec le même compte et les mêmes cours. Pour être prévenu, suis les <a href="https://github.com/Fayze-Kadox/alixo/releases" target="_blank" rel="noopener">sorties sur GitHub</a>. Cette page se mettra à jour automatiquement le jour de la sortie. En attendant, la version web fonctionne parfaitement sur Mac.</p>
     </details>
     <details>
       <summary>Comment installer Alixo sur Windows&nbsp;?</summary>
@@ -575,6 +670,7 @@
         Télécharger pour Windows
       </a>
       <span class="cta-mac"> macOS · bientôt</span>
+      <a class="cta-web" href="https://fayze-kadox.github.io/alixo-src/" target="_blank" rel="noopener">ou essayer dans le navigateur →</a>
     </div>
     <div class="cta-note"><span class="js-version">Dernière version</span> · <span class="js-size">71 Mo</span> · le téléchargement démarre immédiatement</div>
   </div>
@@ -584,7 +680,7 @@
 <footer>
   <div class="foot-inner">
     <div class="foot-brand">
-      <span class="logo-mark">A</span>
+      <img class="logo-img" src="img/logo.png" alt="" width="30" height="30">
       <div>
         <div class="foot-name">Alixo</div>
         <div class="foot-tag">Le cockpit d'amphi des étudiants.</div>
