@@ -94,24 +94,42 @@ fetch(`https://api.github.com/repos/${REPO}/releases/latest`)
     const portableLink = document.getElementById('dl-portable');
     if (portable && portableLink) portableLink.href = portable.browser_download_url;
 
-    /* Le jour où un .dmg apparaît dans la release, la carte macOS s'active toute seule. */
-    const mac = assets.find(a => /\.dmg$/i.test(a.name) || /mac|darwin/i.test(a.name));
+    /* Le jour où un .dmg apparaît dans la release, tout ce qui dit « bientôt » passe à « disponible ». */
+    const mac = assets.find(a => /\.dmg$/i.test(a.name));
     if (mac) {
+      const MAC_URL = `https://github.com/${REPO}/releases/latest/download/Alixo-Mac.dmg`;
       const card = document.getElementById('dl-mac');
       const btn = document.getElementById('btn-mac');
       card.classList.add('available');
-      btn.textContent = 'Télécharger pour macOS';
+      btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 19h16"/></svg> Télécharger Alixo-Mac.dmg';
       btn.classList.remove('ghost'); btn.classList.add('primary');
-      btn.href = `https://github.com/${REPO}/releases/latest/download/Alixo-Mac.dmg`; btn.removeAttribute('target');
-      const hint = document.getElementById('mac-hint');
-      if (hint) hint.hidden = false;
-      document.querySelectorAll('.cta-mac, .soon-badge').forEach(el => { el.textContent = el.classList.contains('soon-badge') ? 'Disponible' : ' macOS · disponible'; });
-      const notice = document.getElementById('mac-notice');
-      if (notice) notice.innerHTML = ' La version macOS est disponible. <a href="' + btn.href + '">Télécharger Alixo pour Mac →</a>';
+      btn.href = MAC_URL; btn.removeAttribute('target');
       const tag = card.querySelector('.dl-soon-tag');
       if (tag) { tag.textContent = 'Disponible'; tag.style.display = 'inline-block'; }
       const txt = card.querySelector('.dl-mac-txt');
-      if (txt) txt.textContent = 'Même application, mêmes fonctionnalités, même compte : tes cours pris sur Windows sont déjà là.';
+      if (txt) txt.textContent = 'Même application, mêmes fonctionnalités, même compte : tes cours pris sur Windows ou sur le web sont déjà là.';
+      const meta = document.getElementById('mac-meta');
+      if (meta) { meta.hidden = false; const s = document.getElementById('mac-size'); if (s && mac.size) s.textContent = (mac.size / 1048576).toFixed(0) + ' Mo'; }
+      const hint = document.getElementById('mac-hint');
+      if (hint) hint.hidden = false;
+
+      /* Hero, pastille, CTA, FAQ, pied de page */
+      const heroMac = document.getElementById('hero-mac');
+      if (heroMac) { heroMac.href = MAC_URL; heroMac.setAttribute('aria-label', 'Télécharger pour macOS'); heroMac.classList.add('mac-ready'); }
+      document.querySelectorAll('.soon-badge').forEach(el => { el.textContent = 'Disponible'; el.classList.add('ok'); });
+      document.querySelectorAll('.cta-mac').forEach(el => { el.innerHTML = '<a href="' + MAC_URL + '">ou pour macOS →</a>'; });
+      const pill = document.getElementById('pill-mac');
+      if (pill) pill.textContent = 'la version macOS est disponible';
+      const notice = document.getElementById('mac-notice');
+      if (notice) { notice.innerHTML = ' La version macOS est disponible. <a href="' + MAC_URL + '">Télécharger Alixo pour Mac →</a>'; if (isMac) notice.hidden = false; }
+      const faqQ = document.getElementById('faq-mac-q'), faqA = document.getElementById('faq-mac-a');
+      if (faqQ && faqA) {
+        faqQ.textContent = 'Alixo existe sur Mac ?';
+        faqA.innerHTML = 'Oui, depuis la ' + (rel.tag_name || '').replace(/^v?/i, 'v') + ' : une application universelle (Apple Silicon et Intel), avec le même compte et les mêmes cours que sur Windows et sur le web. <a href="' + MAC_URL + '">Télécharge Alixo-Mac.dmg</a>, glisse Alixo dans Applications, puis au premier lancement fais un clic droit › « Ouvrir » (l\'application n\'est pas encore signée par Apple). Les nouvelles versions sont signalées dans l\'application.';
+      }
+      const foot = document.getElementById('foot-copy');
+      if (foot) foot.textContent = '© 2026 Alixo · Windows, macOS et web.';
+      document.title = document.title.replace('Bientôt sur macOS', 'Aussi sur macOS');
     }
 
     /* Changelog */

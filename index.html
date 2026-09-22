@@ -52,7 +52,7 @@
   <div class="hero-inner">
     <a class="pill reveal" href="#nouveautes">
       <span class="pill-tag">Nouveau</span>
-      <span class="pill-txt"><span class="js-version">Dernière version</span> disponible · la version macOS arrive bientôt</span>
+      <span class="pill-txt"><span class="js-version">Dernière version</span> disponible · <span id="pill-mac">la version macOS arrive bientôt</span></span>
       <span class="pill-arrow">→</span>
     </a>
     <h1 class="reveal">Ton cours va vite.<br><em>Alixo va plus vite.</em></h1>
@@ -67,14 +67,14 @@
         Télécharger pour Windows
         <small class="btn-meta">Gratuit · <span class="js-size">71 Mo</span></small>
       </a>
-      <a class="btn ghost big mac-soon" href="#telecharger" aria-label="macOS — bientôt disponible">
+      <a class="btn ghost big mac-soon" id="hero-mac" href="#telecharger" aria-label="macOS — bientôt disponible">
         <svg class="apple-logo" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" stroke="none" d="M16.4 12.7c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.8 0-1.9-.9-3.2-.8-1.6 0-3.1 1-4 2.4-1.7 3-.4 7.3 1.2 9.7.8 1.2 1.8 2.5 3 2.4 1.2 0 1.7-.8 3.2-.8s1.9.8 3.2.8 2.1-1.2 2.9-2.4c.9-1.4 1.3-2.7 1.3-2.8 0 0-2.5-1-2.5-3.8ZM14 5.5c.7-.8 1.1-1.9 1-3-1 0-2.1.7-2.8 1.5-.6.7-1.2 1.8-1 2.9 1.1.1 2.2-.6 2.8-1.4Z"/></svg>
         macOS
         <span class="soon-badge">Bientôt</span>
       </a>
     </div>
     <a class="hero-web reveal" href="https://fayze-kadox.github.io/alixo-src/" target="_blank" rel="noopener">
-      Pas envie d'installerPas envie d'installer&nbsp;? <strong>Essayer dans le navigateur →</strong>nbsp;? <strong>Essayer dans le navigateur&nbsp;→</strong>
+      Pas envie d'installer&nbsp;? <strong>Essayer dans le navigateur&nbsp;→</strong>
     </a>
     <div class="hero-trust reveal">
       <span>✓ Sans compte pour télécharger</span>
@@ -565,6 +565,7 @@
       <a class="btn ghost big full" id="btn-mac" href="https://github.com/Fayze-Kadox/alixo/releases" target="_blank" rel="noopener">
         🔔 Être prévenu de la sortie
       </a>
+      <div class="dl-meta-mac" id="mac-meta" hidden><span class="js-version">Dernière version</span> · <span id="mac-size"></span> · universel Intel / Apple Silicon</div>
       <ul class="dl-list muted">
         <li>Universel&nbsp;: Apple Silicon et Intel</li>
         <li>Synchronisation avec ton compte existant</li>
@@ -632,8 +633,8 @@
       <p>Oui. <a href="https://fayze-kadox.github.io/alixo-src/" target="_blank" rel="noopener">La version web</a> est la même application, dans ton navigateur, toujours au niveau de la version PC. Sur téléphone, la version mobile s'ouvre automatiquement. Avec un compte, tes cours sont partagés entre le web, le mobile et l'application PC.</p>
     </details>
     <details>
-      <summary>Quand sort la version macOS&nbsp;?</summary>
-      <p>Bientôt. Elle est en cours de finalisation (application universelle Intel et Apple Silicon) et sera publiée sur la même page de téléchargement, avec le même compte et les mêmes cours. Pour être prévenu, suis les <a href="https://github.com/Fayze-Kadox/alixo/releases" target="_blank" rel="noopener">sorties sur GitHub</a>. Cette page se mettra à jour automatiquement le jour de la sortie. En attendant, la version web fonctionne parfaitement sur Mac.</p>
+      <summary id="faq-mac-q">Quand sort la version macOS&nbsp;?</summary>
+      <p id="faq-mac-a">Bientôt. Elle est en cours de finalisation (application universelle Intel et Apple Silicon) et sera publiée sur la même page de téléchargement, avec le même compte et les mêmes cours. Pour être prévenu, suis les <a href="https://github.com/Fayze-Kadox/alixo/releases" target="_blank" rel="noopener">sorties sur GitHub</a>. Cette page se mettra à jour automatiquement le jour de la sortie. En attendant, la version web fonctionne parfaitement sur Mac.</p>
     </details>
     <details>
       <summary>Comment installer Alixo sur Windows&nbsp;?</summary>
@@ -693,7 +694,7 @@
       <a href="#faq">FAQ</a>
       <a href="https://github.com/Fayze-Kadox/alixo/releases" target="_blank" rel="noopener">Versions</a>
     </nav>
-    <div class="foot-copy">© 2026 Alixo · Windows aujourd'hui, macOS bientôt.</div>
+    <div class="foot-copy" id="foot-copy">© 2026 Alixo · Windows aujourd'hui, macOS bientôt.</div>
   </div>
 </footer>
 

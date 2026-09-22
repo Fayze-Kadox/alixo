@@ -646,3 +646,7 @@ footer { border-top: 1px solid var(--border); margin-top: 40px; }
   .mini-grid { grid-template-columns: 1fr; }
   .phone { width: 220px; }
 }
+.soon-badge.ok { background: rgba(46,139,106,.14); color: var(--ok); }
+.btn.mac-ready { border-color: rgba(46,139,106,.5); color: var(--ink); }
+.dl-meta-mac { font-size: 12.5px; color: var(--ink-3); text-align: center; margin-top: -6px; }
+.cta-mac a { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
