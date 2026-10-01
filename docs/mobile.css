@@ -1,0 +1,119 @@
+/* ============================================================
+   Alixo — version téléphone (mobile.html) : adaptation de l'interface
+   de bureau aux petits écrans tactiles. Chargée après styles.css,
+   uniquement par mobile.html (body.mobile).
+   ============================================================ */
+:root { --topbar-h: 50px; --toolbar-h: 42px; }
+body.mobile { height: calc(var(--vh, 1vh) * 100); }
+
+/* --- barre supérieure --- */
+body.mobile #topbar { padding: 0 6px 0 4px; }
+body.mobile .logo { padding: 4px 6px 4px 2px; gap: 6px; }
+body.mobile .logo-name { display: none; }
+body.mobile .crumbs .chip, body.mobile .crumbs .sep, body.mobile .crumbs .crumb-root, body.mobile .crumbs > span { display: none; }
+body.mobile #tb-title { max-width: 44vw; font-size: 14px; }
+body.mobile #cal-now, body.mobile #timer-now, body.mobile #save-status, body.mobile #btn-theme { display: none !important; }
+body.mobile .tbtn { width: 36px; height: 36px; }
+body.mobile #mob-menu { flex: none; }
+body.mobile #access-chips .acc-lbl { display: none; }
+
+/* --- onglets --- */
+body.mobile #tabbar { padding: 4px 6px 0; }
+body.mobile .tab { max-width: 150px; font-size: 12px; }
+
+/* --- bibliothèque : tiroir + grille sur une colonne --- */
+body.mobile #view-library { padding: 8px 8px 12px; gap: 0; }
+body.mobile #libnav {
+  position: fixed; left: 0; top: calc(var(--topbar-h) + var(--tabbar-h)); bottom: 0; width: min(84vw, 340px); z-index: 70;
+  padding: 10px 10px 30px; background: var(--surface); border-right: 1px solid var(--border);
+  transform: translateX(-102%); transition: transform .22s ease; overflow-y: auto;
+}
+body.mobile.drawer-open #libnav { transform: none; box-shadow: 0 0 40px rgba(0, 0, 0, .3); }
+#mob-backdrop { position: fixed; inset: 0; z-index: 65; background: rgba(0, 0, 0, .35); }
+.mob-full { display: block; margin: 18px 8px 8px; font-size: 12px; color: var(--ink-3); text-decoration: underline; }
+body.mobile #lib-main { padding: 12px 12px 0; border-radius: 10px; }
+body.mobile .lib-head { flex-direction: column; align-items: stretch; gap: 8px; padding-bottom: 10px; }
+body.mobile #lib-title { font-size: 20px; }
+body.mobile .lib-actions { justify-content: flex-start; }
+body.mobile #btn-import-files, body.mobile #btn-new-folder, body.mobile #btn-new-slides, body.mobile #btn-new-doc { display: none; }
+body.mobile #doc-grid { grid-template-columns: 1fr; gap: 10px; padding-bottom: 90px; }
+body.mobile .doc-card { min-height: 0; }
+body.mobile .doc-card .pin-btn, body.mobile .doc-card .del-btn, body.mobile .folder-card .fc-act { opacity: 1; }
+body.mobile #lib-tree { padding-bottom: 90px; }
+body.mobile #lib-galaxy { margin-bottom: 12px; }
+body.mobile .gx-hint { display: none; }
+body.mobile .gx-legend { display: none; }
+
+/* --- bouton « + » flottant --- */
+#mob-fab { position: fixed; right: 16px; bottom: 18px; z-index: 62; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+#mob-fab .mob-fabbtn { width: 54px; height: 54px; border-radius: 50%; background: var(--tint); color: #fff; font-size: 28px; line-height: 1; display: grid; place-items: center; box-shadow: 0 8px 22px rgba(0, 0, 0, .28); }
+#mob-fab .mob-sheet { display: flex; flex-direction: column; gap: 2px; padding: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 30px rgba(0, 0, 0, .22); }
+#mob-fab .mob-sheet button { padding: 10px 14px; border-radius: 8px; text-align: left; font-size: 14px; font-weight: 550; }
+#mob-fab .mob-sheet button:hover { background: var(--hover); }
+
+/* --- éditeur --- */
+body.mobile #planpanel { position: fixed; left: 0; top: calc(var(--topbar-h) + var(--toolbar-h) + var(--tabbar-h)); bottom: 0; width: 100%; z-index: 58; border-radius: 0; }
+body.mobile #view-editor.plan-open #docwrap { padding-left: 10px; }
+body.mobile #docwrap { padding: calc(var(--topbar-h) + var(--toolbar-h) + var(--tabbar-h) + 10px) 8px 80px; }
+body.mobile #doc { padding: 18px 14px 40px; min-height: 0; border-radius: 6px; }
+body.mobile #doc-meta { flex-wrap: wrap; }
+body.mobile #toolbar { overflow-x: auto; overflow-y: hidden; flex-wrap: nowrap; padding: 0 6px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+body.mobile #toolbar::-webkit-scrollbar { display: none; }
+body.mobile #toolbar > * { flex: none; }
+body.mobile #toolbar .tb-hint { display: none; }
+body.mobile .rpanel, body.mobile #mathpanel, body.mobile #viewpanel, body.mobile #calpanel, body.mobile #dictpanel, body.mobile #aipanel, body.mobile #timerpanel, body.mobile #calcpanel {
+  position: fixed !important; left: 0 !important; right: 0 !important; top: calc(var(--topbar-h) + var(--toolbar-h) + var(--tabbar-h)) !important; bottom: 0 !important; width: 100% !important; max-width: none !important; border-radius: 0; z-index: 59;
+}
+body.mobile #view-editor.math-open #docwrap, body.mobile #view-editor.calc-open #docwrap, body.mobile #view-editor.view-open #docwrap { padding-right: 8px; }
+body.mobile #pp-pill { left: 8px; bottom: 16px; top: auto; }
+body.mobile #imgbar { flex-wrap: wrap; max-width: 96vw; }
+
+/* --- pop-overs, paramètres, bilan --- */
+body.mobile #popover { width: min(360px, 94vw) !important; max-height: calc(100vh - 40px); left: 3vw !important; }
+body.mobile #setov { padding: 0; }
+body.mobile .set-card { width: 100vw; height: 100%; border-radius: 0; border: none; }
+body.mobile .set-nav { width: 60px; padding: 12px 6px; }
+body.mobile .set-navbtn span, body.mobile .set-navtitle, body.mobile .set-navfoot { display: none; }
+body.mobile .set-navbtn { justify-content: center; }
+body.mobile .set-head { padding: 16px 16px 10px; }
+body.mobile .set-body { padding: 6px 14px 30px; }
+body.mobile .set-tiles, body.mobile .set-tiles4 { grid-template-columns: 1fr 1fr; }
+body.mobile .set-keys { grid-template-columns: 1fr; }
+body.mobile .wk-card { padding: 20px 16px; }
+body.mobile .wk-tiles { grid-template-columns: 1fr 1fr; }
+body.mobile #searchbox { width: 94vw; left: 3vw; }
+body.mobile #ctxmenu { max-width: 90vw; }
+
+/* --- présentations : vignettes en haut, pas de palette (glisser-déposer inadapté au tactile) --- */
+body.mobile #view-slides { grid-template-columns: 1fr; grid-template-rows: 46px 92px 1fr; grid-template-areas: "bar" "strip" "stage"; }
+body.mobile .sl-bar { padding: 0 6px; }
+body.mobile .sl-strip { flex-direction: row; overflow-x: auto; overflow-y: hidden; padding: 8px 10px; gap: 8px; border-right: none; border-bottom: 1px solid var(--border); }
+body.mobile .sl-thumb { flex: none; width: 128px; }
+body.mobile .sl-thumb .sl-tbox { width: 110px; }
+body.mobile .sl-tadd { width: 110px; height: auto; margin: 0; align-self: center; flex: none; }
+body.mobile .sl-side { display: none; }
+body.mobile .sl-el .sl-h { width: 22px; height: 22px; }
+
+/* --- tableurs : barre et ligne de formule compactes, pas de volet graphique --- */
+body.mobile .sh-bar { padding: 0 6px; }
+body.mobile .sh-fxrow { padding: 0 6px; }
+body.mobile .sh-name { width: 62px; padding: 0 6px; font-size: 12px; }
+body.mobile .sh-fxico { padding: 0 8px; }
+body.mobile .sh-fx { padding: 0 8px; }
+body.mobile .sh-side { display: none; }
+body.mobile .sh-status { gap: 10px; padding: 6px 10px; font-size: 11.5px; }
+body.mobile .sh-tabs { padding: 5px 8px 0; }
+body.mobile .sh-grid { -webkit-overflow-scrolling: touch; }
+
+/* --- connexion / questionnaire --- */
+body.mobile .auth-card, body.mobile .ob-card { padding: 22px 18px; }
+
+/* --- fenêtres centrales 1.16 (partage, événement, Alixo+) : plein écran --- */
+body.mobile .dlgov { padding: 0; }
+body.mobile .dlg-card { width: 100vw; height: 100%; max-height: none; }
+body.mobile .dlg-nav { width: 60px; }
+body.mobile .dlg-card .set-head { padding: 14px 16px 10px; }
+body.mobile .dlg-body { padding: 8px 14px 20px; }
+body.mobile .dlg-foot { padding: 10px 14px calc(12px + env(safe-area-inset-bottom)); }
+body.mobile .ev-form, body.mobile .sh-dlg2 { grid-template-columns: 1fr; gap: 16px; }
+body.mobile .plus-row { grid-template-columns: minmax(0, 1fr) 80px 90px; }

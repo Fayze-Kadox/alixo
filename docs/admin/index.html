@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Alixo — Administration</title>
+<link rel="stylesheet" href="admin.css">
+<link rel="icon" type="image/png" href="logo.png?v=2">
+</head>
+<body>
+
+<header id="top">
+  <div class="brand"><span class="mark"><img src="logo.png" alt=""></span><span>Alixo <b>Administration</b></span></div>
+  <nav id="nav" hidden>
+    <button data-view="dash" class="on">Tableau de bord</button>
+    <button data-view="users">Utilisateurs</button>
+    <button data-view="keys">Clés API Google</button>
+    <button data-view="ann">Annonces</button>
+    <button data-view="codes">Clés Alixo+</button>
+    <button data-view="msg">Messages</button>
+    <button data-view="db">Base de données</button>
+    <button data-view="admins">Administrateurs</button>
+  </nav>
+  <div id="me" hidden><span id="me-mail"></span><button id="logout" class="btn ghost small">Se déconnecter</button></div>
+</header>
+
+<!-- connexion -->
+<section id="login" class="center">
+  <div class="card login">
+    <h1>Panneau d’administration</h1>
+    <p class="muted">Réservé aux comptes listés dans la collection <code>admins</code> du projet Firebase d’Alixo.</p>
+    <button id="google" class="btn wide"><svg viewBox="0 0 24 24" width="18" height="18"><path fill="#4285F4" d="M21.8 12.2c0-.7-.1-1.4-.2-2H12v3.9h5.5a4.7 4.7 0 0 1-2 3.1v2.6h3.3c1.9-1.8 3-4.4 3-7.6Z"/><path fill="#34A853" d="M12 22c2.7 0 5-.9 6.7-2.4l-3.3-2.6c-.9.6-2.1 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3v2.6A10 10 0 0 0 12 22Z"/><path fill="#FBBC05" d="M6.4 13.9a6 6 0 0 1 0-3.8V7.5H3a10 10 0 0 0 0 9l3.4-2.6Z"/><path fill="#EA4335" d="M12 6c1.5 0 2.8.5 3.8 1.5l2.9-2.9A10 10 0 0 0 3 7.5l3.4 2.6C7.2 7.8 9.4 6 12 6Z"/></svg>Continuer avec Google</button>
+    <div class="sep"><span>ou</span></div>
+    <form id="pwform"><input id="pw-mail" type="email" placeholder="E-mail" autocomplete="username" required><input id="pw-pass" type="password" placeholder="Mot de passe" autocomplete="current-password" required><button class="btn ghost wide" type="submit">Se connecter</button></form>
+    <p id="login-err" class="err" hidden></p>
+    <p class="muted small">La première personne administratrice se déclare dans la console Firebase : Firestore › collection <code>admins</code> › document dont l’identifiant est son UID (Authentication › Utilisateurs). Voir <code>SETUP-COMPTES.md</code> § 6.</p>
+  </div>
+</section>
+
+<!-- refus -->
+<section id="denied" class="center" hidden>
+  <div class="card login">
+    <h1>Accès refusé</h1>
+    <p>Ce compte (<b id="den-mail"></b>) n’est pas administrateur.</p>
+    <p class="muted">Pour l’autoriser, un administrateur ajoute cet UID dans <b>Administrateurs</b> :</p>
+    <code id="den-uid" class="uid"></code>
+    <p class="muted small">Premier administrateur : dans la console Firebase → Firestore → collection <code>admins</code> → document dont l’identifiant est cet UID (champ <code>email</code> facultatif), puis rechargez cette page.</p>
+    <button id="den-reload" class="btn wide" style="margin-top:8px">J’ai ajouté le document — réessayer</button>
+    <button id="den-out" class="btn ghost wide" style="margin-top:8px">Changer de compte</button>
+  </div>
+</section>
+
+<!-- panneau -->
+<main id="panel" hidden>
+  <section id="v-dash" class="view">
+    <h2>Tableau de bord</h2>
+    <div class="tiles" id="dash-tiles"></div>
+    <div class="grid2">
+      <div class="card"><h3>Derniers utilisateurs actifs</h3><div id="dash-recent"></div></div>
+      <div class="card"><h3>Version</h3><div id="dash-version"></div></div>
+    </div>
+  </section>
+
+  <section id="v-users" class="view" hidden>
+    <div class="vhead"><h2>Utilisateurs <span class="count" id="users-count"></span></h2>
+      <div class="tools"><input id="users-q" placeholder="Rechercher (e-mail, pseudo, nom, UID)…" autocomplete="off"><select id="users-f"><option value="">Tous</option><option value="online">En ligne maintenant</option><option value="active">Actifs (7 j)</option><option value="key">Avec clé attribuée</option><option value="nokey">Sans clé attribuée</option><option value="plus">Alixo+</option><option value="free">Formule gratuite</option><option value="disabled">Suspendus</option><option value="desktop">Version PC</option><option value="web">Version web</option></select><button id="users-csv" class="btn ghost small">Exporter CSV</button></div></div>
+    <div class="card table-card"><table id="users-tbl"><thead><tr><th>Utilisateur</th><th>Spécialités</th><th>Statut</th><th>Dernière ouverture</th><th>Version</th><th>Séances</th><th>Clé IA</th><th>Alixo+</th><th>État</th><th></th></tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section id="v-keys" class="view" hidden>
+    <div class="vhead"><h2>Clés API Google (Gemini)</h2><div class="tools"><button id="key-add" class="btn">＋ Ajouter une clé</button></div></div>
+    <p class="muted">Les clés du réservoir sont distribuées aux utilisateurs : chacun reçoit <b>une</b> clé, écrite dans <code>keys/{uid}</code> et lisible par lui seul. L’application l’utilise automatiquement s’il n’a pas de clé personnelle (« Imposer » la remplace même s’il en a une).</p>
+    <div class="card table-card"><table id="keys-tbl"><thead><tr><th>Libellé</th><th>Clé</th><th>Utilisateurs</th><th>État</th><th></th></tr></thead><tbody></tbody></table></div>
+    <div class="card">
+      <h3>Distribution</h3>
+      <div class="row wrap">
+        <button id="dist-all" class="btn">Attribuer une clé à tous les utilisateurs sans clé</button>
+        <button id="dist-rebalance" class="btn ghost">Rééquilibrer (répartir tous les utilisateurs sur les clés actives)</button>
+        <button id="dist-clear" class="btn ghost danger">Retirer toutes les clés attribuées</button>
+        <label class="chk"><input type="checkbox" id="dist-force"> Imposer (remplace aussi les clés personnelles)</label>
+      </div>
+      <div id="dist-log" class="log"></div>
+    </div>
+  </section>
+
+  <section id="v-ann" class="view" hidden>
+    <div class="vhead"><h2>Annonces et version</h2><div class="tools"><button id="ann-add" class="btn">＋ Nouvelle annonce</button></div></div>
+    <p class="muted">Les annonces apparaissent dans la <b>cloche</b> de l’application de chaque utilisateur connecté (une seule fois, même après réinstallation). La version annoncée déclenche « Alixo x.y.z est disponible » (cloche et fenêtre de mise à jour) sur toutes les plateformes.</p>
+    <div class="card"><h3>Version disponible</h3>
+      <div class="row wrap"><label>Numéro<input id="ver-num" placeholder="1.12.0"></label><label class="grow">Lien de téléchargement<input id="ver-url" placeholder="https://github.com/Fayze-Kadox/alixo/releases"></label><label class="grow">Note<input id="ver-note" placeholder="Nouveautés en une phrase…"></label><label>Version minimale<input id="ver-min" placeholder="1.18.0" title="En dessous de cette version, l’application affiche une fenêtre bloquante jusqu’à la mise à jour (vide : simple rappel)"></label><button id="ver-save" class="btn">Enregistrer</button></div>
+      <p class="muted small">Toute version plus ancienne que la version disponible reçoit une fenêtre « Mise à jour disponible » au démarrage (rappel toutes les 6 h, « Plus tard » la fait taire 24 h). En dessous de la <b>version minimale</b>, la fenêtre est bloquante : l’application n’est plus utilisable avant la mise à jour.</p></div>
+    <div class="card"><h3>Alixo+ — offre affichée dans l’application</h3>
+      <p class="muted small">Prix et lien de paiement montrés dans la fenêtre « Passer à Alixo+ » (Paramètres › Alixo+, fonctions verrouillées). Sans lien, l’application indique que l’abonnement s’active par l’administrateur. L’activation elle-même se fait dans <a href="#" data-goto="users">Utilisateurs</a> › <b>Alixo+…</b> (avec une durée), une fois le paiement reçu.</p>
+      <div class="row wrap"><label>Prix<input id="plus-price" placeholder="Ex. 2,99 € / mois"></label><label class="grow">Lien de paiement (Stripe, PayPal, HelloAsso…)<input id="plus-url" placeholder="https://…"></label><label class="grow">Note (affichée sous le prix)<input id="plus-note" placeholder="Ex. Activé sur votre compte dans la journée"></label><button id="plus-save" class="btn">Enregistrer</button></div></div>
+    <div class="card table-card"><table id="ann-tbl"><thead><tr><th>Titre</th><th>Public</th><th>Publiée</th><th>Expire</th><th></th></tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section id="v-codes" class="view" hidden>
+    <div class="vhead"><h2>Clés d’activation <span class="count" id="codes-count"></span></h2><div class="tools"><button id="codes-gen" class="btn">＋ Générer des clés Alixo+</button></div></div>
+    <p class="muted">Une clé Alixo+ s’active dans l’application (Paramètres › Alixo+ › <b>Clé d’activation</b>) : elle ouvre Alixo+ sur le compte qui la saisit, pour la durée choisie (prolongation si Alixo+ est déjà actif). Chaque clé ne sert qu’une fois. Les clés inutilisées peuvent être supprimées.</p>
+    <div class="card table-card"><table id="codes-tbl"><thead><tr><th>Clé</th><th>Durée</th><th>Libellé</th><th>Statut</th><th>Créée</th><th></th></tr></thead><tbody></tbody></table></div>
+    <div class="card" style="margin-top:14px"><h3>Versions personnalisées (codées dans le code source)</h3>
+      <p class="muted small">Ces clés ne sont pas dans la base : elles sont écrites dans <code>app/js/editions.js</code> (code, nom, note, actif). Saisies dans l’application, elles activent la version personnalisée correspondante (toutes les fonctions ouvertes, nom affiché dans les Paramètres). Pour en ajouter ou en retirer, modifiez ce fichier puis publiez une nouvelle version.</p>
+      <div class="table-card" style="margin-top:8px"><table id="editions-tbl"><thead><tr><th>Clé</th><th>Nom</th><th>Note</th><th>Statut</th></tr></thead><tbody></tbody></table></div></div>
+  </section>
+
+  <section id="v-msg" class="view" hidden>
+    <div class="vhead"><h2>Messages directs</h2></div>
+    <p class="muted">Un message direct arrive <b>en direct</b> dans la cloche de l’utilisateur (toast + notification), ou en <b>fenêtre</b> qu’il doit fermer si vous cochez l’option. Vous voyez ici s’il a été <b>reçu</b> (l’application l’a téléchargé) puis <b>lu</b> (ouvert). Pour toucher tout le monde, préférez une <a href="#" data-goto="ann">annonce</a>.</p>
+    <div class="grid2 msg-grid">
+      <div class="card">
+        <h3>Nouveau message</h3>
+        <label class="field">Destinataire<input id="msg-to" list="msg-users" placeholder="E-mail, pseudo, nom ou UID…" autocomplete="off"><datalist id="msg-users"></datalist><span id="msg-to-hint" class="muted small"></span></label>
+        <label class="chk" style="margin:6px 0 10px"><input type="checkbox" id="msg-all"><span>Envoyer à <b>tous les utilisateurs affichés</b> dans l’onglet Utilisateurs (filtre et recherche en cours) — <span id="msg-all-n" class="muted">0</span></span></label>
+        <label class="field">Titre<input id="msg-title" maxlength="140" placeholder="Ex. Votre clé IA arrive demain"></label>
+        <label class="field">Texte<textarea id="msg-text" maxlength="1200" placeholder="Message (facultatif)"></textarea></label>
+        <label class="field">Lien (facultatif)<input id="msg-url" placeholder="https://…"></label>
+        <label class="chk"><input type="checkbox" id="msg-popup"> Afficher en fenêtre (l’utilisateur doit la fermer)</label>
+        <div class="modal-foot" style="margin-top:12px"><button id="msg-send" class="btn">Envoyer</button></div>
+      </div>
+      <div class="card">
+        <h3>Messages envoyés <span class="count" id="msg-count"></span></h3>
+        <div class="row wrap" style="margin-bottom:8px"><input id="msg-q" placeholder="Filtrer (destinataire, titre)…" autocomplete="off" style="flex:1; min-width:200px"><button id="msg-refresh" class="btn ghost small" title="Relire les accusés de réception et de lecture">Actualiser</button></div>
+        <div class="table-card" style="border:none; margin:0"><table id="msg-tbl"><thead><tr><th>Destinataire</th><th>Message</th><th>Envoyé</th><th>Suivi</th><th></th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-db" class="view" hidden>
+    <div class="vhead"><h2>Base de données <span class="count">Firestore · lecture seule</span></h2>
+      <div class="tools"><input id="db-path" placeholder="Chemin d’une collection : users/UID/docs…" autocomplete="off" spellcheck="false"><button id="db-go" class="btn ghost small">Ouvrir</button><button id="db-export" class="btn ghost small" title="Télécharger les documents chargés en JSON">Exporter JSON</button></div></div>
+    <p class="muted small">Parcourez les collections comme dans phpMyAdmin : 50 documents à la fois (chaque document lu est facturé une lecture Firestore), recherche dans les documents chargés, filtre <code>champ op valeur</code> côté serveur, clic sur une ligne pour voir le document complet et ses sous-collections. Rien n’est modifiable ici.</p>
+    <div class="db-layout">
+      <aside class="card db-side">
+        <h3>Collections</h3>
+        <div id="db-cols"></div>
+        <h3 style="margin-top:14px">Sous-collections connues</h3>
+        <div class="muted small">users → docs, imgs, files (→ chunks) · shares → docs, imgs, log · inbox → msgs</div>
+      </aside>
+      <div class="db-main">
+        <div class="card db-toolbar">
+          <nav id="db-crumbs" class="db-crumbs"></nav>
+          <div class="row wrap">
+            <input id="db-q" placeholder="Rechercher dans les documents chargés…" autocomplete="off" style="flex:1; min-width:180px">
+            <label>Champ<input id="db-wf" placeholder="ex. platform" style="min-width:120px"></label>
+            <label>Op.<select id="db-wo"><option value="==">==</option><option value="!=">!=</option><option value=">">&gt;</option><option value=">=">&gt;=</option><option value="<">&lt;</option><option value="<=">&lt;=</option><option value="array-contains">contient</option></select></label>
+            <label>Valeur<input id="db-wv" placeholder="ex. web, 12, true" style="min-width:120px"></label>
+            <button id="db-filter" class="btn ghost small">Filtrer</button>
+            <button id="db-reset" class="btn ghost small">Réinitialiser</button>
+          </div>
+        </div>
+        <div class="card table-card"><div id="db-status" class="db-status muted small"></div><div class="db-scroll"><table id="db-tbl"><thead></thead><tbody></tbody></table></div><div class="db-foot"><button id="db-more" class="btn ghost small" hidden>Charger 50 de plus</button></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-admins" class="view" hidden>
+    <div class="vhead"><h2>Administrateurs</h2><div class="tools"><input id="adm-mail" placeholder="E-mail d’un utilisateur Alixo (ou UID)" autocomplete="off"><button id="adm-add" class="btn">Ajouter</button></div></div>
+    <p class="muted">Un administrateur peut voir les utilisateurs, attribuer des clés, activer Alixo+, suspendre des comptes et publier des annonces. Il ne peut pas lire le contenu des cours depuis ce panneau.</p>
+    <div class="card table-card"><table id="adm-tbl"><thead><tr><th>E-mail</th><th>UID</th><th>Ajouté</th><th></th></tr></thead><tbody></tbody></table></div>
+  </section>
+</main>
+
+<div id="modal" hidden><div class="card modal-card" id="modal-card"></div></div>
+<div id="toast" hidden></div>
+
+<script src="firebase-config.js"></script>
+<script>if (!window.ALIXO_FIREBASE_CONFIG) document.write('<script src="../app/firebase-config.js"><\/script>');</script>
+<!-- SDK Firebase : la même copie que l'application (recopiée par le workflow GitHub Pages) ; en local, celle de app/js/vendor -->
+<script src="vendor/firebase-app-compat.js"></script>
+<script>if (typeof firebase === 'undefined') document.write('<script src="../app/js/vendor/firebase-app-compat.js"><\/script><script src="../app/js/vendor/firebase-auth-compat.js"><\/script><script src="../app/js/vendor/firebase-firestore-compat.js"><\/script>');</script>
+<script>if (typeof firebase !== 'undefined' && !firebase.auth) document.write('<script src="vendor/firebase-auth-compat.js"><\/script><script src="vendor/firebase-firestore-compat.js"><\/script>');</script>
+<script src="editions.js"></script>
+<script>if (!window.ALIXO_EDITIONS) document.write('<script src="../app/js/editions.js"><\/script>');</script>
+<script src="admin.js"></script>
+</body>
+</html>

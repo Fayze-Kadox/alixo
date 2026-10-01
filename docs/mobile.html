@@ -1,0 +1,340 @@
+<!-- Fichier généré par scripts/make-mobile.js à partir de index.html : ne pas modifier à la main. -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Alixo</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="mobile.css">
+<link id="app-favicon" rel="icon" type="image/png" href="logo.png">
+<link id="app-touchicon" rel="apple-touch-icon" href="logo.png">
+<meta name="theme-color" content="#33658a">
+<!-- redirect-domain : l'application vit désormais sur alixoapp.com/docs ; un compte connecté sur l'ancienne adresse GitHub Pages y est envoyé (les cours « sans compte » restent lisibles ici) --><script>(function(){try{if(location.hostname!=='fayze-kadox.github.io')return;var s=JSON.parse(localStorage.getItem('alixo.session.v1')||'null');if(!s||!s.uid)return;var f=location.pathname.split('/').pop();if(f==='index.html')f='';location.replace('https://alixoapp.com/docs/'+f+location.search+location.hash);}catch(e){}})();</script>
+</head>
+<body class="mobile">
+
+<!-- ===== Barre supérieure (lame de verre) ===== -->
+<header id="topbar" class="glass">
+  <div class="tb-left">
+    <button id="btn-home" class="logo" title="Bibliothèque">
+      <span class="logo-mark"><img class="app-logo-img" src="logo.png" alt="Alixo"></span><span class="logo-name">Alixo</span>
+    </button>
+    <nav id="breadcrumb" class="crumbs"></nav>
+  </div>
+  <div class="tb-right">
+    <button id="cal-now" class="cal-now" hidden title="Agenda — cliquer pour ouvrir"></button>
+    <button id="timer-now" class="cal-now timer-now" hidden title="Chronomètre / compte à rebours"></button>
+    <span id="save-status" class="only-editor" title="Enregistrement automatique"></span>
+    <button id="btn-search" class="tbtn" title="Recherche universelle (Ctrl+K)">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg>
+    </button>
+    <button id="btn-share" class="tbtn only-editor" title="Partager cette séance (Alixo Share)">
+      <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+    </button>
+    <button id="btn-export" class="tbtn only-editor" title="Exporter en PDF (Ctrl+P)">
+      <svg viewBox="0 0 24 24"><path d="M12 3v11"/><path d="m7.5 10 4.5 4.5L16.5 10"/><path d="M4 20h16"/></svg>
+    </button>
+    <button id="btn-notif" class="tbtn" title="Notifications : mises à jour, partages, messages">
+      <svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span id="notif-badge" class="nbadge" hidden></span>
+    </button>
+    <button id="btn-settings" class="tbtn" title="Paramètres">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+    </button>
+    <button id="btn-theme" class="tbtn" title="Apparence claire / sombre">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- ===== Onglets des séances ouvertes ===== -->
+<nav id="tabbar" hidden></nav>
+
+<!-- ===== Vue Bibliothèque ===== -->
+<section id="view-library">
+  <aside id="libnav" class="glass">
+    <button id="ln-agenda" class="ln-agenda" title="Agenda : cours et événements du mois (Ctrl+Maj+A)"></button>
+    <button id="ln-shared" class="ln-agenda ln-shared" title="Alixo Share : cours et dossiers partagés avec vous, invitations"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg><span>Partagés avec moi</span><span id="share-badge" class="ln-next" hidden></span></button>
+    <button id="ln-todo" class="ln-agenda ln-todo" title="Tâches à faire : catégories, échéances (Ctrl+Maj+K)"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="6" height="6" rx="1.2"/><path d="m4.5 7 1.4 1.4L8.5 5.6M11 7h10M11 17h10"/><rect x="3" y="14" width="6" height="6" rx="1.2"/></svg><span>Tâches</span><span id="todo-badge" class="ln-next" hidden></span></button>
+    <div class="ln-head">
+      <span class="ln-title">Explorateur</span>
+      <button id="btn-new-folder-side" class="ln-addbtn" title="Nouveau dossier">
+        <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M12 11v6M9 14h6"/></svg>
+      </button>
+    </div>
+    <div id="folder-tree"></div>
+  </aside>
+  <div id="lib-main">
+    <div class="lib-head">
+      <div>
+        <nav id="lib-path" class="lib-path"></nav>
+        <h1 id="lib-title">Mes cours</h1>
+      </div>
+      <div class="lib-actions">
+        <div class="seg" id="view-seg" title="Affichage">
+          <button data-view="grid" title="Grille"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg></button>
+          <button data-view="tree" title="Arbre"><svg viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="6" rx="1.5"/><rect x="15" y="3" width="6" height="5" rx="1.5"/><rect x="15" y="10" width="6" height="5" rx="1.5"/><rect x="15" y="17" width="6" height="4" rx="1.5"/><path d="M9 12h3M12 5.5v13.5M12 5.5h3M12 12.5h3M12 19h3"/></svg></button>
+          <button data-view="galaxy" title="Galaxie : dossiers et séances qui flottent, liens animés"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3a9 9 0 0 1 9 9c0 2.5-1.5 3.5-3 3.5S15 14 15 12"/><path d="M12 21a9 9 0 0 1-9-9c0-2.5 1.5-3.5 3-3.5S9 10 9 12"/><circle cx="5" cy="5" r=".8" fill="currentColor"/><circle cx="19.5" cy="18.5" r=".8" fill="currentColor"/><circle cx="18" cy="4.5" r=".6" fill="currentColor"/></svg></button>
+        </div>
+        <button id="btn-import-files" class="cta ghost" title="Ajouter des fichiers dans ce dossier : PDF, Word, PowerPoint, Excel, images, audio… (ou glissez-les ici)">＋ Fichier</button>
+        <button id="btn-new-folder" class="cta ghost">＋ Dossier</button>
+        <button id="btn-new-slides" class="cta ghost" title="Nouvelle présentation : diapositives composées par glisser-déposer, style Alixo">＋ Présentation</button>
+        <button id="btn-new-sheet" class="cta ghost" title="Nouveau tableur : grille de calcul, formules, graphiques">＋ Tableur</button>
+        <button id="btn-new-doc" class="cta">＋ Nouvelle séance</button>
+      </div>
+    </div>
+    <div id="doc-grid"></div>
+    <div id="lib-tree" hidden></div>
+    <div id="lib-galaxy" hidden></div>
+    <div id="lib-agenda" hidden></div>
+    <div id="lib-shared" hidden></div>
+    <div id="lib-todo" hidden></div>
+  </div>
+</section>
+
+<!-- ===== Vue Éditeur ===== -->
+<section id="view-editor" hidden>
+
+  <!-- Volet plan (verre, escamotable) -->
+  <aside id="planpanel" class="glass">
+    <div class="pp-head">
+      <div class="pp-tabs">
+        <button class="pp-tab active" data-pt="plan">Plan du cours</button>
+        <button class="pp-tab" data-pt="jours" title="Ce qui a été écrit chaque jour">Journal</button>
+      </div>
+      <button id="pp-collapse" title="Replier le plan">‹</button>
+    </div>
+    <div id="plan-progress"><div id="plan-progress-bar"></div></div>
+    <div class="pp-tools">
+      <button id="pp-refart" type="button" title="Insérer une référence d’article à l’endroit du curseur (lien Légifrance)"><span class="tt">§</span> Référence d’article</button>
+      <button id="pp-slash" type="button" title="Insérer un bloc (titre, encadré, fiche, formule, tableau, image, dessin…) : menu « / »"><span class="tt" style="font-style:normal">/</span> Insérer un bloc</button>
+      <button id="pp-page" type="button" title="Nouvel onglet dans cette séance (façon Google Docs) : cours, TD, fiches… dans la même séance"><span class="tt" style="font-style:normal">⊞</span> Nouvel onglet</button>
+      <button id="pp-rang" type="button" class="only-health" title="N’afficher que les passages marqués Rang A (l’essentiel EDN)"><span class="tt" style="font-style:normal">A</span> Rang A seulement</button>
+    </div>
+    <nav id="plan-tree"></nav>
+    <nav id="day-list" hidden></nav>
+  </aside>
+  <button id="pp-pill" class="glass" title="Afficher le plan" hidden>
+    <svg viewBox="0 0 24 24"><path d="M4 6h16M7 12h13M10 18h10"/></svg>
+  </button>
+
+  <!-- Document : une seule zone d'écriture continue (façon Google Docs) -->
+  <div id="docwrap">
+    <div id="day-banner" hidden></div>
+    <nav id="page-tabs" hidden></nav>
+    <article id="doc">
+      <div id="doc-meta">
+        <span class="dm-label">Professeur</span>
+        <input id="doc-prof" placeholder="Nom du professeur…" list="profs-list" autocomplete="off" spellcheck="false" title="Nom du professeur (repris du dossier, modifiable)">
+        <datalist id="profs-list"></datalist>
+      </div>
+      <div id="blocks" contenteditable="true" spellcheck="true" lang="fr"></div>
+    </article>
+  </div>
+
+  <!-- Palette mathématique (panneau droit) -->
+  <aside id="mathpanel" class="glass" hidden>
+    <div class="mp-tabs">
+      <button class="mp-tab active" data-tab="sym">Symboles</button>
+      <button class="mp-tab" data-tab="mod">Modèles</button>
+      <button class="mp-tab" data-tab="gra">Graphiques</button>
+      <button id="mp-close" title="Fermer"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div id="mp-body"></div>
+  </aside>
+
+  <!-- Correction orthographe / grammaire (IA) -->
+  <aside id="aipanel" class="glass rpanel" hidden>
+    <div class="mp-tabs"><span class="rp-title">Corrections (IA)</span><button id="ai-close" class="rp-close" title="Fermer"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div id="ai-body"></div>
+  </aside>
+
+  <!-- Émulateur TI-83 (service en ligne) -->
+  <aside id="calcpanel" class="glass rpanel" hidden>
+    <div class="mp-tabs"><div class="calc-seg" id="calc-seg" role="tablist"><button type="button" data-calc="ti" class="on" title="TI-83 Premium CE — calculatrice graphique (lycée, supérieur)">TI-83</button><button type="button" data-calc="college" title="Casio fx-92 Collège — calculatrice scientifique simple">Collège</button></div><a id="ti-ext" class="rp-link" href="https://maclasseti.fr/calculatrice" target="_blank" title="Ouvrir dans le navigateur">↗</a><button id="calc-close" class="rp-close" title="Fermer"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div id="calc-body"></div>
+  </aside>
+
+  <!-- Dictionnaire des définitions (tous les cours) -->
+  <aside id="dictpanel" class="glass rpanel" hidden>
+    <div class="mp-tabs"><span class="rp-title">Dictionnaire</span><button id="dict-close" class="rp-close" title="Fermer"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="dict-search"><input id="dict-input" placeholder="Rechercher une notion…" autocomplete="off" spellcheck="false"></div>
+    <div id="dict-body"></div>
+  </aside>
+
+  <!-- Agenda -->
+  <aside id="calpanel" class="glass rpanel" hidden>
+    <div class="mp-tabs"><span class="rp-title">Agenda</span><button id="cal-add" class="cta small" type="button">＋ Événement</button><button id="cal-close" class="rp-close" title="Fermer"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div id="cal-body"></div>
+  </aside>
+
+  <!-- Chronomètre et compte à rebours -->
+  <aside id="timerpanel" class="glass rpanel" hidden>
+    <div class="mp-tabs"><span class="rp-title">Chronomètre · Compte à rebours</span><button id="timer-close" class="rp-close" title="Fermer"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div id="timer-body"></div>
+  </aside>
+
+  <!-- Document affiché à côté du cours (PDF, diaporama, Word) -->
+  <aside id="viewpanel" hidden>
+    <div class="vw-resizer" title="Glisser pour redimensionner"></div>
+    <div class="mp-tabs vw-head">
+      <span class="rp-title" id="vw-title">Document</span>
+      <button id="vw-recent" class="tbtn small" type="button" title="Documents récents (cette séance et les autres)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></button>
+      <button id="vw-open" class="cta ghost small" type="button">Ouvrir…</button>
+      <button id="vw-close" class="rp-close" title="Fermer"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div id="vw-body"></div>
+    <input id="vw-file" type="file" accept=".pdf,.docx,.pptx,.png,.jpg,.jpeg,.gif,.webp,.txt,.md,application/pdf" hidden>
+  </aside>
+</section>
+
+<!-- ===== Vue Présentation (diapositives) — voir js/slides.js ===== -->
+<section id="view-slides" hidden>
+  <div id="sl-bar" class="sl-bar"></div>
+  <aside id="sl-strip" class="sl-strip"></aside>
+  <div id="sl-stage" class="sl-stage"><div id="sl-canvas" class="sl-canvas"></div></div>
+  <aside id="sl-side" class="sl-side"></aside>
+  <input id="sl-img-file" type="file" accept="image/*" hidden>
+</section>
+<div id="sl-present" hidden></div>
+<div id="sl-print"></div>
+
+<!-- ===== Vue Tableur (js/sheets.js) ===== -->
+<section id="view-sheet" hidden>
+  <div id="sh-bar" class="sh-bar"></div>
+  <div id="sh-fxrow" class="sh-fxrow">
+    <span id="sh-name" class="sh-name" title="Cellule ou plage sélectionnée">A1</span>
+    <button id="sh-fxico" class="sh-fxico" type="button" title="Insérer une fonction (liste par catégorie)">fx</button>
+    <input id="sh-fx" class="sh-fx" placeholder="Valeur ou formule : =SOMME(A1:A10) — tapez = pour l’assistant" autocomplete="off" spellcheck="false">
+    <button id="sh-fxguide" class="sh-fxguide" type="button" title="Guide des formules : références, fonctions, critères, erreurs">?</button>
+  </div>
+  <div id="sh-main" class="sh-main">
+    <div id="sh-grid" class="sh-grid" tabindex="0"></div>
+    <div id="sh-fxhelp" class="sh-fxhelp" hidden></div>
+    <input id="sh-capture" class="sh-capture" autocomplete="off" autocorrect="off" spellcheck="false" aria-hidden="true" tabindex="-1">
+    <aside id="sh-side" class="sh-side" hidden></aside>
+  </div>
+  <div id="sh-tabs" class="sh-tabs"></div>
+  <div id="sh-status" class="sh-status"></div>
+</section>
+<div id="sh-print"></div>
+
+<!-- ===== Barre d'outils de l'éditeur ===== -->
+<div id="toolbar" class="only-editor" hidden>
+  <div class="fsize" title="Taille du texte">
+    <button data-fs="-" title="Réduire la taille (Ctrl+Maj+<)">−</button>
+    <input id="fs-input" value="16" inputmode="numeric" maxlength="3" aria-label="Taille du texte">
+    <button data-fs="+" title="Augmenter la taille (Ctrl+Maj+>)">+</button>
+  </div>
+  <span class="tb-sep"></span>
+  <button data-cmd="bold" title="Gras (Ctrl+B)"><b class="tlabel">G</b></button>
+  <button data-cmd="italic" title="Italique (Ctrl+I)"><i class="tlabel">I</i></button>
+  <button data-cmd="underline" title="Souligné (Ctrl+U)"><u class="tlabel">S</u></button>
+  <button data-cmd="strikeThrough" title="Barré"><s class="tlabel">B</s></button>
+  <button data-cmd="superscript" title="Exposant (Ctrl+.) — en mode Santé, « Na+ » ou « H2O » se mettent en forme tout seuls"><span class="tlabel">x<sup>2</sup></span></button>
+  <button data-cmd="subscript" title="Indice (Ctrl+,)"><span class="tlabel">x<sub>2</sub></span></button>
+  <button data-menu="color" title="Couleur du texte"><span class="color-ico">A</span></button>
+  <button data-menu="hilite" title="Couleur de surlignage"><span class="hl-swatch">ab</span></button>
+  <button data-cmd="removeFormat" title="Effacer la mise en forme (Ctrl+\)"><svg viewBox="0 0 24 24"><path d="M6 6 18 18M13 5h6M5 19h8M15 5 9.5 19"/></svg></button>
+  <span class="tb-sep"></span>
+  <button data-act="heading" title="Niveau de titre (Ctrl+Alt+1…4)"><span class="tt">I.A.</span></button>
+  <button data-list="ul" title="Liste à puces (Ctrl+Maj+8)"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2" fill="currentColor"/><circle cx="4.5" cy="12" r="1.2" fill="currentColor"/><circle cx="4.5" cy="18" r="1.2" fill="currentColor"/></svg></button>
+  <button data-list="ol" title="Liste numérotée (Ctrl+Maj+7)"><svg viewBox="0 0 24 24"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M4 5.5 5.5 4.5V9M3.8 12.2c.4-.8 2.4-1.2 2.4.2 0 1-2.4 1.8-2.4 2.9h2.7M3.8 17.2h1.6c1.3 0 1.3 1.8 0 1.8h-.7.7c1.4 0 1.4 1.9 0 1.9H3.8"/></svg></button>
+  <button data-list="cl" title="Liste de cases à cocher (Ctrl+Maj+9)"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="6" height="6" rx="1.2"/><path d="m4.5 7 1.4 1.4L8.5 5.6M11 7h10M11 17h10"/><rect x="3" y="14" width="6" height="6" rx="1.2"/></svg></button>
+  <span class="tb-sep"></span>
+  <button data-align="left" title="Aligner à gauche (Ctrl+Maj+L)"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 10h10M4 14h16M4 18h10"/></svg></button>
+  <button data-align="center" title="Centrer (Ctrl+Maj+E)"><svg viewBox="0 0 24 24"><path d="M4 6h16M7 10h10M4 14h16M7 18h10"/></svg></button>
+  <button data-align="right" title="Aligner à droite (Ctrl+Maj+R)"><svg viewBox="0 0 24 24"><path d="M4 6h16M10 10h10M4 14h16M10 18h10"/></svg></button>
+  <button data-align="justify" title="Justifier (Ctrl+Maj+J)"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg></button>
+  <button data-act="link"    title="Insérer un lien (bouton cliquable, QR code à l’export PDF)"><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.5 1.5"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.5-1.5"/></svg></button>
+  <button data-act="refart"  title="Référence d’article (art. 1240 C. civ. → lien Légifrance)"><span class="tt" style="font-style:normal">§</span></button>
+  <span class="tb-sep"></span>
+  <span class="tb-hint" title="Les blocs (titres, encadrés, fiches, formules, graphiques, tableaux, images, dessins) s’insèrent avec « / » sur une ligne vide">/ blocs</span>
+  <span class="tb-sep"></span>
+  <button data-act="ai"      title="Corriger l’orthographe et la grammaire avec l’IA (F7)"><svg viewBox="0 0 24 24"><path d="M4 17c3-1 6-9 8-9s3 8 8 7"/><path d="m3 20 2-2M19 4l1 3 3 1-3 1-1 3-1-3-3-1 3-1Z"/></svg></button>
+  <button data-act="calc"    title="Calculatrice contextuelle"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M9 7h6M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"/></svg></button>
+  <button data-act="ti"      title="Calculatrices : TI-83 Premium CE et fx-92 Collège (émulateurs en ligne)"><span class="tt" style="font-style:normal">TI</span></button>
+  <button data-act="dict"    title="Dictionnaire des définitions de tous les cours (Ctrl+Maj+D)"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h14v16H6a2 2 0 0 0-2 2Z"/><path d="M4 21a2 2 0 0 1 2-2h14M9 7h7M9 11h5"/></svg></button>
+  <button data-act="timer"   title="Chronomètre et compte à rebours (Ctrl+Maj+T)"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6M12 2v3"/></svg></button>
+  <button data-act="cal"     title="Agenda : cours et événements (Ctrl+Maj+A)"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M8 14h3M13 14h3M8 18h3"/></svg></button>
+  <button data-act="viewer"  title="Afficher un PDF, un diaporama ou un document Word à côté du cours"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M13 4v16M15.5 9h3M15.5 12h3M15.5 15h2"/></svg></button>
+  <input id="img-file" type="file" accept="image/*" multiple hidden>
+</div>
+
+<!-- ===== Barre flottante d'une image sélectionnée ===== -->
+<div id="imgbar" class="glass" hidden>
+  <button data-ib="al-left" title="À gauche, texte autour"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="8" height="8" rx="1"/><path d="M14 6h7M14 9h7M14 12h7M3 16h18M3 19h18"/></svg></button>
+  <button data-ib="al-center" title="Centrée, sur sa propre ligne"><svg viewBox="0 0 24 24"><rect x="8" y="5" width="8" height="8" rx="1"/><path d="M3 16h18M3 19h18"/></svg></button>
+  <button data-ib="al-right" title="À droite, texte autour"><svg viewBox="0 0 24 24"><rect x="13" y="5" width="8" height="8" rx="1"/><path d="M3 6h7M3 9h7M3 12h7M3 16h18M3 19h18"/></svg></button>
+  <span class="tb-sep"></span>
+  <button data-ib="size" class="ib-size" title="Taille de l’image (largeur en % ou en pixels)">60 %</button>
+  <span class="tb-sep"></span>
+  <button data-ib="crop" title="Recadrer"><svg viewBox="0 0 24 24"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg></button>
+  <button data-ib="replace" title="Remplacer l’image"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 14-5.3L20 8M20 4v4h-4M20 12a8 8 0 0 1-14 5.3L4 16M4 20v-4h4"/></svg></button>
+  <button data-ib="caption" title="Légende sous l’image"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="11" rx="2"/><path d="M6 19h12"/></svg></button>
+  <span class="tb-sep"></span>
+  <button data-ib="delete" class="danger" title="Supprimer l’image"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+</div>
+
+<!-- ===== Recherche universelle ===== -->
+<div id="searchov" hidden>
+  <div id="searchbox" class="glass">
+    <div class="sb-row">
+      <svg viewBox="0 0 24 24" class="sb-ico"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg>
+      <input id="search-input" placeholder="Rechercher dans tous les cours… (notions, arrêts, formules)" autocomplete="off">
+      <kbd>Échap</kbd>
+    </div>
+    <div id="search-results"></div>
+  </div>
+</div>
+
+<!-- ===== Menu « / » ===== -->
+<div id="slashmenu" class="glass" hidden></div>
+
+<!-- ===== Menu contextuel (clic droit sur un dossier) ===== -->
+<div id="ctxmenu" hidden></div>
+
+<!-- ===== Pop-over générique (référence, calculatrice, choix) ===== -->
+<div id="popover" class="glass" hidden></div>
+
+<!-- Suggestion de résultat de calcul (Tab pour accepter) -->
+<div id="calc-ghost" hidden></div>
+
+<div id="toast" hidden></div>
+
+<!-- Sommaire généré à l'export PDF -->
+<div id="print-summary"></div>
+
+<script src="firebase-config.js"></script>
+<script src="js/vendor/firebase-app-compat.js"></script>
+<script src="js/vendor/firebase-auth-compat.js"></script>
+<script src="js/vendor/firebase-firestore-compat.js"></script>
+<script src="js/vendor/qrcode.js"></script>
+<script src="js/vendor/jszip.min.js"></script>
+<script src="js/vendor/mammoth.browser.min.js"></script>
+<script src="js/vendor/three.min.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/math.js"></script>
+<script src="js/graphs.js"></script>
+<script src="js/editions.js"></script>
+<script src="js/med.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/app.js"></script>
+<script src="js/galaxy3d.js"></script>
+<script src="js/galaxy.js"></script>
+<script src="js/slides.js"></script>
+<script src="js/sheets.js"></script>
+<script src="js/nest.js"></script>
+<script src="js/files.js"></script>
+<script src="js/draw.js"></script>
+<script src="js/export.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/share.js"></script>
+<script src="js/notify.js"></script>
+<script src="js/todo.js"></script>
+<script src="js/stats.js"></script>
+<script src="js/cloudconfig.js"></script>
+<script src="js/mobile.js"></script>
+</body>
+</html>
