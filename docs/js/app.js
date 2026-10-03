@@ -16,7 +16,7 @@ const fmtDate = ts => new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric',
 
 const DEFAULT_TINT = '#33658a';
 /* version de l'application (tenue à jour avec package.json) — sert aux notifications « nouvelle version installée » */
-const ALIXO_VERSION = '1.21.0';
+const ALIXO_VERSION = '1.22.0';
 /* version web d'Alixo (GitHub Pages) et téléchargement de la version PC */
 const ALIXO_WEB_URL = 'https://alixoapp.com/docs/';
 const ALIXO_PC_URL = 'https://github.com/Fayze-Kadox/alixo/releases/latest/download/Alixo-Setup.exe';
@@ -110,108 +110,11 @@ function folderIconHTML(f, big) {
   return big ? FOLDER_ICON_BIG : FOLDER_ICON;
 }
 
-/* ---------------- contenu de démonstration ---------------- */
-function seed() {
-  const F = (nom, couleur, parentId = null) => ({ id: uid(), nom, couleur, parentId });
-  const fDroit = F('Droit', '#8c4351');
-  const fEco = F('Économie', '#2f7d68');
-  const fOblig = F('Droit des obligations', '#8c4351', fDroit.id);
-  const fConst = F('Droit constitutionnel', '#3d5a80', fDroit.id);
-  const fMicro = F('Microéconomie', '#2f7d68', fEco.id);
-  const fMacro = F('Macroéconomie', '#33658a', fEco.id);
-
-  const B = (type, props) => Object.assign({ id: uid(), type }, props);
-  const now = Date.now();
-
-  const docDroit = {
-    id: uid(), folderId: fOblig.id, titre: 'La responsabilité extracontractuelle — le fait générateur',
-    createdAt: now - 86400000 * 2, updatedAt: now - 3600000, pinned: true,
-    blocks: [
-      B('p', { text: 'La responsabilité extracontractuelle suppose la réunion de trois conditions : un fait générateur, un dommage et un lien de causalité. La séance porte sur le premier élément.' }),
-      B('h', { level: 1, text: 'Le fait personnel : la faute' }),
-      B('callout', { ct: 'definition', text: '<b>Faute civile</b> — tout fait quelconque de l’homme qui cause à autrui un dommage et oblige celui par la faute duquel il est arrivé à le réparer. Elle s’apprécie sans condition d’imputabilité morale depuis 1984.' }),
-      B('p', { text: 'Le siège de la matière est l’<a class="refart" contenteditable="false" target="_blank" href="https://www.legifrance.gouv.fr/search/code?query=article%201240%20code%20civil">art. 1240 C. civ.</a>, complété par l’<a class="refart" contenteditable="false" target="_blank" href="https://www.legifrance.gouv.fr/search/code?query=article%201241%20code%20civil">art. 1241 C. civ.</a> pour la négligence et l’imprudence.' }),
-      B('h', { level: 2, text: 'L’élément matériel' }),
-      B('p', { text: 'La faute peut résulter d’un acte positif (commission) ou d’une abstention (omission). La jurisprudence n’exige pas un acte : le comportement passif suffit dès lors qu’il existait un devoir d’agir.' }),
-      B('h', { level: 2, text: 'L’appréciation de la faute' }),
-      B('p', { text: 'L’appréciation se fait <i>in abstracto</i>, par référence au standard de la personne raisonnable placée dans les mêmes circonstances externes.' }),
-      B('juris', {
-        fields: {
-          ref: 'Cass. ass. plén., 9 mai 1984, <i>Derguini</i>, n° 80-93.481',
-          faits: 'Une enfant de cinq ans, renversée par un véhicule, décède. Les juges du fond retiennent un partage de responsabilité en raison du comportement de l’enfant.',
-          probleme: 'La faute de la victime peut-elle être retenue à l’encontre d’un enfant dépourvu de discernement ?',
-          solution: 'Oui. La cour n’était pas tenue de vérifier si la mineure était capable de discerner les conséquences de ses actes.',
-          portee: 'Objectivation de la faute civile : l’imputabilité morale n’est plus une condition. Solution constante depuis.'
-        }
-      }),
-      B('callout', { ct: 'retenir', text: 'Depuis les arrêts d’Assemblée plénière du 9 mai 1984, la faute est appréciée <b>objectivement</b> : ni l’infans ni le majeur privé de raison n’échappent à la qualification.' }),
-      B('h', { level: 1, text: 'Le fait des choses' }),
-      B('h', { level: 2, text: 'L’émergence du principe général' }),
-      B('p', { text: 'Découvert par la jurisprudence à partir de l’ancien article 1384 alinéa 1er (devenu 1242 al. 1er), le principe général de responsabilité du fait des choses naît avec l’arrêt <i>Teffaine</i> (1896) puis s’épanouit avec <i>Jand’heur</i> (1930).' }),
-      B('callout', { ct: 'arret', text: '<b>Ch. réunies, 13 févr. 1930, <i>Jand’heur</i></b> — la présomption de responsabilité est attachée à la <b>garde</b> de la chose, non à la chose elle-même ; peu importe qu’elle soit ou non actionnée par la main de l’homme.' }),
-      B('h', { level: 2, text: 'Les conditions : la garde' }),
-      B('p', { text: 'Le gardien est celui qui exerce les pouvoirs d’usage, de direction et de contrôle (arrêt <i>Franck</i>, 1941). La garde est alternative, non cumulative.' })
-    ]
-  };
-
-  const docMicro = {
-    id: uid(), folderId: fMicro.id, titre: 'Le choix optimal du consommateur',
-    createdAt: now - 86400000, updatedAt: now - 7200000, pinned: false,
-    blocks: [
-      B('p', { text: 'Objectif : caractériser le panier optimal d’un consommateur rationnel sous contrainte budgétaire.' }),
-      B('h', { level: 1, text: 'Préférences et utilité' }),
-      B('formula', { src: 'U(x, y) = x^alpha y^(1-alpha)' }),
-      B('p', { text: 'La fonction Cobb-Douglas est le cas canonique : préférences convexes, monotones, élasticité de substitution unitaire.' }),
-      B('callout', { ct: 'definition', text: '<b>Taux marginal de substitution (TMS)</b> — quantité de bien <i>y</i> à laquelle le consommateur est prêt à renoncer pour une unité de <i>x</i> supplémentaire, à utilité constante.' }),
-      B('formula', { src: 'TMS = (partial U / partial x)/(partial U / partial y)' }),
-      B('graph', { gtype: 'indiff', params: {} }),
-      B('h', { level: 1, text: 'La contrainte budgétaire' }),
-      B('formula', { src: 'R = p_x x + p_y y' }),
-      B('h', { level: 1, text: 'L’optimum du consommateur' }),
-      B('p', { text: 'À l’optimum intérieur, la courbe d’indifférence est tangente à la droite de budget :' }),
-      B('formula', { src: 'TMS = p_x / p_y' }),
-      B('callout', { ct: 'retenir', text: 'Condition d’optimum : <b>TMS = rapport des prix</b>. Toute l’analyse micro du consommateur tient dans cette égalité de tangence.' }),
-      B('h', { level: 1, text: 'Élasticité-prix de la demande' }),
-      B('formula', { src: 'e_p = (dQ/Q)/(dP/P)' }),
-      B('p', { text: 'Demande élastique si |e| > 1, inélastique si |e| < 1. À relier au marché :' }),
-      B('graph', { gtype: 'offredemande', params: {} })
-    ]
-  };
-
-  const docMacro = {
-    id: uid(), folderId: fMacro.id, titre: 'Le modèle IS-LM en économie fermée',
-    createdAt: now - 86400000 * 4, updatedAt: now - 86400000 * 2, pinned: false,
-    blocks: [
-      B('h', { level: 1, text: 'L’équilibre sur le marché des biens : la courbe IS' }),
-      B('formula', { src: 'Y = C(Y - T) + I(i) + G' }),
-      B('p', { text: 'IS décrit les couples (Y, i) qui équilibrent le marché des biens. Une hausse de G la déplace vers la droite.' }),
-      B('formula', { src: 'k = 1/(1 - c(1 - t))' }),
-      B('h', { level: 1, text: 'L’équilibre monétaire : la courbe LM' }),
-      B('formula', { src: 'M/P = L(Y, i)' }),
-      B('h', { level: 1, text: 'L’équilibre global' }),
-      B('graph', { gtype: 'islm', params: {} }),
-      B('callout', { ct: 'exemple', text: 'Relance budgétaire : IS → droite, hausse de Y <b>et</b> de i — effet d’éviction partiel sur l’investissement privé.' })
-    ]
-  };
-
-  const docConst = {
-    id: uid(), folderId: fConst.id, titre: 'La hiérarchie des normes',
-    createdAt: now - 86400000 * 6, updatedAt: now - 86400000 * 5, pinned: false,
-    blocks: [
-      B('h', { level: 1, text: 'La pyramide kelsénienne' }),
-      B('p', { text: 'Chaque norme tire sa validité de sa conformité à la norme supérieure : Constitution, traités, lois, règlements.' }),
-      B('h', { level: 1, text: 'Le contrôle de constitutionnalité' }),
-      B('p', { text: 'Contrôle a priori (art. 61 C.) et contrôle a posteriori par la QPC (art. 61-1 C.) depuis la révision de 2008.' }),
-      B('callout', { ct: 'controverse', text: 'Place des traités : <i>supra-législative</i> mais <i>infra-constitutionnelle</i> en droit interne (Sarran, 1998 ; Fraisse, 2000) — lecture contestée côté Union européenne (primauté).' })
-    ]
-  };
-
-  return {
-    folders: [fDroit, fEco, fOblig, fConst, fMicro, fMacro],
-    docs: [docDroit, docMicro, docMacro, docConst],
-    settings: { theme: null, snippets: [{ k: 'tkt', v: 't’inquiète' }] }
-  };
-}
+/* ---------------- état de départ ----------------
+   1.22 : plus de contenu de démonstration. Avant, le premier lancement — et chaque nouvel appareil, puisque le
+   stockage local est propre au compte — créait d'office les dossiers « Droit » et « Économie » (avec quatre séances
+   d'exemple), qui partaient ensuite dans le compte par la synchronisation : dossiers en double à chaque connexion. */
+function emptyState() { return { folders: [], docs: [], settings: { theme: null, snippets: [{ k: 'tkt', v: 't’inquiète' }] } }; }
 
 /* ---------------- état runtime ---------------- */
 let currentDocId = null;
@@ -2261,7 +2164,7 @@ function settingsSectionHTML(k) {
         <label class="set-inline">Taille <select id="set-fontsize">${DOC_SIZES.map(([v, l]) => `<option value="${v}" ${(state.settings.docSize || 'm') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
       </div></div>
     <div class="set-sect"><div class="po-label">Fautes de frappe</div>
-      <div class="set-checks"><label><input type="checkbox" id="set-autotypo" ${state.settings.autoTypo !== false ? 'checked' : ''}><span><b>Corriger seul les fautes de frappe courantes</b><small>« qaund » → « quand », « aevc » → « avec », « etre » → « être »… dès que vous tapez un espace, sans Internet ni IA. Retour arrière juste après garde le mot tel que vous l’avez tapé (et il n’est plus corrigé). Les textes dans une autre langue ne sont pas touchés.</small></span></label></div></div>
+      <div class="set-checks"><label><input type="checkbox" id="set-autotypo" ${state.settings.autoTypo !== false ? 'checked' : ''}><span><b>Corriger seul les fautes de frappe courantes</b><small>« qaund » → « quand », « aevc » → « avec », « etre » → « être », « contart » → « contrat »… dès que vous tapez un espace ou une ponctuation, sans Internet ni IA : liste de fautes courantes, lexique de 24 000 mots (lettres inversées, lettre doublée, accent oublié — jamais un mot ambigu) et mots appris des corrections précédentes. Retour arrière juste après garde le mot tel que vous l’avez tapé (et il n’est plus corrigé). Les textes dans une autre langue ne sont pas touchés.</small></span></label></div></div>
     <div class="set-sect"><div class="po-label">Raccourcis de frappe</div>
       <div class="po-hint" style="margin:0 0 8px">Tape l’abréviation puis un espace : elle est remplacée par le texte complet (« tkt » → « t’inquiète »).</div>
       <div id="po-snips">${snippetRowsHTML()}</div>
@@ -2276,16 +2179,19 @@ function settingsSectionHTML(k) {
   if (k === 'ia') { const o = aiOpt(); return `<div class="set-sect"><div class="po-label">Clé et activation</div><div id="po-aisetup">${aiSetupHTML('settings')}</div></div>
     <div class="set-sect"><div class="po-label">Ce que l’IA propose</div>
       <div class="set-checks" id="set-ai">
-        <label><input type="checkbox" data-ai="auto" ${o.auto ? 'checked' : ''}><span><b>Analyse automatique pendant la frappe</b><small>Les propositions apparaissent sous le paragraphe, Tab pour accepter, Échap pour ignorer. Sinon, seulement à la demande (✨ ou F7).</small></span></label>
+        <label><input type="checkbox" data-ai="auto" ${o.auto ? 'checked' : ''}><span><b>Analyse automatique pendant la frappe</b><small>À chaque fin de phrase (point, Entrée), après une pause de frappe ou en quittant le paragraphe, les phrases nouvelles partent en une seule requête ; les propositions apparaissent sous le paragraphe, Tab pour accepter, Échap pour ignorer. Sinon, seulement à la demande (✨ ou F7).</small></span></label>
         <label><input type="checkbox" data-ai="fix" ${o.fix ? 'checked' : ''}><span><b>Corriger l’orthographe et la grammaire</b><small>Accords, conjugaison, ponctuation… selon le niveau choisi ci-dessous.</small></span></label>
-        <label><input type="checkbox" data-ai="autofix" ${o.autofix ? 'checked' : ''}><span><b>Corriger seul les fautes de frappe évidentes (sans Tab)</b><small>Lettres inversées, lettre manquante, accent oublié : quand l’IA est sûre, la correction s’applique d’elle-même (le mot est surligné un instant, Ctrl+Z pour revenir). Les autres fautes restent proposées sous le paragraphe, Tab pour accepter.</small></span></label>
+        <label><input type="checkbox" data-ai="autofix" ${o.autofix ? 'checked' : ''}><span><b>Corriger seul les fautes de frappe évidentes (sans Tab)</b><small>Lettres inversées, lettre manquante, accent oublié : quand l’IA est sûre, la correction s’applique d’elle-même (le mot est surligné un instant, Ctrl+Z pour revenir) et le mot est appris : la prochaine fois, il est corrigé à l’espace, sans requête. Les autres fautes restent proposées sous le paragraphe, Tab pour accepter.</small></span></label>
         <label><input type="checkbox" data-ai="multilang" ${o.multilang ? 'checked' : ''}><span><b>Corriger aussi les textes écrits dans une autre langue</b><small>Un bloc en anglais, espagnol, allemand, italien ou portugais est alors corrigé dans sa langue. Décoché : il est laissé tel quel. Dans tous les cas, un mot ou une citation en langue étrangère au milieu d’un texte français n’est jamais « corrigé ».</small></span></label>
         <label><input type="checkbox" data-ai="style" ${o.style ? 'checked' : ''}><span><b>Proposer une mise en forme</b><small>Repère les définitions, titres, arrêts, exemples, points à retenir… et propose l’encadré ou le titre adapté.</small></span></label>
         <label><input type="checkbox" data-ai="rephrase" ${o.rephrase ? 'checked' : ''}><span><b>Proposer des reformulations</b><small>Avec parcimonie : une phrase lourde peut être reformulée plus clairement, sans changer le sens (règle « Reformulation : … »).</small></span></label>
       </div></div>
     <div class="set-sect"><div class="po-label">Niveau de correction</div>
       <div class="set-tiles" id="set-ailevel">${AI_LEVELS.map(([v, l, h]) => `<button type="button" class="set-tile ${o.level === v ? 'on' : ''}" data-level="${v}"><b>${l}</b><span>${h}</span></button>`).join('')}</div>
-      <div class="po-hint">Les abréviations juridiques et médicales, sigles, formules et mots latins ne sont jamais « corrigés ». Ces réglages suivent votre compte.${aiLastStatus ? `<br>Dernière analyse automatique — ${esc(aiLastStatus)}` : ''}</div></div>`; }
+      <div class="po-hint">Les abréviations juridiques et médicales, sigles, formules et mots latins ne sont jamais « corrigés ». Ces réglages suivent votre compte.${aiLastStatus ? `<br>Dernière analyse automatique — ${esc(aiLastStatus)}` : ''}</div></div>
+    <div class="set-sect"><div class="po-label">Économie de requêtes</div>
+      <div class="po-hint" style="margin:0 0 8px">${esc(aiStatsText(AlixoCorr.stats()))}</div>
+      <div class="po-row" style="gap:8px; flex-wrap:wrap"><button class="cta ghost small" id="set-aiforget" type="button" title="Oublie les mots appris des corrections et les mots que vous avez demandé à ne plus corriger">Oublier les mots appris et ignorés</button><button class="cta ghost small" id="set-aicache" type="button" title="Les phrases déjà relues seront analysées à nouveau à la prochaine occasion">Vider la mémoire des phrases</button></div></div>`; }
   if (k === 'export') return `<div class="set-sect"><div class="po-label">Format d’export des séances</div>
       <div class="po-radios" id="po-fmt">
         ${Object.entries(EXPORT_FORMATS).map(([k2, v]) => `<label><input type="radio" name="fmt" value="${k2}" ${k2 === fmt ? 'checked' : ''}> ${v.label}</label>`).join('')}
@@ -2386,6 +2292,8 @@ function bindSettingsSection(k, root) {
     bindAiSetup(root.querySelector('#po-aisetup'), 'settings');
     root.querySelector('#set-ai').addEventListener('change', e => { const key = e.target.dataset.ai; if (!key) return; aiOpt(); state.settings.ai[key] = e.target.checked; save(); if (key === 'auto' && !e.target.checked) dismissSug(); const t = root.querySelector('.ai-styletoggle'); if (t && key === 'auto') t.checked = e.target.checked; });
     root.querySelector('#set-ailevel').addEventListener('click', e => { const b = e.target.closest('[data-level]'); if (!b) return; aiOpt(); state.settings.ai.level = b.dataset.level; save(); root.querySelectorAll('#set-ailevel .set-tile').forEach(t => t.classList.toggle('on', t === b)); });
+    const fg = root.querySelector('#set-aiforget'); if (fg) fg.addEventListener('click', () => { AlixoCorr.forget(); toast('Mots appris et ignorés oubliés'); });
+    const cc = root.querySelector('#set-aicache'); if (cc) cc.addEventListener('click', () => { AlixoCorr.clearCache(); toast('Mémoire des phrases vidée'); });
     return;
   }
   if (k === 'export') {
@@ -7304,58 +7212,10 @@ function insertDrawing() {
    l'appareil (localStorage, jamais synchronisée).
    ============================================================ */
 const AI_KEY_LS = 'alixo.geminiKey';
-const AI_MODELS = ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-flash-lite-latest'];   // essayés dans l'ordre (indisponible ou saturé → suivant)
-const AI_FAST_MODELS = ['gemini-3.6-flash', 'gemini-flash-lite-latest', 'gemini-3.5-flash-lite'];   // analyse pendant la frappe : un modèle complet d'abord (1.18 : les « lite » laissaient passer trop de fautes), les rapides en secours
 const AI_PROVIDER = 'Google AI Studio';
 function aiKey() { try { return localStorage.getItem(AI_KEY_LS) || ''; } catch { return ''; } }
-
-/* appel générique à Gemini ; renvoie { ok, text } ou { ok: false, status, error } */
-async function geminiCall(key, { system, user, maxTokens = 8000, json = false, models = AI_MODELS, retry = true, timeoutMs = 30000, temperature = 0.2 }) {
-  let last = null;
-  const sleep = ms => new Promise(r => setTimeout(r, ms));
-  for (let attempt = 0; attempt < (retry ? 2 : 1); attempt++) for (const model of models) {
-    if (attempt && model === models[0]) await sleep(1500);   // second passage : Google était saturé partout
-    let res;
-    const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), timeoutMs);
-    try {
-      res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-        method: 'POST', signal: ctl.signal,
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: system }] },
-          contents: [{ role: 'user', parts: [{ text: user }] }],
-          generationConfig: Object.assign({ temperature, maxOutputTokens: maxTokens }, json ? { responseMimeType: 'application/json' } : {})
-        })
-      });
-    } catch (err) {
-      clearTimeout(tm);
-      if (err && err.name === 'AbortError') { last = { ok: false, status: 0, error: 'Google ne répond pas (délai dépassé) — réessayez dans un instant.' }; continue; }
-      return { ok: false, status: 0, error: 'Impossible de joindre Google — vérifiez la connexion internet.' };
-    }
-    clearTimeout(tm);
-    let j = null; try { j = await res.json(); } catch { j = null; }
-    if (res.ok) {
-      const cand = j && j.candidates && j.candidates[0];
-      if (!cand || !cand.content) {
-        const why = (j && j.promptFeedback && j.promptFeedback.blockReason) || (cand && cand.finishReason) || '';
-        return { ok: false, status: res.status, error: 'Le modèle n’a pas renvoyé de réponse' + (why ? ` (${why})` : '') + '.' };
-      }
-      return { ok: true, text: (cand.content.parts || []).map(p => p.text || '').join('') };
-    }
-    const detail = (j && j.error && j.error.message) || '';
-    const st = (j && j.error && j.error.status) || '';
-    if (res.status === 404 || /not found|not supported/i.test(detail)) { last = { ok: false, status: 404, error: `Modèle ${model} indisponible.` }; continue; }
-    if (res.status === 400 && /api key/i.test(detail)) return { ok: false, status: 400, error: 'Clé refusée par Google : elle est incomplète, révoquée ou mal copiée.' };
-    if (res.status === 403) return { ok: false, status: 403, error: 'Clé reconnue mais sans accès (' + (detail || st) + '). Vérifiez que l’API Gemini est activée pour cette clé dans AI Studio.' };
-    if (res.status === 503 || res.status === 500 || res.status === 429 || /high demand|overloaded|resource exhausted/i.test(detail)) {
-      // saturation passagère : on réessaie une fois puis on passe au modèle suivant
-      last = { ok: false, status: res.status, error: res.status === 429 ? 'Limite du palier gratuit atteinte pour l’instant — réessayez dans une minute.' : 'Google est saturé pour l’instant (' + res.status + ') — réessayez dans un instant.' };
-      continue;   // modèle suivant
-    }
-    return { ok: false, status: res.status, error: `Erreur ${res.status} de Google${detail ? ' : ' + detail : ''}.` };
-  }
-  return last || { ok: false, status: 404, error: 'Aucun modèle Gemini disponible.' };
-}
+/* 1.22 : les appels à Gemini passent par le moteur js/corr.js (AlixoCorr.call) — une seule implémentation,
+   réponse JSON, « réflexion » désactivée quand le modèle l'accepte (moins de jetons, plus rapide) */
 let aiState = null;   // { items: [{ n, id, avant, apres, regle, done }], label }
 
 function aiCorrectable(b) { return TEXT_TYPES.includes(b.type) || isFiche(b) || b.type === 'table' || b.type === 'cards'; }
@@ -7386,7 +7246,7 @@ function aiSetupHTML(mode) {
     </div>
     <div class="ai-keymsg" aria-live="polite"></div>
     ${key && mode === 'panel' ? `<label class="ai-toggle"><input type="checkbox" class="ai-styletoggle" ${aiStyleOn() ? 'checked' : ''}> Analyse automatique pendant la frappe : les fautes d’orthographe / grammaire et la mise en forme (définitions, titres, encadrés…) sont proposées sous le paragraphe, sans rien demander — <b>Tab</b> pour accepter</label>` : ''}
-    <div class="po-hint">Gemini Flash (Google) : gratuit, très bon en français ; le palier gratuit autorise une quinzaine d’analyses par minute, largement assez. La clé reste sur cet ordinateur (jamais envoyée ailleurs qu’à Google, jamais synchronisée avec vos cours) ; seul le texte analysé est transmis. Le bouton « Corriger » (✨ ou F7) devient actif dès qu’une clé valide est enregistrée.</div>`;
+    <div class="po-hint">Gemini Flash (Google) : gratuit, très bon en français. Alixo économise le palier gratuit : les fautes de frappe courantes sont corrigées sur l’appareil, chaque phrase n’est envoyée qu’une fois (les phrases déjà relues restent en mémoire) et les phrases nouvelles sont groupées en une seule requête. La clé reste sur cet ordinateur (jamais envoyée ailleurs qu’à Google, jamais synchronisée avec vos cours) ; seul le texte analysé est transmis. Le bouton « Corriger » (✨ ou F7) devient actif dès qu’une clé valide est enregistrée.</div>`;
 }
 function bindAiSetup(root, mode) {
   if (!root) return;
@@ -7419,7 +7279,7 @@ function bindAiSetup(root, mode) {
 }
 /* appel minimal pour vérifier qu'une clé fonctionne (quelques jetons) */
 async function aiTestKey(key) {
-  const r = await geminiCall(key, { system: 'Réponds uniquement par le mot OK.', user: 'Test', maxTokens: 10 });
+  const r = await AlixoCorr.call(key, { system: 'Réponds uniquement avec le JSON {"ok":true}.', user: 'Test', maxTokens: 16, models: AlixoCorr.MODELS_LIVE, timeoutMs: 15000 });
   return r.ok ? { ok: true } : { ok: false, error: r.error };
 }
 function showAiSetup() {
@@ -7431,8 +7291,9 @@ function showAiSetup() {
   setTimeout(() => { const i = body.querySelector('.ai-keyinput'); if (i) i.focus(); }, 60);
 }
 
-async function runAiCorrection() {
+async function runAiCorrection(o) {
   const d = doc(); if (!d) return;
+  const second = !!(o && o.second && aiState && aiState.payload);
   if (!requirePlus('ia')) return;
   if (!aiKey()) { openRightPanel('#aipanel'); showAiSetup(); return; }
   // portée : blocs sélectionnés → bloc courant (si le curseur y est) → tout le cours
@@ -7444,6 +7305,7 @@ async function runAiCorrection() {
     const cur = inEditor ? getBlock(currentBlockId()) : null;
     if (cur && aiCorrectable(cur) && blockPlain(cur).trim()) { targets = [cur]; label = 'bloc courant'; }
   }
+  if (second) { targets = aiState.payload.map(x => getBlock(x.id)).filter(Boolean); label = aiState.label + ' · seconde lecture'; }
   if (!targets.length) { targets = d.blocks; label = 'tout le cours'; }
   let payload = targets.filter(aiCorrectable).map(b => ({ id: b.id, text: blockPlain(b) })).filter(x => x.text.trim());
   // 1.21 : blocs dans une autre langue — laissés tels quels, sauf réglage « autres langues » (alors corrigés dans leur langue)
@@ -7454,119 +7316,26 @@ async function runAiCorrection() {
   openRightPanel('#aipanel');
   $('#ai-body').innerHTML = `<div class="ai-empty">Analyse en cours (${esc(label)})…</div>`;
   try {
-    const items = await aiAnalyze(payload, (i, n) => { const el = $('#ai-body .ai-empty'); if (el && n > 1) el.textContent = `Analyse en cours (${label}) — lecture ${i + 1} / ${n}…`; });
-    aiState = { items, label };
+    const already = second ? aiState.items.map(it => ({ id: it.id, avant: it.avant, apres: it.apres })) : [];
+    const items = await aiAnalyze(payload, (i, n) => { const el = $('#ai-body .ai-empty'); if (el && n > 1) el.textContent = `Analyse en cours (${label}) — lecture ${Math.min(i + 1, n)} / ${n}…`; }, { second, already });
+    aiState = { items, label, payload: payload.map(x => ({ id: x.id })) };
     renderAiPanel();
-    if (!items.length) toast('Aucune faute détectée');
+    if (!items.length) toast(second ? 'Rien de plus à la seconde lecture' : 'Aucune faute détectée');
   } catch (err) {
     $('#ai-body').innerHTML = `<div class="ai-empty ai-err">${esc(err.message || 'Erreur inattendue')}</div><div class="ai-foot"><button class="cta ghost small" id="ai-run" type="button">Réessayer</button></div>`;
-    $('#ai-run').addEventListener('click', runAiCorrection);
+    $('#ai-run').addEventListener('click', () => runAiCorrection());
   }
 }
 
-/* 1.18 — grille de relecture commune aux deux analyses (à la demande et pendant la frappe) : la consigne
-   « repère les fautes » laissait passer les homophones, les terminaisons -é/-er et les accords ; on impose
-   maintenant une lecture mot à mot, catégorie par catégorie, et l'exhaustivité. */
-const AI_CHECKLIST = `Relis le texte mot par mot et vérifie systématiquement, dans cet ordre :
-1. accents et orthographe lexicale (é/è/ê, ç, a/à, ou/où, la/là, du/dû, sur/sûr, tache/tâche, mots mal orthographiés, lettres doublées ou manquantes) ;
-2. homophones grammaticaux : a/à, et/est, on/ont, son/sont, ce/se, ces/ses/c'est/s'est, leur/leurs, quel(le)(s)/qu'elle(s), sa/ça, ni/n'y, si/s'y, peu/peut, tout/tous/toute(s), quelque/quel que, quand/quant/qu'en, davantage/d'avantage, près/prêt, voir/voire ;
-3. terminaisons -é / -er / -ez / -ai / -ais / -ait (participe passé, infinitif, imparfait, futur, conditionnel) et accord du participe passé (avec être ; avec avoir si le COD est placé avant) ;
-4. accord sujet-verbe (sujet inversé ou éloigné, sujet collectif, pronom « qui »), accord de l'adjectif, du déterminant et du nom en genre et en nombre, pluriels irréguliers et noms composés ;
-5. conjugaison : temps et modes (subjonctif après « il faut que », « bien que », « avant que »), concordance des temps, verbes du 3e groupe ;
-6. syntaxe : négation complète (ne … pas), pronoms relatifs, prépositions (« pallier quelque chose », « se rappeler quelque chose », « se souvenir de »), mot doublé, mot manquant ou en trop, anglicismes flagrants ;
-7. majuscules (début de phrase, noms propres, institutions), apostrophes, traits d'union, ponctuation et typographie française (selon le niveau demandé).
-Sois exhaustif : relève TOUTES les fautes, y compris plusieurs dans la même phrase ou le même mot répété — une faute oubliée est plus grave qu'une correction évidente. Chaque « avant » est un extrait EXACT du texte (copié tel quel : majuscules, apostrophes, accents), de préférence 2 à 6 mots pour être unique dans le bloc, et « apres » est ce même extrait corrigé (rien d'autre ne change).`;
-/* retrouve un extrait signalé par l'IA dans le texte du bloc (apostrophes droites / typographiques,
-   espaces insécables, blancs en trop) ; null s'il n'y figure pas */
-function aiLocate(text, avant) {
-  if (!avant) return null;
-  if (text.includes(avant)) return avant;
-  const t = avant.trim(); if (t && text.includes(t)) return t;
-  const cands = [avant.replace(/'/g, '’'), avant.replace(/’/g, "'"), t.replace(/'/g, '’'), t.replace(/’/g, "'")];
-  for (const c of cands) if (c && text.includes(c)) return c;
-  const soft = x => x.replace(/[\u00a0\u202f]/g, ' ').replace(/\s+/g, ' ');
-  const st = soft(text), sa = soft(t);
-  if (!sa) return null;
-  let i = st.indexOf(sa);
-  if (i < 0) { const sa2 = sa.replace(/'/g, '’'); i = st.indexOf(sa2); if (i < 0) { const sa3 = sa.replace(/’/g, "'"); i = st.indexOf(sa3); } }
-  if (i < 0) return null;
-  /* même position dans le texte d'origine si les blancs n'ont pas bougé avant l'extrait */
-  const orig = text.slice(i, i + sa.length);
-  return soft(orig) === sa ? orig : null;
-}
-/* aligne « apres » sur la typographie de l'extrait retrouvé (apostrophes) */
-function aiAlign(avant, apres) {
-  if (avant.includes('’') && !avant.includes("'")) return apres.replace(/'/g, '’');
-  if (avant.includes("'") && !avant.includes('’')) return apres.replace(/’/g, "'");
-  return apres;
-}
-/* lots de blocs pour l'analyse à la demande : une seule requête pour tout le cours tronquait la réponse
-   au-delà de quelques pages (les dernières fautes n'étaient jamais signalées) */
-function aiChunks(blocks, maxChars = 6000, maxN = 40) {
-  const out = []; let cur = [], n = 0;
-  for (const b of blocks) {
-    const len = b.text.length + 12;
-    if (cur.length && (n + len > maxChars || cur.length >= maxN)) { out.push(cur); cur = []; n = 0; }
-    cur.push(b); n += len;
-  }
-  if (cur.length) out.push(cur);
-  return out;
-}
-function aiSystemPrompt() {
-  return `Tu es un correcteur d'orthographe et de grammaire pour des notes de cours en français (droit, économie, commerce et marketing, médecine et sciences de la santé, STAPS, sciences humaines).
-On te donne des blocs de texte, chacun précédé de son identifiant entre crochets (et, s'il est écrit dans une autre langue, de cette langue entre parenthèses : corrige-le alors dans sa langue, sans rien traduire).
-Repère les vraies fautes : orthographe, accords, conjugaison, grammaire, ponctuation, typographie française.
-${aiLangPrompt(null)}
-${AI_CHECKLIST}
-Ne reformule pas le style, ne change pas le sens, ne « corrige » pas les abréviations juridiques ou médicales usuelles (art., C. civ., Cass., al., n°, CE, CC, BPCO, SCA, IV, mg/kg…), les noms de molécules, les noms propres, les sigles, les formules ni les mots latins en italique.${aiLevelPrompt()}
-Réponds UNIQUEMENT avec un tableau JSON, sans commentaire :
-[{"id": "identifiant du bloc", "avant": "extrait exact fautif tel qu'il apparaît (le plus court possible, quelques mots)", "apres": "le même extrait corrigé", "regle": "la règle d'orthographe ou de grammaire concernée, en une phrase claire et pédagogique"}]
-Si tout est correct, réponds [].`;
-}
-async function aiAnalyzeChunk(system, blocks, already) {
-  let user = blocks.map(b => `[${b.id}]${b.lang && b.lang !== 'fr' && LANG_NAMES[b.lang] ? ' (' + LANG_NAMES[b.lang] + ')' : ''}\n${b.text}`).join('\n\n');
-  if (already && already.length) user = `Fautes déjà relevées lors d'une première lecture (ne les répète pas) :\n${already.map(x => `[${x.id}] « ${x.avant} » → « ${x.apres} »`).join('\n')}\n\nRelis maintenant chaque bloc une seconde fois, plus attentivement, pour trouver les fautes qui ont échappé à la première lecture (homophones, terminaisons, accords, mots oubliés). Réponds [] seulement si tu es certain qu'il ne reste rien.\n\n${user}`;
-  const r = await geminiCall(aiKey(), { system, user, maxTokens: 8000, json: true, temperature: 0 });
-  if (!r.ok) throw new Error(r.status === 400 ? 'Clé API refusée — vérifiez-la (bouton « Clé API… » ou Paramètres).' : r.error);
-  const m = (r.text || '').match(/\[[\s\S]*\]/);
-  if (!m) return [];
-  let arr;
-  try { arr = JSON.parse(m[0]); } catch { throw new Error('Réponse illisible du modèle — réessayez.'); }
-  if (!Array.isArray(arr)) return [];
-  const byId = new Map(blocks.map(b => [String(b.id), b.text]));
-  const out = [];
-  for (const x of arr) {
-    if (!x || !x.id || typeof x.avant !== 'string' || typeof x.apres !== 'string' || !x.avant.trim() || x.avant === x.apres) continue;
-    const text = byId.get(String(x.id)); if (text === undefined) continue;
-    const avant = aiLocate(text, x.avant); if (!avant) continue;
-    const apres = aiAlign(avant, x.apres); if (apres === avant) continue;
-    out.push({ id: String(x.id), avant, apres, regle: String(x.regle || '').trim() });
-  }
-  return out;
-}
-/* analyse à la demande (bouton « Corriger », F7) : par lots, puis une seconde lecture des lots
-   (au plus deux) pour rattraper ce que la première a manqué ; les doublons sont fusionnés */
-async function aiAnalyze(blocks, onProgress) {
-  const system = aiSystemPrompt();
-  const chunks = aiChunks(blocks);
-  const twoPass = chunks.length <= 2;
-  const total = chunks.length * (twoPass ? 2 : 1);
-  let step = 0; const all = [];
-  const seen = new Set();
-  const add = list => { for (const x of list) { const k = x.id + '|' + x.avant; if (seen.has(k)) continue; seen.add(k); all.push(x); } };
-  for (const ch of chunks) {
-    if (onProgress) onProgress(step, total);
-    add(await aiAnalyzeChunk(system, ch, null)); step++;
-    if (twoPass) {
-      if (onProgress) onProgress(step, total);
-      const already = all.filter(x => ch.some(b => String(b.id) === x.id));
-      add(await aiAnalyzeChunk(system, ch, already)); step++;
-    }
-  }
-  /* ordre du cours, puis position dans le bloc */
+/* analyse à la demande (bouton « Corriger », F7) — 1.22 : phrase par phrase par le moteur js/corr.js. Les phrases
+   déjà relues (mémoire locale) ne repartent pas vers l'API ; les autres sont groupées en requêtes compactes.
+   `second` : seconde lecture de tout le texte, sans la mémoire, pour rattraper ce qui a échappé à la première */
+async function aiAnalyze(blocks, onProgress, { second = false, already = [] } = {}) {
+  const raw = await AlixoCorr.analyzeBlocks(blocks.map(b => ({ id: String(b.id), text: b.text, lang: b.lang || 'fr' })), { onProgress, second, already });
+  const seen = new Set(); const all = [];
+  for (const x of raw) { const k = x.id + '|' + x.at + '|' + x.avant; if (seen.has(k)) continue; seen.add(k); all.push(x); }
   const order = new Map(blocks.map((b, i) => [String(b.id), i]));
-  const byId = new Map(blocks.map(b => [String(b.id), b.text]));
-  all.sort((a, b) => (order.get(a.id) - order.get(b.id)) || (byId.get(a.id).indexOf(a.avant) - byId.get(b.id).indexOf(b.avant)));
+  all.sort((a, b) => (order.get(a.id) - order.get(b.id)) || (a.at - b.at));
   return all.map((x, i) => Object.assign({ n: i, done: false }, x));
 }
 
@@ -7577,6 +7346,8 @@ function renderAiPanel() {
       <div class="ai-foot"><button class="cta small" id="ai-run" type="button">Corriger tout le cours</button> <button class="cta ghost small" id="ai-style" type="button" title="Repérer les définitions, titres, arrêts, exemples… à mettre en forme">Suggérer une mise en forme</button></div>
       <div class="ai-empty" style="padding-top:4px">Pendant la frappe, l’analyse est automatique : dès qu’une faute ou une mise en forme (définition, titre, encadré…) est repérée, la proposition apparaît sous le paragraphe, <b>Tab</b> pour l’accepter, Échap pour l’ignorer. Ces boutons analysent tout le cours d’un coup.</div>`;
     body.querySelector('#ai-run').addEventListener('click', () => { clearBlockSel(); document.activeElement && document.activeElement.blur(); runAiCorrection(); });
+    const cs = AlixoCorr.stats();
+    if (cs.req || cs.cached || cs.local) body.insertAdjacentHTML('beforeend', `<div class="ai-empty ai-stats">${aiStatsText(cs)}</div>`);
     body.querySelector('#ai-style').addEventListener('click', runAiStyle);
     return;
   }
@@ -7589,8 +7360,9 @@ function renderAiPanel() {
         ? `<div class="ai-status">${it.done === 'skip' ? 'Ignoré' : (it.done === 'fail' ? (it.kind === 'style' ? 'Bloc introuvable ou déjà transformé' : 'Passage introuvable (texte déjà modifié ?)') : 'Appliqué ✓')}</div>`
         : `<div class="ai-actions"><button class="pobtn" data-ai="apply" type="button">Appliquer</button><button class="cta ghost small" data-ai="skip" type="button">Ignorer</button><button class="cta ghost small" data-ai="go" type="button" title="Aller au bloc">Voir</button></div>`}
     </div>`).join('') +
-    `<div class="ai-foot"><button class="cta ghost small" id="ai-run" type="button">${st.kind === 'style' ? 'Corriger l’orthographe' : 'Relancer la correction'}</button> <button class="cta ghost small" id="ai-style" type="button">${st.kind === 'style' ? 'Relancer la mise en forme' : 'Mise en forme'}</button> <button class="cta ghost small" id="ai-key" type="button" title="Changer ou retirer la clé API">Clé API…</button></div>`;
-  body.querySelector('#ai-run').addEventListener('click', runAiCorrection);
+    `<div class="ai-foot"><button class="cta ghost small" id="ai-run" type="button">${st.kind === 'style' ? 'Corriger l’orthographe' : 'Relancer la correction'}</button> ${st.kind === 'style' || !st.payload ? '' : '<button class="cta ghost small" id="ai-second" type="button" title="Relire tout le texte une seconde fois, sans la mémoire des phrases déjà relues (une requête de plus)">Seconde lecture</button> '}<button class="cta ghost small" id="ai-style" type="button">${st.kind === 'style' ? 'Relancer la mise en forme' : 'Mise en forme'}</button> <button class="cta ghost small" id="ai-key" type="button" title="Changer ou retirer la clé API">Clé API…</button></div>`;
+  body.querySelector('#ai-run').addEventListener('click', () => runAiCorrection());
+  const sec = body.querySelector('#ai-second'); if (sec) sec.addEventListener('click', () => runAiCorrection({ second: true }));
   body.querySelector('#ai-style').addEventListener('click', runAiStyle);
   body.querySelector('#ai-key').addEventListener('click', showAiSetup);
   const all = body.querySelector('#ai-all');
@@ -7662,17 +7434,24 @@ function stripCorrBlock(b) {
 
 /* remplace la première occurrence de `from` dans un fragment HTML (texte uniquement, balises conservées) ;
    `info.at` reçoit la position (en caractères) du remplacement */
-function replaceInHTML(html, from, to, rule, info) {
+function replaceInHTML(html, from, to, rule, info, hint) {
   const t = document.createElement('div'); t.innerHTML = html || '';
   const nodes = [];
   const w = document.createTreeWalker(t, NodeFilter.SHOW_TEXT); let n;
   while ((n = w.nextNode())) nodes.push(n);
   const soft = s => s.replace(/ /g, ' ');
   const full = soft(nodes.map(x => x.textContent).join(''));
-  let idx = full.indexOf(soft(from));
+  /* 1.22 : `hint` = position attendue dans le texte brut ; s'il y a plusieurs occurrences, on prend la plus proche */
+  const find = needle => {
+    let i = full.indexOf(needle); if (i < 0 || typeof hint !== 'number') return i;
+    let best = i;
+    while (i >= 0) { if (Math.abs(i - hint) < Math.abs(best - hint)) best = i; i = full.indexOf(needle, i + 1); }
+    return best;
+  };
+  let idx = find(soft(from));
   if (idx < 0) {   // 1.18 : apostrophe droite / typographique selon ce que l'IA a renvoyé
     const alt = from.includes("'") ? from.replace(/'/g, '’') : from.replace(/’/g, "'");
-    idx = full.indexOf(soft(alt));
+    idx = find(soft(alt));
     if (idx < 0) return null;
     from = alt;
   }
@@ -7702,7 +7481,7 @@ function applyAiItem(it) {
     return true;
   }
   const info = {};
-  const where = replaceInBlock(b, it.avant, it.apres, it.regle, info);
+  const where = replaceInBlock(b, it.avant, it.apres, it.regle, info, it.at);
   if (!where) { it.done = 'fail'; return false; }
   if (where === 'text') addCorrMark(b.id, info.at, it.avant, it.apres);
   it.done = true;
@@ -7731,24 +7510,11 @@ function aiOpt() {
 }
 const aiStyleOn = () => aiOpt().auto;
 const AI_LEVELS = [['leger', 'Léger', 'Seulement les fautes indiscutables : orthographe, accords, conjugaison'], ['standard', 'Standard', 'Fautes, grammaire, ponctuation et typographie française'], ['strict', 'Strict', 'En plus : majuscules, répétitions, anglicismes, tournures lourdes']];
-/* 1.21 : consigne de langue — jamais de « francisation » d'un texte écrit dans une autre langue, ni d'une citation */
-function aiLangPrompt(lang) {
-  if (lang && lang !== 'fr' && LANG_NAMES[lang]) return `Langue : le texte est écrit en ${LANG_NAMES[lang]}. Corrige uniquement l'orthographe et la grammaire de cette langue ; ne traduis rien, ne remplace aucun mot par son équivalent français, ne signale pas comme fautes des tournures correctes dans cette langue.`;
-  return "Langue : le texte est en français, mais un mot, une expression, un titre ou une citation dans une autre langue (anglais, latin, espagnol, allemand…) n'est JAMAIS une faute : ne le traduis pas, ne le « corrige » pas, ne le francise pas.";
-}
-function aiLevelPrompt() {
-  const o = aiOpt();
-  let t = '';
-  if (o.level === 'leger') t += "\nNiveau léger : ne signale que les fautes indiscutables (orthographe, accords, conjugaison) ; ignore la ponctuation, la typographie et les majuscules.";
-  if (o.level === 'strict') t += "\nNiveau strict : signale aussi la ponctuation, la typographie française (espaces insécables avant ; : ? !, guillemets « »), les majuscules, les répétitions maladroites, les anglicismes et les tournures lourdes, toujours avec une correction minimale.";
-  if (o.rephrase) t += "\nReformulations : propose aussi, avec parcimonie (au plus une par paragraphe), une reformulation plus claire ou plus concise d'une phrase lourde, en gardant exactement le sens ; la règle commence alors par « Reformulation : ».";
-  return t;
-}
 const STYLE_LABELS = { definition: 'Encadré Définition', arret: 'Encadré Arrêt de principe', retenir: 'Encadré À retenir', exemple: 'Encadré Exemple', controverse: 'Encadré Controverse', bilan: 'Encadré Bilan', drapeau: 'Encadré Drapeaux rouges', reflexe: 'Encadré Réflexe / piège', mnemo: 'Encadré Moyen mnémotechnique', h1: 'Titre de partie (I.)', h2: 'Titre de section (A.)', h3: 'Sous-titre (1.)', h4: 'Paragraphe de plan (a.)', li: 'Élément de liste', quote: 'Citation' };
 const styleLabel = it => STYLE_LABELS[it.type] || it.type;
-let aiSug = null;            // proposition affichée sous un bloc : { id, style: {type, terme, raison} | null, fixes: [{avant, apres, regle}] }
-const aiSeen = new Map();    // blocs déjà analysés ou ignorés (id + texte)
-let aiSugQueue = null, aiSugBusy = false, aiSugLast = 0, aiSugTimer = null, aiTypeTimer = null;
+let aiSug = null;            // proposition affichée sous un bloc : { id, style: {type, terme, raison} | null, fixes: [{avant, apres, regle, kind, at}] }
+const aiSeen = new Map();    // blocs dont la mise en forme a déjà été jugée ou ignorée (id + texte)
+const aiDeclined = new Set();   // corrections refusées (Échap, ✕) cette session : id|avant|apres — jamais reproposées
 const styleKey = b => b.id + '|' + blockPlain(b).trim();
 /* ---------------- langue d'un texte (1.21) : d'après les mots-outils les plus fréquents ----------------
    L'IA « corrigeait » des notes prises en anglais ou en espagnol comme si c'était du français fautif. */
@@ -7761,7 +7527,7 @@ const LANG_WORDS = {
   pt: 'o a os as de que e do da em um uma para com não se por mais dos das no na é são ao foi como mas ou seu sua pelo pela também já isso esse essa'
 };
 const LANG_SETS = Object.fromEntries(Object.entries(LANG_WORDS).map(([k, v]) => [k, new Set(v.split(' '))]));
-const LANG_NAMES = { fr: 'français', en: 'anglais', es: 'espagnol', de: 'allemand', it: 'italien', pt: 'portugais' };
+const LANG_NAMES = AlixoCorr.LANG_NAMES;
 /* 'fr', 'en', 'es', 'de', 'it', 'pt' — ou null si on ne peut pas trancher (texte court, notes télégraphiques) */
 function detectLang(text) {
   const words = String(text || '').toLowerCase().replace(/[’]/g, "'").split(/[^a-zà-ÿäöüßñç']+/).filter(Boolean);
@@ -7775,106 +7541,130 @@ function detectLang(text) {
   if (best[0] !== 'fr' && top < second * 1.5) return null;
   return best[0];
 }
-/* distance d'édition (fautes de frappe : lettres inversées, manquantes, doublées) */
-function levenshtein(a, b) {
-  if (a === b) return 0;
-  const m = a.length, n = b.length; if (!m) return n; if (!n) return m;
-  let prev = Array.from({ length: n + 1 }, (_, i) => i);
-  for (let i = 1; i <= m; i++) {
-    const cur = [i];
-    for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
-    prev = cur;
-  }
-  return prev[n];
-}
-/* une correction est une « faute de frappe sûre » si l'IA l'affirme et que le mot change à peine */
-function typoLike(f) {
-  if (!f || !f.sure || f.kind !== 'frappe') return false;
-  const a = String(f.avant).trim(), b = String(f.apres).trim();
-  if (!a || !b || /\s/.test(a) || /\s/.test(b) || a.length < 3) return false;
-  if (a === a.toUpperCase() && /[A-Z]/.test(a)) return false;                       // sigle
-  if (a.toLowerCase() === b.toLowerCase()) return false;                           // simple changement de casse : pas une faute de frappe
-  if (typoIgnored.has(a.toLowerCase()) || (state.settings.snippets || []).some(x => x.k === a)) return false;
-  return levenshtein(a.toLowerCase(), b.toLowerCase()) <= (a.length >= 8 ? 3 : 2);
-}
 /* le curseur est-il dans (ou juste après) ce passage du bloc ? → le mot est peut-être encore en cours de frappe */
-function caretTouches(b, avant) {
+function caretTouches(b, avant, at) {
   const bl = blockAtSelection(); if (!bl || bl.dataset.id !== b.id) return false;
   const f = activeField(); if (!f) return false;
   const off = caretOffsetIn(f); if (typeof off !== 'number') return false;
-  const plain = stripTags(f.innerHTML); const at = plain.indexOf(avant);
-  return at >= 0 && off >= at && off <= at + avant.length;
+  const plain = stripTags(f.innerHTML);
+  const pos = typeof at === 'number' && plain.slice(at, at + avant.length) === avant ? at : plain.indexOf(avant);
+  return pos >= 0 && off >= pos && off <= pos + avant.length;
 }
-/* à la sortie d'un bloc (ou après une pause de frappe) */
+/* ============================================================
+   1.22 — analyse pendant la frappe : le moteur js/corr.js reçoit les phrases (fin de phrase, pause, sortie du bloc),
+   ne renvoie vers l'API que celles qu'il ne connaît pas, groupées ; ici on applique ses réponses à l'écran.
+   ============================================================ */
 const aiAutoType = b => !!b && (TEXT_TYPES.includes(b.type) || b.type === 'cards');
 let aiLastStatus = '';   // dernière analyse automatique (Paramètres › IA) : « ok », « aucune faute », ou l'erreur rencontrée
-function aiAutoConsider(b, { fromTyping = false } = {}) {
-  if (!aiAutoType(b) || !isPlus() || !aiKey() || !aiStyleOn()) return;
-  const text = blockPlain(b).trim();
-  if (text.length < (fromTyping ? 20 : 12) || aiSeen.has(styleKey(b))) return;
+const aiLiveOn = () => isPlus() && !!aiKey() && aiStyleOn();
+const aiStamp = () => new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+/* texte d'un bloc pour le moteur (null : bloc non analysable ou dans une autre langue, réglage « autres langues » décoché) */
+function corrInfo(blockId) {
+  const b = getBlock(blockId); if (!aiAutoType(b)) return null;
+  const text = blockPlain(b); if (text.trim().length < 12) return null;
   const lang = detectLang(text);
-  if (lang && lang !== 'fr' && !aiOpt().multilang) {   // 1.21 : un bloc dans une autre langue n'est pas « corrigé » en français
-    aiSeen.set(styleKey(b), true);
-    aiLastStatus = `${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} : bloc en ${LANG_NAMES[lang]} laissé tel quel (Paramètres › IA › autres langues)`;
-    return;
-  }
-  aiSugQueue = b.id;
-  aiAutoRun();
+  if (lang && lang !== 'fr' && !aiOpt().multilang) { aiLastStatus = `${aiStamp()} : bloc en ${LANG_NAMES[lang]} laissé tel quel (Paramètres › IA › autres langues)`; return null; }
+  return { text, lang: lang || 'fr', type: b.type };
 }
-function aiAutoTyping(b) {
-  clearTimeout(aiTypeTimer);
-  if (!isPlus() || !aiKey() || !aiStyleOn()) return;
-  aiTypeTimer = setTimeout(() => {
-    const cur = getBlock(b.id); if (!cur) return;
-    const bl = blockAtSelection();
-    if (bl && bl.dataset.id === b.id) aiAutoConsider(cur, { fromTyping: true });   // toujours dans le bloc : on analyse quand même
-  }, 2500);
+/* le curseur est-il dans la phrase [s, e[ du bloc ? (la phrase en cours de frappe attend la fin de phrase ou la pause) */
+function corrCaretIn(blockId, s, e) {
+  const bl = blockAtSelection(); if (!bl || bl.dataset.id !== blockId) return false;
+  const f = activeField(); if (!f || !f.classList.contains('btxt')) return false;
+  const off = caretOffsetIn(f); return typeof off === 'number' && off >= s && off <= e;
 }
-async function aiAutoRun() {
-  if (aiSugBusy || !aiSugQueue) return;
-  const wait = 4000 - (Date.now() - aiSugLast);          // ~15 requêtes par minute au maximum
-  if (wait > 0) { clearTimeout(aiSugTimer); aiSugTimer = setTimeout(aiAutoRun, wait); return; }
-  const b = getBlock(aiSugQueue); aiSugQueue = null;
-  if (!aiAutoType(b)) return;
-  const key = styleKey(b); aiSeen.set(key, true);
-  aiSugBusy = true; aiSugLast = Date.now();
-  try {
-    const text0 = blockPlain(b).trim();
-    const r = await aiAutoAnalyze({ id: b.id, type: b.type, text: text0, lang: detectLang(text0) });
-    const cur = getBlock(b.id);
-    aiLastStatus = `${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} : ${r.fixes.length ? r.fixes.length + ' correction' + (r.fixes.length > 1 ? 's' : '') : 'aucune faute'}${r.style ? ' + mise en forme' : ''}`;
-    if (cur && styleKey(cur) === key) {
-      let fixes = r.fixes;
-      /* 1.21 : les fautes de frappe dont l'IA est sûre (lettres inversées, lettre manquante, accent oublié) sont
-         corrigées tout de suite, sans Tab — sauf si le curseur est encore sur le mot (peut-être en cours de frappe) ;
-         le reste est proposé sous le bloc comme avant */
-      const auto = aiOpt().autofix ? fixes.filter(f => typoLike(f) && !caretTouches(cur, f.avant)) : [];
-      if (auto.length) {
-        const caret = caretSnapshot(cur.id); let off = caret && caret.off, n = 0; const done = [];
-        for (const f of auto) {
-          const at = blockPlain(cur).indexOf(f.avant);
-          if (applyFix(cur, f)) { n++; done.push(f); if (caret && caret.id === cur.id && TEXT_TYPES.includes(cur.type) && typeof off === 'number' && at >= 0 && at < off) off += f.apres.length - f.avant.length; }
-        }
-        if (n) {
-          fixes = fixes.filter(f => !done.includes(f));
-          aiSeen.set(styleKey(cur), true);   // le texte corrigé ne repart pas en analyse
-          touch(); renderBlocks(caret ? caret.id : cur.id, off, caret && caret.key); applyCorrMarks();
-          toast(n === 1 ? `Faute de frappe corrigée : « ${done[0].avant} » → « ${done[0].apres} » — Ctrl+Z pour annuler` : `${n} fautes de frappe corrigées (${done.map(f => f.apres).join(', ')}) — Ctrl+Z pour annuler`);
-          aiLastStatus += ` (${n} appliquée${n > 1 ? 's' : ''} d’office)`;
-        }
-      }
-      if (fixes.length || r.style) { aiSug = { id: b.id, style: r.style, fixes }; renderSug(); }
+/* corrections reçues pour un bloc : fautes de frappe sûres appliquées d'office (Ctrl+Z pour revenir), le reste proposé sous le bloc */
+function corrDeliver(blockId, list, meta) {
+  const b = getBlock(blockId); if (!aiAutoType(b)) return;
+  const o = aiOpt(); if (!o.fix) return;
+  const text = blockPlain(b);
+  const fixes = [];
+  for (const it of list) {
+    const base = text.indexOf(it.text); if (base < 0) continue;   // phrase modifiée depuis l'envoi
+    for (const f of it.fixes) {
+      const at = base + f.at;
+      if (text.slice(at, at + f.avant.length) !== f.avant) continue;
+      if (aiDeclined.has(blockId + '|' + f.avant + '|' + f.apres)) continue;
+      if (fixes.some(x => x.at === at && x.avant === f.avant)) continue;
+      fixes.push({ avant: f.avant, apres: f.apres, regle: f.regle, kind: f.kind, at });
     }
-  } catch (err) {
-    /* 1.20 : l'analyse a échoué (hors ligne, quota, modèle indisponible) : le bloc redevient analysable —
-       avant, il restait marqué « vu » et n'était plus jamais relu, d'où une IA qui semblait ne plus fonctionner */
-    aiSeen.delete(key);
-    aiLastStatus = `${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} : échec — ${err && err.message || err}`;
-    console.warn('IA (analyse automatique) :', err);
   }
-  aiSugBusy = false;
-  if (aiSugQueue) aiAutoRun();
+  aiLastStatus = `${aiStamp()} : ${fixes.length ? fixes.length + ' correction' + (fixes.length > 1 ? 's' : '') : 'aucune faute'}${meta && meta.cached ? ' (mémoire, sans requête)' : ''}`;
+  if (!fixes.length) return;
+  const snips = state.settings.snippets || [];
+  const auto = o.autofix ? fixes.filter(f => AlixoCorr.sureTypo(f) && !snips.some(x => x.k === f.avant) && !caretTouches(b, f.avant, f.at)) : [];
+  let rest = fixes.filter(f => !auto.includes(f));
+  if (auto.length) {
+    const caret = caretSnapshot(b.id); let off = caret && caret.off, n = 0; const done = [];
+    for (const f of auto.slice().sort((x, y) => y.at - x.at)) {   // de la fin vers le début : les positions restent valables
+      if (applyFix(b, f)) { n++; done.unshift(f); AlixoCorr.learn(f.avant, f.apres); AlixoCorr.note('auto'); if (caret && caret.id === b.id && TEXT_TYPES.includes(b.type) && typeof off === 'number' && f.at < off) off += f.apres.length - f.avant.length; }
+    }
+    if (n) {
+      const delta = at => done.filter(f => f.at < at).reduce((d, f) => d + f.apres.length - f.avant.length, 0);
+      rest = rest.map(f => Object.assign({}, f, { at: f.at + delta(f.at) }));
+      touch(); renderBlocks(caret ? caret.id : b.id, off, caret && caret.key); applyCorrMarks();
+      toast(n === 1 ? `Faute de frappe corrigée : « ${done[0].avant} » → « ${done[0].apres} » — Ctrl+Z pour annuler` : `${n} fautes de frappe corrigées (${done.map(f => f.apres).join(', ')}) — Ctrl+Z pour annuler`);
+      aiLastStatus += ` (${n} appliquée${n > 1 ? 's' : ''} d’office)`;
+    }
+  }
+  if (rest.length) {
+    const cur = aiSug && aiSug.id === b.id ? aiSug : { id: b.id, style: null, fixes: [] };
+    const merged = cur.fixes.filter(x => blockPlain(b).slice(x.at, x.at + x.avant.length) === x.avant);
+    for (const f of rest) if (!merged.some(x => x.at === f.at && x.avant === f.avant)) merged.push(f);
+    merged.sort((x, y) => x.at - y.at);
+    aiSug = { id: b.id, style: cur.style, fixes: merged }; renderSug();
+  } else if (!auto.length) return;
+  corrMarkClean(b);
 }
+/* mise en forme proposée pour un paragraphe (à la sortie du bloc) */
+function corrStyle(blockId, st) {
+  const b = getBlock(blockId); if (!b) return;
+  aiSeen.set(styleKey(b), true);
+  if (!st || !aiOpt().style || b.type !== 'p' || !STYLE_LABELS[st.type]) return;
+  if (!specAllowed((CALLOUTS[st.type] || {}).spec)) return;
+  const cur = aiSug && aiSug.id === b.id ? aiSug : { id: b.id, style: null, fixes: [] };
+  aiSug = { id: b.id, style: st, fixes: cur.fixes }; renderSug();
+  aiLastStatus = (aiLastStatus || aiStamp() + ' :') + ' + mise en forme';
+}
+/* après une correction appliquée : les phrases du bloc qui n'ont plus rien en attente sont mémorisées comme propres,
+   pour ne pas repartir vers l'API à la prochaine pause de frappe */
+function corrMarkClean(b) {
+  if (!b) return;
+  const info = corrInfo(b.id); if (!info) return;
+  const o = aiOpt(); const ctx = { level: o.level, lang: info.lang };
+  const pend = aiSug && aiSug.id === b.id ? aiSug.fixes : [];
+  for (const sn of AlixoCorr.sentences(info.text)) {
+    if (!AlixoCorr.worth(sn.text)) continue;
+    if (pend.some(f => f.at >= sn.s && f.at < sn.e)) continue;
+    const k = AlixoCorr.keyOf(sn.text, ctx);
+    if (AlixoCorr.cacheGet(k) === undefined) AlixoCorr.cacheSet(k, []);
+  }
+}
+AlixoCorr.init({
+  key: aiKey,
+  enabled: aiLiveOn,
+  ctx: () => ({ level: aiOpt().level }),
+  text: corrInfo,
+  caretIn: corrCaretIn,
+  onResult: corrDeliver,
+  onStyle: corrStyle,
+  onError: err => { aiLastStatus = `${aiStamp()} : échec — ${err && err.message || err}`; console.warn('IA (analyse automatique) :', err); }
+});
+/* à la sortie d'un bloc : tout le bloc (phrases non encore relues) + mise en forme si c'est un paragraphe */
+function aiAutoConsider(b) {
+  if (!aiAutoType(b) || !aiLiveOn()) return;
+  const o = aiOpt();
+  const style = o.style && b.type === 'p' && !aiSeen.has(styleKey(b)) && blockPlain(b).trim().length >= 60;
+  if (!o.fix && !style) return;
+  AlixoCorr.left(b.id, { style });
+}
+/* pendant la frappe : pause de 2,5 s → les phrases nouvelles ou modifiées partent (groupées) */
+function aiAutoTyping(b) { if (aiAutoType(b) && aiLiveOn() && aiOpt().fix) AlixoCorr.typed(b.id); }
+/* fin de phrase (. ! ? Entrée) : les phrases terminées partent sans attendre la pause */
+function corrSentenceDone(field) {
+  const bl = field && field.closest('#blocks > .block'); const b = bl && getBlock(bl.dataset.id);
+  if (aiAutoType(b) && aiLiveOn() && aiOpt().fix) setTimeout(() => AlixoCorr.sentenceDone(b.id), 0);
+}
+/* mise en forme de plusieurs paragraphes (panneau IA, tout le cours) */
 const STYLE_RULES = `- "definition" : une notion suivie de sa définition (donne le terme défini dans "terme", tel qu'il apparaît au début du paragraphe)
 - "arret" : présentation d'un arrêt ou d'une décision de jurisprudence (juridiction, date, solution)
 - "exemple" : un exemple, un cas pratique, une illustration
@@ -7889,31 +7679,6 @@ const STYLE_RULES = `- "definition" : une notion suivie de sa définition (donne
 - "quote" : une citation textuelle
 Ne propose rien pour les paragraphes ordinaires : mieux vaut aucune proposition qu'une proposition douteuse. Une proposition n'est justifiée que si le paragraphe ENTIER relève clairement de ce type.`;
 const parseJsonAnswer = text => { const m = (text || '').match(/[\[{][\s\S]*[\]}]/); if (!m) return null; try { return JSON.parse(m[0]); } catch { return null; } };
-/* un seul appel : fautes + mise en forme d'un bloc en cours de rédaction */
-async function aiAutoAnalyze(b) {
-  const system = `Tu relis en direct les notes de cours d'un étudiant (droit, économie, commerce, médecine et santé, STAPS, sciences humaines), en français. Le texte peut être encore en cours de rédaction : ignore l'absence de ponctuation finale et les phrases inachevées.
-1) Fautes : repère les vraies fautes d'orthographe, d'accord, de conjugaison, de grammaire ou de typographie française ; en cas de doute sur une faute d'orthographe ou d'accord, signale-la. Chaque correction doit être minimale (le mot ou le groupe fautif, rien de plus). Ne reformule pas, ne modernise pas, ne change ni le style, ni le vocabulaire, ni le sens ; ne « corrige » pas les abréviations juridiques ou médicales usuelles (art., C. civ., Cass., al., n°, CE, CC, BPCO, SCA, IV, mg/kg…), les noms de molécules, les noms propres, les sigles, les mots latins, ni les notes télégraphiques volontaires (absence d'article, majuscule manquante en cours de frappe).
-${aiLangPrompt(b.lang)}
-${AI_CHECKLIST}
-${aiLevelPrompt()}
-Pour chaque correction, précise "type" : "frappe" UNIQUEMENT pour une faute de frappe évidente d'un seul mot (lettres inversées, lettre manquante ou doublée, accent oublié sur un mot courant) dont la correction ne fait aucun doute ; sinon "orthographe", "grammaire" ou "typographie". Et "sur" : true seulement si la correction est indiscutable, quel que soit le contexte.
-2) Mise en forme (uniquement si le bloc est un paragraphe simple) : indique le type qui conviendrait clairement :
-${STYLE_RULES}
-Réponds UNIQUEMENT avec un objet JSON : {"corrections": [{"avant": "extrait exact fautif (le plus court possible)", "apres": "extrait corrigé", "regle": "règle en une phrase claire et pédagogique", "type": "frappe | orthographe | grammaire | typographie", "sur": true ou false}], "mise_en_forme": {"type": "…", "terme": "…", "raison": "en quelques mots"} ou null}`;
-  const user = `Type du bloc : ${b.type === 'p' ? 'paragraphe simple' : b.type === 'cards' ? 'cartes (une carte par ligne : titre — texte)' : b.type}${b.lang && b.lang !== 'fr' ? `\nLangue du texte : ${LANG_NAMES[b.lang]}` : ''}\n\n${b.text}`;
-  const r = await geminiCall(aiKey(), { system, user, maxTokens: 3000, json: true, models: AI_FAST_MODELS, retry: true, timeoutMs: 20000, temperature: 0 });
-  if (!r.ok) throw new Error(r.error);
-  const j = parseJsonAnswer(r.text) || {};
-  const seenFix = new Set();
-  const fixes = (Array.isArray(j.corrections) ? j.corrections : [])
-    .filter(x => x && typeof x.avant === 'string' && typeof x.apres === 'string' && x.avant.trim() && x.avant !== x.apres)
-    .map(x => { const avant = aiLocate(b.text, x.avant); return avant ? { avant, apres: aiAlign(avant, x.apres), regle: String(x.regle || '').trim(), kind: String(x.type || '').toLowerCase(), sure: x.sur === true } : null; })
-    .filter(x => x && x.apres !== x.avant && !seenFix.has(x.avant) && seenFix.add(x.avant));
-  const st = j.mise_en_forme && STYLE_LABELS[j.mise_en_forme.type] && b.type === 'p' ? { type: j.mise_en_forme.type, terme: String(j.mise_en_forme.terme || '').trim(), raison: String(j.mise_en_forme.raison || '').trim() } : null;
-  const o = aiOpt();
-  return { fixes: o.fix ? fixes : [], style: o.style ? st : null };
-}
-/* mise en forme de plusieurs paragraphes (panneau IA, tout le cours) */
 async function aiStyleAnalyze(blocks) {
   const system = `Tu aides un étudiant (droit, économie, médecine et santé, sciences humaines) à structurer ses notes de cours prises dans un éditeur par blocs.
 On te donne des paragraphes de texte brut, chacun précédé de son identifiant entre crochets, dans l'ordre du cours.
@@ -7921,11 +7686,17 @@ Pour chaque paragraphe qui gagnerait clairement à être mis en forme, indique l
 ${STYLE_RULES}
 Réponds UNIQUEMENT avec un tableau JSON, sans commentaire : [{"id": "identifiant", "type": "…", "terme": "…", "raison": "pourquoi, en quelques mots"}]. Si rien ne s'impose : [].`;
   const user = blocks.map(b => `[${b.id}]\n${b.text}`).join('\n\n');
-  const r = await geminiCall(aiKey(), { system, user, maxTokens: 4000, json: true });
+  const r = await AlixoCorr.call(aiKey(), { system, user, maxTokens: 4000, models: AlixoCorr.MODELS_FULL, timeoutMs: 40000 });
   if (!r.ok) throw new Error(r.status === 400 ? 'Clé API refusée — vérifiez-la (bouton « Clé API… » ou Paramètres).' : r.error);
   const arr = parseJsonAnswer(r.text);
   if (!Array.isArray(arr)) return [];
   return arr.filter(x => x && x.id && STYLE_LABELS[x.type]).map(x => ({ id: String(x.id), type: x.type, terme: String(x.terme || '').trim(), raison: String(x.raison || '').trim() }));
+}
+/* Paramètres › IA : ce que le moteur a économisé */
+function aiStatsText(c) {
+  const since = c.since ? new Date(c.since).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }) : '';
+  const parts = [`${c.req} requête${c.req > 1 ? 's' : ''} envoyée${c.req > 1 ? 's' : ''}`, `${c.sent} phrase${c.sent > 1 ? 's' : ''} analysée${c.sent > 1 ? 's' : ''}`, `${c.cached} servie${c.cached > 1 ? 's' : ''} par la mémoire`, `${c.local} faute${c.local > 1 ? 's' : ''} de frappe corrigée${c.local > 1 ? 's' : ''} sans requête`];
+  return `Depuis le ${since} : ${parts.join(' · ')}${c.tokIn ? ` · ${(c.tokIn + (c.tokOut || 0)).toLocaleString('fr-FR')} jetons` : ''}. Mémoire : ${c.cacheSize} phrases, ${c.learned} mot${c.learned > 1 ? 's' : ''} appris, ${c.ignored} ignoré${c.ignored > 1 ? 's' : ''}.`;
 }
 /* applique une proposition de mise en forme à un bloc (sans touch/render) */
 function applyStyle(b, it) {
@@ -7949,8 +7720,8 @@ function applyStyle(b, it) {
 /* remplace un passage dans n'importe quel bloc corrigeable : texte, source d'une citation, cartes (titre, texte),
    champs d'une fiche, cases d'un tableau — 1.21 : avant, Tab sur une proposition sous un bloc Cartes cherchait le
    passage dans b.text (inexistant) et finissait en « passage introuvable » */
-function replaceInBlock(b, avant, apres, regle, info) {
-  if (TEXT_TYPES.includes(b.type)) { const h = replaceInHTML(b.text || '', avant, apres, regle, info); if (h !== null) { b.text = h; return 'text'; } }
+function replaceInBlock(b, avant, apres, regle, info, hint) {
+  if (TEXT_TYPES.includes(b.type)) { const h = replaceInHTML(b.text || '', avant, apres, regle, info, hint); if (h !== null) { b.text = h; return 'text'; } }
   if (b.type === 'quote' && b.cite) { const h = replaceInHTML(b.cite, avant, apres, regle); if (h !== null) { b.cite = h; return 'cite'; } }
   if (b.type === 'cards') {
     b.cards = cardsOf(b);
@@ -7963,7 +7734,7 @@ function replaceInBlock(b, avant, apres, regle, info) {
 /* applique une correction (sans touch/render) ; renvoie true si le passage a été trouvé */
 function applyFix(b, f) {
   const info = {};
-  const where = replaceInBlock(b, f.avant, f.apres, f.regle, info);
+  const where = replaceInBlock(b, f.avant, f.apres, f.regle, info, f.at);
   if (!where) return false;
   if (where === 'text') addCorrMark(b.id, info.at, f.avant, f.apres);
   b.notes = b.notes || [];
@@ -7996,6 +7767,7 @@ function renderSug() {
 function dismissSug() {
   if (!aiSug) return;
   const b = getBlock(aiSug.id); if (b) aiSeen.set(styleKey(b), true);
+  for (const f of aiSug.fixes) aiDeclined.add(aiSug.id + '|' + f.avant + '|' + f.apres);   // 1.22 : jamais reproposées
   aiSug = null; renderSug();
 }
 /* applique une partie de la proposition ; what : { fixes: [indices], style: bool } — sans argument : toutes les corrections, jamais la mise en forme */
@@ -8009,20 +7781,23 @@ function acceptSug(what) {
   const doStyle = all ? false : !!what.style;
   const caret = caretSnapshot(b.id);
   let off = caret.off, applied = 0;
-  for (const i of fixIdx) {
-    const f = s.fixes[i]; if (!f) continue;
-    const plain = blockPlain(b); const at = plain.indexOf(f.avant);
-    if (applyFix(b, f)) { applied++; if (caret.id === b.id && TEXT_TYPES.includes(b.type) && typeof off === 'number' && at >= 0 && at < off) off += f.apres.length - f.avant.length; }
+  /* 1.22 : de la fin vers le début, pour que les positions des corrections suivantes restent valables */
+  const todo = fixIdx.map(i => s.fixes[i]).filter(Boolean).sort((x, y) => (y.at || 0) - (x.at || 0));
+  const shifts = [];
+  for (const f of todo) {
+    const plain = blockPlain(b); const at = typeof f.at === 'number' && plain.slice(f.at, f.at + f.avant.length) === f.avant ? f.at : plain.indexOf(f.avant);
+    if (applyFix(b, Object.assign({}, f, { at }))) { applied++; shifts.push({ at, d: f.apres.length - f.avant.length }); if (f.kind === 'frappe' && AlixoCorr.sureTypo(f)) AlixoCorr.learn(f.avant, f.apres); if (caret.id === b.id && TEXT_TYPES.includes(b.type) && typeof off === 'number' && at >= 0 && at < off) off += f.apres.length - f.avant.length; }
   }
   let styled = false;
   if (doStyle && s.style) styled = applyStyle(b, s.style);
   // ce qui reste à proposer
-  const rest = { id: s.id, fixes: s.fixes.filter((_, i) => !fixIdx.includes(i)), style: doStyle ? null : s.style };
+  const rest = { id: s.id, fixes: s.fixes.filter((_, i) => !fixIdx.includes(i)).map(f => Object.assign({}, f, { at: typeof f.at === 'number' ? f.at + shifts.filter(x => x.at < f.at).reduce((d, x) => d + x.d, 0) : f.at })), style: doStyle ? null : s.style };
   if (styled) rest.style = null;
   aiSug = rest.fixes.length || rest.style ? rest : null;
   if (!aiSug) aiSeen.set(styleKey(b), true);
   if (applied || styled) { touch(); renderBlocks(caret.id, off, caret.key); }
   else renderSug();
+  if (applied) corrMarkClean(getBlock(b.id));
   if (applied && styled) toast(`${applied} correction${applied > 1 ? 's' : ''} et ${styleLabel(s.style)} appliquées — Ctrl+Z pour annuler`);
   else if (styled) toast(`${styleLabel(s.style)} — Ctrl+Z pour annuler`);
   else if (applied) toast(`${applied} correction${applied > 1 ? 's' : ''} appliquée${applied > 1 ? 's' : ''} — Ctrl+Z pour annuler`);
@@ -8031,7 +7806,7 @@ function acceptSug(what) {
 function ignoreSugPart(what) {
   if (!aiSug) return;
   if (what.style) aiSug.style = null;
-  if (what.fixes) aiSug.fixes = aiSug.fixes.filter((_, i) => !what.fixes.includes(i));
+  if (what.fixes) { aiSug.fixes.forEach((f, i) => { if (what.fixes.includes(i)) aiDeclined.add(aiSug.id + '|' + f.avant + '|' + f.apres); }); aiSug.fixes = aiSug.fixes.filter((_, i) => !what.fixes.includes(i)); }
   if (!aiSug.fixes.length && !aiSug.style) dismissSug(); else renderSug();
 }
 blocksEl.addEventListener('click', e => {
@@ -8533,31 +8308,56 @@ blocksEl.addEventListener('dblclick', e => {
 });
 function openChartDataPopover(id, anchor) {
   const b = getBlock(id); if (!b || b.type !== 'chart') return;
+  const bl = $(`#blocks > .block[data-id="${id}"]`);
+  /* 1.22 : tableau dynamique (catégories en lignes, séries en colonnes) avec aperçu en direct sur le graphique ;
+     le mode texte (collage d'un bloc entier) reste disponible. Travail sur une copie : Annuler / Échap restaure. */
+  const w = AlixoCharts.workCopy(b);
+  let done = false;
   showPopover(`<h4>Données du graphique</h4>
     <div class="po-row"><input id="cd-title" placeholder="Titre (facultatif)" value="${esc(b.title || '')}"></div>
     <div class="po-row" style="margin-top:6px"><input id="cd-unit" placeholder="Unité (%, €, mmol/L…)" value="${esc((b.opts || {}).unit || '')}" style="flex:0 0 150px"><input id="cd-ymin" placeholder="Min. axe" value="${esc((b.opts || {}).ymin ?? '')}"><input id="cd-ymax" placeholder="Max. axe" value="${esc((b.opts || {}).ymax ?? '')}"></div>
-    <textarea id="cd-data" class="cd-data" spellcheck="false" rows="9">${esc(AlixoCharts.toText(b))}</textarea>
-    <div class="po-hint">Une ligne par catégorie : <b>étiquette</b>, puis une valeur par série (séparées par une tabulation, « ; » ou « , »). La première ligne donne les noms des séries. Collez directement une plage depuis Excel / Google Sheets.</div>
+    <div id="cd-grid" class="cd-grid"></div>
+    <div class="po-hint">Tapez directement dans les cases : <b>Entrée</b> passe à la ligne suivante (et en ajoute une au bout), <b>Tab</b> et les flèches vont de case en case, × retire une ligne ou une série. Collez une plage depuis Excel / Sheets dans une case : elle se remplit à partir de là ; collée dans la case « Catégorie », elle remplace tout (première ligne = noms des séries). Le graphique se met à jour pendant la saisie.</div>
     <div class="po-row" style="justify-content:flex-end; gap:6px; margin-top:8px"><button class="cta ghost small" id="cd-cancel" type="button">Annuler</button><button class="pobtn" id="cd-ok" type="button">Appliquer</button></div>`,
     anchor || anchorForBlock(id), pop => {
-      const ok = () => {
-        const parsed = AlixoCharts.parseText(pop.querySelector('#cd-data').value, b);
-        if (!parsed) { toast('Données illisibles : une étiquette puis des nombres sur chaque ligne'); return; }
-        b.labels = parsed.labels; b.series = parsed.series;
-        b.title = pop.querySelector('#cd-title').value.trim();
-        b.opts = b.opts || {};
-        b.opts.unit = pop.querySelector('#cd-unit').value.trim();
-        const ymin = parseFloat(pop.querySelector('#cd-ymin').value.replace(',', '.')), ymax = parseFloat(pop.querySelector('#cd-ymax').value.replace(',', '.'));
-        if (isFinite(ymin)) b.opts.ymin = ymin; else delete b.opts.ymin;
-        if (isFinite(ymax)) b.opts.ymax = ymax; else delete b.opts.ymax;
-        hidePopover();
-        touch(); const bl = $(`#blocks > .block[data-id="${id}"]`); if (bl) refreshChart(bl, b); selectObj(id);
-        toast('Graphique mis à jour');
+      pop.style.left = Math.max(12, Math.min(parseFloat(pop.style.left) || 12, innerWidth - pop.offsetWidth - 12)) + 'px';
+      const gridEl = pop.querySelector('#cd-grid');
+      const readMeta = () => {
+        const n = sel => { const v = parseFloat((pop.querySelector(sel).value || '').replace(',', '.')); return isFinite(v) ? v : null; };
+        return { title: pop.querySelector('#cd-title').value.trim(), unit: pop.querySelector('#cd-unit').value.trim(), ymin: n('#cd-ymin'), ymax: n('#cd-ymax') };
       };
+      const optsWith = m => { const o = Object.assign({}, b.opts || {}, { unit: m.unit }); if (m.ymin !== null) o.ymin = m.ymin; else delete o.ymin; if (m.ymax !== null) o.ymax = m.ymax; else delete o.ymax; return o; };
+      const previewNow = () => { if (!bl) return; const m = readMeta(); bl.querySelector('.cwrap').innerHTML = AlixoCharts.svg(Object.assign({}, b, AlixoCharts.cleanWork(w), { title: m.title, opts: optsWith(m) })); };
+      let tm = null; const soon = () => { clearTimeout(tm); tm = setTimeout(previewNow, 60); };
+      const mountText = () => {
+        gridEl.innerHTML = `<textarea id="cd-data" class="cd-data" spellcheck="false" rows="9">${esc(AlixoCharts.toText(AlixoCharts.cleanWork(w)))}</textarea>
+          <div class="cg-actions"><span class="po-hint" style="margin:0; flex:1">Une ligne par catégorie : étiquette puis une valeur par série (tabulation, « ; » ou « , ») ; première ligne : noms des séries.</span><button type="button" class="cg-grid">Mode tableau</button></div>`;
+        const ta = gridEl.querySelector('#cd-data');
+        const sync = () => { const parsed = AlixoCharts.parseText(ta.value, w); if (parsed) { w.labels = parsed.labels; w.series = parsed.series; return true; } return false; };
+        ta.addEventListener('input', () => { if (sync()) soon(); });
+        ta.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); ok(); } if (e.key === 'Tab') { e.preventDefault(); const st = ta.selectionStart; ta.value = ta.value.slice(0, st) + '\t' + ta.value.slice(ta.selectionEnd); ta.selectionStart = ta.selectionEnd = st + 1; } });
+        gridEl.querySelector('.cg-grid').addEventListener('click', () => { if (!sync() && ta.value.trim()) { toast('Données illisibles : une étiquette puis des nombres sur chaque ligne'); return; } mountGrid(); });
+        ta.focus();
+      };
+      const mountGrid = () => { AlixoCharts.bindGrid(gridEl, w, soon, { onText: mountText }); };
+      pop.querySelectorAll('#cd-title, #cd-unit, #cd-ymin, #cd-ymax').forEach(x => x.addEventListener('input', soon));
+      const commit = () => {
+        const c = AlixoCharts.cleanWork(w);
+        if (!c.labels.length || !c.series.length) { toast('Le graphique a besoin d’au moins une catégorie et une série'); return false; }
+        const m = readMeta();
+        b.labels = c.labels; b.series = c.series; b.title = m.title; b.opts = optsWith(m);
+        done = true; touch(); if (bl) refreshChart(bl, b); selectObj(id);
+        return true;
+      };
+      const restore = () => { done = true; if (bl) refreshChart(bl, b); };
+      const ok = () => { if (commit()) { hidePopover(); toast('Graphique mis à jour'); } };
       pop.querySelector('#cd-ok').addEventListener('click', ok);
-      pop.querySelector('#cd-cancel').addEventListener('click', hidePopover);
-      pop.querySelector('#cd-data').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); ok(); } if (e.key === 'Tab') { e.preventDefault(); const t = e.target; const s = t.selectionStart; t.value = t.value.slice(0, s) + '\t' + t.value.slice(t.selectionEnd); t.selectionStart = t.selectionEnd = s + 1; } });
-      setTimeout(() => pop.querySelector('#cd-data').focus(), 40);
+      pop.querySelector('#cd-cancel').addEventListener('click', () => { restore(); hidePopover(); });
+      pop.addEventListener('keydown', e => { if (e.key === 'Escape') restore(); });
+      /* fermé autrement (clic ailleurs) : les données saisies sont gardées si elles sont valables */
+      pop._onHide = () => { if (done) return; const c = AlixoCharts.cleanWork(w); if (c.labels.length && c.series.length) commit(); else restore(); };
+      mountGrid();
+      setTimeout(() => { const first = gridEl.querySelector('.cg-val') || gridEl.querySelector('input'); if (first) { first.focus(); first.select(); } }, 40);
     });
 }
 function openChartColorsPopover(id, anchor) {
@@ -8912,7 +8712,7 @@ $('#toolbar').addEventListener('click', e => {
 /* ============================================================
    Démarrage
    ============================================================ */
-state = load() || seed();
+state = load() || emptyState();
 if (!state.settings) state.settings = { theme: null };
 if (!Array.isArray(state.settings.snippets)) state.settings.snippets = [{ k: 'tkt', v: 't’inquiète' }];
 if (!Array.isArray(state.settings.profs)) state.settings.profs = [];
@@ -8967,37 +8767,12 @@ function expandSnippet() {
 }
 
 /* ============================================================
-   1.21 — Fautes de frappe courantes corrigées seules (sans IA, sans Internet) : « qaund » + espace → « quand ».
-   Liste fermée de mots qui n'existent pas en français (lettres inversées, accents oubliés) : jamais un mot
-   ambigu (« role », « meme », « cote »…). Retour arrière juste après : le mot d'origine revient et n'est plus touché.
+   Fautes de frappe corrigées seules (sans IA, sans Internet) : « qaund » + espace → « quand ».
+   1.22 : le mot est jugé par le moteur js/corr.js — liste fermée (1.21), mots appris des corrections précédentes,
+   et lexique de 24 000 mots (lettres inversées, lettre doublée, accent oublié, jamais un mot ambigu).
+   Retour arrière juste après : le mot d'origine revient et n'est plus jamais touché.
    ============================================================ */
-const TYPO_FIXES = {
-  qaund: 'quand', qunad: 'quand', quadn: 'quand', aevc: 'avec', avce: 'avec', dnas: 'dans', dasn: 'dans', pusi: 'puis', mias: 'mais', tuot: 'tout', tuos: 'tous',
-  poru: 'pour', puor: 'pour', ausis: 'aussi', ausi: 'aussi', parceque: 'parce que', paceque: 'parce que', ocmme: 'comme', cmome: 'comme', comem: 'comme', dnoc: 'donc', alros: 'alors', enocre: 'encore',
-  jsute: 'juste', jutse: 'juste', tojuours: 'toujours', toujour: 'toujours', toujorus: 'toujours', jamias: 'jamais', jamis: 'jamais', beaucuop: 'beaucoup', beacoup: 'beaucoup', beaucop: 'beaucoup',
-  plusieur: 'plusieurs', pluseurs: 'plusieurs', plusiuers: 'plusieurs', certian: 'certain', poitn: 'point', ponit: 'point', temsp: 'temps', tmeps: 'temps', tepms: 'temps', momnet: 'moment',
-  qustion: 'question', quesiton: 'question', questoin: 'question', raisn: 'raison', noatmment: 'notamment', notament: 'notamment', notemment: 'notamment', effectivment: 'effectivement', effectivemnt: 'effectivement',
-  seulemnt: 'seulement', seulment: 'seulement', egalemnt: 'également', egalement: 'également', finalemnt: 'finalement', finalment: 'finalement', generalement: 'généralement', vraimen: 'vraiment', vraimnet: 'vraiment', vraiement: 'vraiment',
-  nombruex: 'nombreux', nouvaeu: 'nouveau', nouvau: 'nouveau', nouvelel: 'nouvelle', premeir: 'premier', premeire: 'première', premiere: 'première', derniere: 'dernière', denrier: 'dernier',
-  possibel: 'possible', posible: 'possible', imposible: 'impossible', improtant: 'important', importnat: 'important', importan: 'important', necesaire: 'nécessaire', necessaire: 'nécessaire', obligatoir: 'obligatoire', suivnat: 'suivant',
-  defintion: 'définition', definiton: 'définition', 'défintion': 'définition', 'définiton': 'définition', contart: 'contrat', cotnrat: 'contrat', tribunla: 'tribunal', jurisprudnece: 'jurisprudence', juriprudence: 'jurisprudence',
-  consitution: 'constitution', constituion: 'constitution', 'responsabilté': 'responsabilité', responsabilite: 'responsabilité', economie: 'économie', economique: 'économique', augmentaiton: 'augmentation', augmenation: 'augmentation',
-  diminuiton: 'diminution', inflaton: 'inflation', inflaiton: 'inflation', chomage: 'chômage', cout: 'coût', couts: 'coûts', controle: 'contrôle', etre: 'être', etes: 'êtes', etant: 'étant', etait: 'était', etaient: 'étaient', ete: 'été',
-  ecrire: 'écrire', ecriture: 'écriture', ecrit: 'écrit', ecrits: 'écrits', ecole: 'école', eleve: 'élève', eleves: 'élèves', etude: 'étude', etudes: 'études', etudiant: 'étudiant', etudiants: 'étudiants', etudier: 'étudier',
-  evidemment: 'évidemment', evenement: 'événement', energie: 'énergie', equilibre: 'équilibre', egalite: 'égalité', egal: 'égal', egale: 'égale', enonce: 'énoncé', etablir: 'établir', etablissement: 'établissement', etape: 'étape', etranger: 'étranger',
-  europeen: 'européen', europeenne: 'européenne', generale: 'générale', generaux: 'généraux', gerer: 'gérer', heritage: 'héritage', hopital: 'hôpital', idee: 'idée', idees: 'idées', interieur: 'intérieur', exterieur: 'extérieur',
-  memoire: 'mémoire', mere: 'mère', pere: 'père', frere: 'frère', metier: 'métier', methode: 'méthode', modele: 'modèle', ministere: 'ministère', monetaire: 'monétaire', necessite: 'nécessité', possibilite: 'possibilité', prefet: 'préfet',
-  prevoir: 'prévoir', prevu: 'prévu', prevue: 'prévue', probleme: 'problème', problemes: 'problèmes', porblème: 'problème', qualite: 'qualité', quantite: 'quantité', realiser: 'réaliser', realite: 'réalité', reflexion: 'réflexion',
-  remede: 'remède', repondre: 'répondre', reponse: 'réponse', resoudre: 'résoudre', resultat: 'résultat', reunion: 'réunion', salarie: 'salarié', salaries: 'salariés', sante: 'santé', securite: 'sécurité', societe: 'société', liberte: 'liberté',
-  propriete: 'propriété', specifique: 'spécifique', strategie: 'stratégie', succes: 'succès', superieur: 'supérieur', symptome: 'symptôme', systeme: 'système', theorie: 'théorie', theoreme: 'théorème', universite: 'université',
-  verite: 'vérité', veritable: 'véritable', vehicule: 'véhicule', tres: 'très', apres: 'après', deja: 'déjà', voila: 'voilà', francais: 'français', francaise: 'française', telephone: 'téléphone', developpement: 'développement',
-  developement: 'développement', developpment: 'développement', interet: 'intérêt', regle: 'règle', reglement: 'règlement', periode: 'période', siecle: 'siècle', medecin: 'médecin', medecine: 'médecine', hypothese: 'hypothèse',
-  synthese: 'synthèse', numero: 'numéro', bibliotheque: 'bibliothèque', facon: 'façon', lecon: 'leçon', recu: 'reçu', apercu: 'aperçu', garcon: 'garçon', exmeple: 'exemple', exempel: 'exemple', exemlpe: 'exemple', exmple: 'exemple',
-  entrepirse: 'entreprise', entrerpise: 'entreprise', gouvernemnet: 'gouvernement', gouvernment: 'gouvernement', coment: 'comment', commetn: 'comment', pourquio: 'pourquoi', pourqoi: 'pourquoi', pourquoit: 'pourquoi',
-  perosnne: 'personne', persone: 'personne', pesonne: 'personne', enfnat: 'enfant', pouvior: 'pouvoir', droti: 'droit', dorit: 'droit', pensse: 'pense', cest: 'c’est', jai: 'j’ai'
-};
 let typoLast = null;            // { field, from, to, ts } : Retour arrière juste après remet le mot d'origine
-const typoIgnored = new Set();  // mots que l'utilisateur a voulu garder (cette session)
 let typoToasts = 0;
 const autoTypoOn = () => state.settings.autoTypo !== false;
 function expandTypo(field) {
@@ -9009,22 +8784,21 @@ function expandTypo(field) {
   const before = node.textContent.slice(0, rng.startOffset);
   const m = before.match(/(?:^|[\s(«"“'’])([A-Za-zÀ-ÿ]{3,})$/); if (!m) return false;
   const word = m[1];
-  if (word !== word.toLowerCase() && word !== word[0].toUpperCase() + word.slice(1).toLowerCase()) return false;   // sigles, CamelCase : jamais
-  const k = word.toLowerCase(); const fix = TYPO_FIXES[k];
-  if (!fix || typoIgnored.has(k)) return false;
   if ((state.settings.snippets || []).some(x => x.k === word)) return false;   // un raccourci personnel a priorité
+  const fix = AlixoCorr.localFix(word); if (!fix) return false;
   const lang = detectLang(field.textContent); if (lang && lang !== 'fr') return false;   // texte dans une autre langue : on ne touche à rien
-  const rep = word[0] === word[0].toUpperCase() ? fix[0].toUpperCase() + fix.slice(1) : fix;
+  const rep = fix.to;
   const at = rng.startOffset - word.length;
   const wr = document.createRange(); wr.setStart(node, at); wr.setEnd(node, rng.startOffset);
   sel.removeAllRanges(); sel.addRange(wr);
   document.execCommand('insertText', false, rep);   // historique natif conservé, événement input déclenché
   typoLast = { field, from: word, to: rep, ts: Date.now() };
+  AlixoCorr.note('local');
   if (field.classList.contains('btxt')) { const bl = field.closest('#blocks > .block'); if (bl) { addCorrMark(bl.dataset.id, offsetInField(field, node, at), word, rep); applyCorrMarks(); } }
   if (typoToasts++ < 3) toast(`Faute de frappe corrigée : « ${word} » → « ${rep} » — Retour arrière tout de suite pour garder « ${word} »`);
   return true;
 }
-/* Retour arrière juste après une correction automatique : le mot tapé revient, et n'est plus corrigé */
+/* Retour arrière juste après une correction automatique : le mot tapé revient, et n'est plus corrigé (mémorisé sur l'appareil) */
 function undoTypo(e) {
   const t = typoLast; typoLast = null;
   if (!t || Date.now() - t.ts > 6000 || !t.field.isConnected) return false;
@@ -9037,7 +8811,7 @@ function undoTypo(e) {
   const wr = document.createRange(); wr.setStart(node, rng.startOffset - m[0].length); wr.setEnd(node, rng.startOffset);
   sel.removeAllRanges(); sel.addRange(wr);
   document.execCommand('insertText', false, t.from + m[1]);
-  typoIgnored.add(t.from.toLowerCase());
+  AlixoCorr.ignore(t.from);
   toast(`« ${t.from} » conservé — ce mot ne sera plus corrigé automatiquement`);
   return true;
 }
@@ -9107,12 +8881,14 @@ blocksEl.addEventListener('keydown', e => {
   if (e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.key === 'Backspace' && typoLast) { undoTypo(e); return; }   // 1.21 : annule la correction de frappe qui vient d'être faite
   if (e.key.length === 1 || e.key === 'Enter') typoLast = null;
+  if (e.key === 'Enter') { const f0 = activeField(); if (f0 && f0.classList.contains('btxt')) corrSentenceDone(f0); }   // 1.22 : fin de phrase
   if (!SNIPPET_TRIGGERS.has(e.key)) return;
   const f = activeField(); if (!f || f.tagName === 'INPUT' || !f.matches('.btxt, .jref, .jval, figcaption, .tcell, .qcite, .cd-t, .cd-x')) return;
+  if ('.!?'.includes(e.key) && f.classList.contains('btxt')) corrSentenceDone(f);   // 1.22 : la phrase terminée part vers l'analyse
   if (e.key === ' ' && expandArrow(f)) return;   // l'espace s'insère ensuite normalement
   if (expandNotation(f, e.key)) return;
   if (expandSnippet()) return; // la touche déclencheuse s'insère ensuite normalement
-  expandTypo(f);               // 1.21 : « qaund » → « quand »
+  expandTypo(f);               // « qaund » → « quand », à l'espace ou à la ponctuation
 });
 
 /* ============================================================
@@ -9254,24 +9030,12 @@ function openOnboarding(edit) {
       ts: Date.now()
     };
     if (window.AlixoAuth && AlixoAuth.clearNewAccount) AlixoAuth.clearNewAccount();
-    // dossiers racine pour les nouvelles spécialités (sans doublon de nom)
-    const existing = new Set(state.folders.filter(f => !f.parentId).map(f => norm(f.nom)));
-    let created = 0;
-    for (const k of sel.specialites) {
-      if (before.has(k)) continue;
-      const s = OB_SPECIALITES.find(s => s.k === k);
-      const nom = k === 'autre' ? (sel.specialiteAutre.trim() || '') : s.nom;
-      if (!nom || existing.has(norm(nom))) continue;
-      state.folders.push({ id: uid(), nom, couleur: s.c, parentId: null });
-      existing.add(norm(nom));
-      created++;
-    }
-    if (created) expandedFolders = new Set(state.folders.map(f => f.id));
+    // 1.22 : plus de dossiers créés d'office pour les spécialités choisies (l'utilisateur crée les siens)
     save();
     closeOnboarding();
     syncHealthUI();
     if (!currentDocId) { renderCrumbs(); renderLibrary(); }
-    toast(edit ? 'Profil mis à jour' : (created ? 'Ton espace est prêt — bonnes révisions !' : 'Bienvenue sur Alixo !'));
+    toast(edit ? 'Profil mis à jour' : 'Bienvenue sur Alixo !');
   }
 
   renderStep1();

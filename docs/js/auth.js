@@ -119,6 +119,7 @@ window.AlixoAuth = (() => {
         <div class="auth-foot">
           <button id="auth-offline" class="auth-link subtle">Continuer sans compte (local uniquement)</button>
         </div>
+        <div class="auth-legal">En continuant, vous acceptez les <a href="https://alixoapp.com/conditions.html" target="_blank" rel="noopener">conditions d’utilisation</a> et la <a href="https://alixoapp.com/confidentialite.html" target="_blank" rel="noopener">politique de confidentialité</a>.</div>
       </div>`;
     document.body.appendChild(ov);
 

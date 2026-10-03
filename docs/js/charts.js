@@ -183,5 +183,100 @@ window.AlixoCharts = (() => {
     return { labels, series };
   }
 
-  return { W, H, TYPES, PALETTE, defaults, svg, toText, parseText };
+  /* ---------- 1.22 : tableau dynamique des données (catégories en lignes, séries en colonnes) ----------
+     gridHTML(w) rend la grille d'un modèle de travail { labels, series } ; bindGrid(root, w, onChange) la rend vivante :
+     saisie, ajout / suppression de lignes et de séries, Entrée / Tab / flèches de case en case, collage d'une plage
+     Excel / Sheets à partir de la case courante, bascule vers le mode texte. onChange(w) après chaque modification. */
+  const cell = v => (v === null || v === undefined || v === '' || (typeof v === 'number' && !isFinite(v))) ? '' : String(v).replace('.', ',');
+  function gridHTML(w) {
+    const labels = Array.isArray(w.labels) ? w.labels : [], series = Array.isArray(w.series) ? w.series : [];
+    const head = series.map((s, k) => `<th><div class="cg-head"><input class="cg-ser" data-c="${k}" value="${esc(s.name || '')}" placeholder="Série ${k + 1}" aria-label="Nom de la série ${k + 1}"><button type="button" class="cg-x cg-delcol" data-c="${k}" tabindex="-1" title="Supprimer cette série">×</button></div></th>`).join('');
+    const rows = labels.map((l, i) => `<tr><th scope="row"><div class="cg-head"><input class="cg-lab" data-r="${i}" value="${esc(l)}" placeholder="Catégorie ${i + 1}" aria-label="Catégorie ${i + 1}"><button type="button" class="cg-x cg-delrow" data-r="${i}" tabindex="-1" title="Supprimer cette ligne">×</button></div></th>${series.map((s, k) => `<td><input class="cg-val" inputmode="decimal" data-r="${i}" data-c="${k}" value="${esc(cell((s.data || [])[i]))}" aria-label="${esc(l || 'Catégorie ' + (i + 1))}, ${esc(s.name || 'série ' + (k + 1))}"></td>`).join('')}</tr>`).join('');
+    return `<div class="cg-wrap"><table class="cg"><thead><tr><th class="cg-corner" title="Collez ici une plage complète (en-têtes compris) depuis Excel ou Sheets">Catégorie</th>${head}<th class="cg-addcol"><button type="button" class="cg-addser" title="Ajouter une série">＋</button></th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="cg-actions"><button type="button" class="cg-addrow">＋ Ligne</button><button type="button" class="cg-addser">＋ Série</button><span class="cg-sp"></span><button type="button" class="cg-text" title="Saisir ou coller les données sous forme de texte (une ligne par catégorie)">Mode texte</button></div>`;
+  }
+  function bindGrid(root, w, onChange, { onText } = {}) {
+    w.labels = Array.isArray(w.labels) ? w.labels : []; w.series = Array.isArray(w.series) ? w.series : [];
+    w.series.forEach(s => { s.data = Array.isArray(s.data) ? s.data : []; });
+    const fit = () => w.series.forEach(s => { while (s.data.length < w.labels.length) s.data.push(null); s.data.length = w.labels.length; });
+    fit();
+    const changed = () => { if (onChange) onChange(w); };
+    const render = (focus) => {
+      root.innerHTML = gridHTML(w);
+      if (focus) { const el = root.querySelector(focus.sel); if (el) { el.focus(); if (focus.end) el.setSelectionRange(el.value.length, el.value.length); else el.select(); } }
+    };
+    const selOf = (r, c) => c === -1 ? `.cg-lab[data-r="${r}"]` : c === -2 ? `.cg-ser[data-c="${r}"]` : `.cg-val[data-r="${r}"][data-c="${c}"]`;
+    root.addEventListener('input', e => {
+      const t = e.target; if (!t.matches('input')) return;
+      if (t.classList.contains('cg-ser')) w.series[+t.dataset.c].name = t.value;
+      else if (t.classList.contains('cg-lab')) w.labels[+t.dataset.r] = t.value;
+      else w.series[+t.dataset.c].data[+t.dataset.r] = num(t.value);
+      changed();
+    });
+    root.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      if (b.classList.contains('cg-addrow')) { w.labels.push(''); fit(); render({ sel: selOf(w.labels.length - 1, -1) }); changed(); }
+      else if (b.classList.contains('cg-addser')) { w.series.push({ name: '', data: w.labels.map(() => null) }); render({ sel: selOf(w.series.length - 1, -2) }); changed(); }
+      else if (b.classList.contains('cg-delrow')) { const r = +b.dataset.r; w.labels.splice(r, 1); w.series.forEach(s => s.data.splice(r, 1)); render({ sel: selOf(Math.min(r, w.labels.length - 1), -1) }); changed(); }
+      else if (b.classList.contains('cg-delcol')) { const c = +b.dataset.c; w.series.splice(c, 1); render({ sel: w.series.length ? selOf(Math.min(c, w.series.length - 1), -2) : '.cg-lab' }); changed(); }
+      else if (b.classList.contains('cg-text')) { if (onText) onText(); }
+    });
+    root.addEventListener('keydown', e => {
+      const t = e.target; if (!t.matches('input')) return;
+      const isSer = t.classList.contains('cg-ser'), isLab = t.classList.contains('cg-lab');
+      const r = isSer ? -1 : +t.dataset.r, c = isSer ? +t.dataset.c : isLab ? -1 : +t.dataset.c;
+      const go = (nr, nc) => { const el = root.querySelector(nr === -1 ? selOf(nc, -2) : selOf(nr, nc)); if (el) { e.preventDefault(); el.focus(); el.select(); return true; } return false; };
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (r + 1 >= w.labels.length) { w.labels.push(''); fit(); render({ sel: selOf(w.labels.length - 1, isSer ? c : c) }); changed(); }
+        else go(r + 1, isSer ? c : c);
+        return;
+      }
+      if (e.key === 'ArrowDown') { if (r + 1 < w.labels.length) go(r + 1, c); return; }
+      if (e.key === 'ArrowUp') { if (r > 0) go(r - 1, c); else if (r === 0 && c >= 0) go(-1, c); return; }
+      if (e.key === 'ArrowRight' && t.selectionStart === t.value.length) { if (c + 1 < w.series.length) go(r, c + 1); return; }
+      if (e.key === 'ArrowLeft' && t.selectionStart === 0) { if (c > 0) go(r, c - 1); else if (c === 0 && r >= 0) go(r, -1); return; }
+    });
+    root.addEventListener('paste', e => {
+      const t = e.target; if (!t.matches('input')) return;
+      const text = (e.clipboardData || window.clipboardData).getData('text/plain') || '';
+      if (!/[\n\t;]/.test(text)) return;   // une seule valeur : collage normal
+      e.preventDefault();
+      const isSer = t.classList.contains('cg-ser'), isLab = t.classList.contains('cg-lab');
+      const r0 = isSer ? -1 : +t.dataset.r, c0 = isSer ? +t.dataset.c : isLab ? -1 : +t.dataset.c;
+      const lines = text.split(/\r?\n/).filter(l => l.trim());
+      const sep = lines[0].includes('\t') ? '\t' : lines[0].includes(';') ? ';' : ',';
+      const grid = lines.map(l => l.split(sep).map(x => x.trim()));
+      // plage complète collée dans la première case (en-têtes + catégories) : on remplace tout
+      if (r0 === 0 && c0 === -1 && grid.length > 1 && grid[0].length > 1 && num(grid[0][1]) === null) {
+        const parsed = parseText(text, w);
+        if (parsed) { w.labels = parsed.labels; w.series = parsed.series; fit(); render({ sel: selOf(0, -1) }); changed(); return; }
+      }
+      grid.forEach((cells, i) => {
+        const r = r0 + i;
+        cells.forEach((v, j) => {
+          const c = c0 + j;
+          if (r === -1) { if (c >= 0) { while (w.series.length <= c) w.series.push({ name: '', data: w.labels.map(() => null) }); w.series[c].name = v; } return; }
+          while (w.labels.length <= r) w.labels.push('');
+          if (c === -1) { w.labels[r] = v; return; }
+          while (w.series.length <= c) w.series.push({ name: '', data: w.labels.map(() => null) });
+          fit(); w.series[c].data[r] = num(v);
+        });
+      });
+      fit(); render({ sel: isSer ? selOf(c0, -2) : selOf(r0, c0) }); changed();
+    });
+    render();
+    return { render, model: w };
+  }
+  /* copie de travail d'un graphique (étiquettes et séries), pour l'aperçu en direct */
+  const workCopy = b => ({ labels: (b.labels || []).slice(), series: (b.series || []).map(s => Object.assign({}, s, { data: (s.data || []).slice(), colors: s.colors ? s.colors.slice() : undefined })) });
+  /* nettoie un modèle de travail avant enregistrement : lignes entièrement vides retirées, noms par défaut */
+  function cleanWork(w) {
+    const keep = w.labels.map((l, i) => String(l || '').trim() !== '' || w.series.some(s => s.data[i] !== null && s.data[i] !== undefined && s.data[i] !== ''));
+    const labels = w.labels.filter((_, i) => keep[i]);
+    const series = w.series.map((s, k) => { const o = Object.assign({}, s, { name: String(s.name || '').trim() || 'Série ' + (k + 1), data: s.data.filter((_, i) => keep[i]) }); if (o.colors === undefined) delete o.colors; return o; });
+    return { labels, series };
+  }
+
+  return { W, H, TYPES, PALETTE, defaults, svg, toText, parseText, gridHTML, bindGrid, workCopy, cleanWork };
 })();

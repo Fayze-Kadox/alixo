@@ -559,18 +559,39 @@ window.AlixoSlides = (() => {
     const e = el(id); if (!e || !window.AlixoCharts) return;
     if (!e.chart) e.chart = AlixoCharts.defaults();
     const n = $(`#sl-canvas .sl-el[data-id="${id}"]`);
+    /* 1.22 : tableau dynamique (le même que dans les séances), avec aperçu en direct sur la diapositive */
+    const w = AlixoCharts.workCopy(e.chart);
+    let done = false;
     showPopover(`<h4>Graphique de données</h4>
       <div class="po-row"><select id="po-slck">${Object.entries(AlixoCharts.TYPES).map(([k, t]) => `<option value="${k}" ${e.chart.ck === k ? 'selected' : ''}>${esc(t.name || k)}</option>`).join('')}</select><input id="po-slct" placeholder="Titre du graphique" value="${esc(e.chart.title || '')}"></div>
-      <textarea class="cd-data" id="po-slcd" rows="7" spellcheck="false">${esc(AlixoCharts.toText(e.chart))}</textarea>
-      <div class="po-hint">Une ligne par catégorie : libellé, puis les valeurs séparées par des tabulations ou des points-virgules (première ligne = noms des séries). Collez directement depuis Excel.</div>
-      <div class="po-row" style="margin-top:8px"><button class="pobtn" id="po-slc-ok">Appliquer</button></div>`,
+      <div id="po-slgrid" class="cd-grid"></div>
+      <div class="po-hint">Entrée : ligne suivante · Tab et flèches : case en case · collez une plage Excel / Sheets dans une case (dans « Catégorie » : tout remplacer).</div>
+      <div class="po-row" style="justify-content:flex-end; gap:6px; margin-top:8px"><button class="cta ghost small" id="po-slc-cancel" type="button">Annuler</button><button class="pobtn" id="po-slc-ok" type="button">Appliquer</button></div>`,
       n ? n.getBoundingClientRect() : centerRect(), pop => {
-        pop.querySelector('#po-slc-ok').addEventListener('click', () => {
-          const parsed = AlixoCharts.parseText(pop.querySelector('#po-slcd').value, e.chart);
-          pushHist();
-          e.chart = Object.assign({}, e.chart, parsed || {}, { ck: pop.querySelector('#po-slck').value, title: pop.querySelector('#po-slct').value });
-          hidePopover(); commit(); renderCanvas(); select(id);
-        });
+        pop.style.left = Math.max(12, Math.min(parseFloat(pop.style.left) || 12, innerWidth - pop.offsetWidth - 12)) + 'px';
+        const gridEl = pop.querySelector('#po-slgrid');
+        const current = () => Object.assign({}, e.chart, AlixoCharts.cleanWork(w), { ck: pop.querySelector('#po-slck').value, title: pop.querySelector('#po-slct').value });
+        const preview = () => { const host = n && n.querySelector('.sl-chart'); if (host) host.innerHTML = AlixoCharts.svg(current()); };
+        let tm = null; const soon = () => { clearTimeout(tm); tm = setTimeout(preview, 60); };
+        const mountText = () => {
+          gridEl.innerHTML = `<textarea class="cd-data" id="po-slcd" rows="7" spellcheck="false">${esc(AlixoCharts.toText(AlixoCharts.cleanWork(w)))}</textarea><div class="cg-actions"><span class="po-hint" style="margin:0; flex:1">Une ligne par catégorie : libellé puis les valeurs (tabulations ou « ; ») ; première ligne = noms des séries.</span><button type="button" class="cg-grid">Mode tableau</button></div>`;
+          const ta = gridEl.querySelector('#po-slcd');
+          const sync = () => { const parsed = AlixoCharts.parseText(ta.value, w); if (parsed) { w.labels = parsed.labels; w.series = parsed.series; return true; } return false; };
+          ta.addEventListener('input', () => { if (sync()) soon(); });
+          gridEl.querySelector('.cg-grid').addEventListener('click', () => { sync(); mountGrid(); });
+          ta.focus();
+        };
+        const mountGrid = () => AlixoCharts.bindGrid(gridEl, w, soon, { onText: mountText });
+        pop.querySelector('#po-slck').addEventListener('change', soon);
+        pop.querySelector('#po-slct').addEventListener('input', soon);
+        const apply = () => { const c = AlixoCharts.cleanWork(w); if (!c.labels.length || !c.series.length) return false; pushHist(); e.chart = current(); done = true; commit(); renderCanvas(); select(id); return true; };
+        const restore = () => { done = true; renderCanvas(); select(id); };
+        pop.querySelector('#po-slc-ok').addEventListener('click', () => { if (apply()) hidePopover(); else toast('Le graphique a besoin d’au moins une catégorie et une série'); });
+        pop.querySelector('#po-slc-cancel').addEventListener('click', () => { restore(); hidePopover(); });
+        pop.addEventListener('keydown', ev => { if (ev.key === 'Escape') restore(); });
+        pop._onHide = () => { if (!done) { if (!apply()) restore(); } };
+        mountGrid();
+        setTimeout(() => { const first = gridEl.querySelector('.cg-val') || gridEl.querySelector('input'); if (first) { first.focus(); first.select(); } }, 40);
       });
   }
   function pickImage(id) {

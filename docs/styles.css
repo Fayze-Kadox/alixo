@@ -934,6 +934,9 @@ body.mode-editor .tbtn.only-editor { display: grid; }
 .auth-link:hover { text-decoration: underline; }
 .auth-link.subtle { color: var(--ink-3); }
 .auth-foot { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+.auth-legal { margin-top: 10px; font-size: 11.5px; line-height: 1.45; color: var(--ink-3); text-align: center; }
+.auth-legal a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.auth-legal a:hover { color: var(--ink); }
 #authov .busy, .auth-card.busy { opacity: .96; }
 .auth-card.busy button { pointer-events: none; opacity: .6; }
 
@@ -1851,6 +1854,33 @@ body.health .only-health { display: inline-flex !important; }
 .chart-tools button.primary { background: var(--tint); color: #fff; }
 .chart-tools button.danger { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); margin-left: auto; }
 .chart-tools .tb-sep { width: 1px; height: 18px; background: var(--border); margin: 0 3px; }
+/* 1.22 : tableau dynamique des données d'un graphique (pop-over « Données… », séances et présentations) */
+#popover:has(.cd-grid) { width: min(680px, calc(100vw - 24px)); }
+.cd-grid { margin-top: 8px; }
+.cg-wrap { max-height: min(320px, 45vh); overflow: auto; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); }
+.cg { border-collapse: separate; border-spacing: 0; min-width: 100%; font-size: 13px; font-family: var(--font-ui); }
+.cg th, .cg td { padding: 0; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); text-align: left; font-weight: 500; }
+.cg thead th { position: sticky; top: 0; z-index: 2; background: var(--surface); }
+.cg tbody th { position: sticky; left: 0; z-index: 1; background: var(--surface); }
+.cg thead th.cg-corner { left: 0; z-index: 3; padding: 7px 9px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); white-space: nowrap; }
+.cg th.cg-addcol { width: 32px; border-right: none; text-align: center; }
+.cg tr > :last-child { border-right: none; }
+.cg tbody tr:last-child > * { border-bottom: none; }
+:is(#popover, .po-scope) .cg input { width: 100%; min-width: 88px; border: none; border-radius: 0; background: transparent; padding: 7px 9px; font-size: 13px; color: var(--ink); }
+:is(#popover, .po-scope) .cg input.cg-val { text-align: right; font-variant-numeric: tabular-nums; }
+:is(#popover, .po-scope) .cg input.cg-ser, :is(#popover, .po-scope) .cg input.cg-lab { font-weight: 600; min-width: 110px; }
+:is(#popover, .po-scope) .cg input:focus { outline: 2px solid var(--tint); outline-offset: -2px; border: none; background: var(--tint-soft); }
+.cg-head { display: flex; align-items: center; }
+.cg .cg-x { flex: none; width: 20px; height: 20px; margin-right: 4px; border-radius: 5px; font-size: 13px; line-height: 1; color: var(--ink-3); opacity: 0; display: grid; place-items: center; }
+.cg th:hover .cg-x, .cg th:focus-within .cg-x { opacity: 1; }
+.cg .cg-x:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
+.cg .cg-addser { width: 26px; height: 26px; border-radius: 6px; font-size: 15px; color: var(--tint); display: grid; place-items: center; margin: 2px auto; }
+.cg .cg-addser:hover { background: var(--tint-soft); }
+.cg-actions { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+.cg-actions .cg-sp { flex: 1; }
+.cg-actions button { padding: 4px 10px; border-radius: 6px; font-size: 12.5px; font-weight: 600; background: var(--bg); color: var(--ink-2); font-family: var(--font-ui); }
+.cg-actions button:hover { background: var(--hover); color: var(--ink); }
+.cg-actions .cg-text, .cg-actions .cg-grid { color: var(--tint); }
 
 /* scores cliniques et calculateurs */
 .block.score, .block.mcalc { margin: 12px 0; display: flow-root; }
