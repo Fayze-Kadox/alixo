@@ -1,0 +1,24 @@
+/* ============================================================
+   Alixo — pages système (404, maintenance, confidentialité, conditions, mentions légales)
+   S'appuie sur styles.css (site) et documentation.css (typographie .doc-main).
+   ============================================================ */
+.sys-layout { max-width: 820px; margin: 0 auto; padding: 8px 20px 96px; }
+.sys-main > section { margin-bottom: 44px; }
+.sys-main > section:first-child { padding-top: 0; }
+.sys-main h2 { font-size: clamp(22px, 2.6vw, 28px); margin-top: 0; }
+.sys-main h3 { margin-top: 26px; }
+.sys-main code { font-family: var(--font-mono); font-size: .92em; background: var(--bg-alt); border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; }
+.sys-hero { padding-bottom: 36px; }
+.sys-hero p { max-width: 720px; }
+.sys-404 { font-family: var(--font-display); font-size: clamp(96px, 18vw, 180px); line-height: 1; letter-spacing: -.04em; color: var(--tint); opacity: .22; text-align: center; margin: -10px 0 6px; user-select: none; }
+.sys-url { font-family: var(--font-mono); font-size: 13px; color: var(--ink-3); word-break: break-all; text-align: center; }
+.sys-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 22px 0 36px; }
+.sys-small { font-size: 13.5px; color: var(--ink-3); }
+.sys-status { display: inline-flex; align-items: center; gap: 10px; padding: 10px 16px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); box-shadow: var(--shadow-sm); font-weight: 600; color: var(--ink-2); margin: 4px auto 18px; }
+.sys-page .sys-maint-wrap { text-align: center; }
+.sys-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c-ret); box-shadow: 0 0 0 0 rgba(179, 118, 42, .5); animation: sys-pulse 1.6s infinite; }
+@keyframes sys-pulse { 0% { box-shadow: 0 0 0 0 rgba(179, 118, 42, .45); } 70% { box-shadow: 0 0 0 10px rgba(179, 118, 42, 0); } 100% { box-shadow: 0 0 0 0 rgba(179, 118, 42, 0); } }
+.sys-maint-page .sys-main section { text-align: center; }
+.sys-maint-page .sys-main ul { text-align: left; display: inline-block; }
+.sys-legal-page .sys-main p, .sys-legal-page .sys-main li { font-size: 15px; line-height: 1.65; }
+@media (max-width: 640px) { .sys-layout { padding: 4px 16px 64px; } .sys-actions .btn { flex: 1 1 100%; justify-content: center; } }
