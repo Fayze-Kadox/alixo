@@ -35,8 +35,8 @@
       <a href="#plus">Nouveautés</a>
       <a href="#alixo-plus">Alixo+</a>
       <a href="#seance">En amphi</a>
-      <a href="#filieres">Filières</a>
       <a href="#telecharger">Télécharger</a>
+      <a href="documentation.html">Documentation</a>
       <a href="#faq">FAQ</a>
     </nav>
     <div class="nav-actions">
@@ -44,6 +44,10 @@
         <svg class="ico-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M18.7 5.3l-1.8 1.8M7.1 16.9l-1.8 1.8"/></svg>
         <svg class="ico-moon" viewBox="0 0 24 24"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z"/></svg>
       </button>
+      <a class="btn ghost small btn-login" href="https://alixoapp.com/docs/?login" title="Ouvrir Alixo dans le navigateur et se connecter (ou créer un compte)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+        <span>Se connecter</span>
+      </a>
       <a class="btn primary small" href="#telecharger" data-download>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 19h16"/></svg>
         Télécharger
@@ -79,9 +83,11 @@
         <span class="soon-badge">Bientôt</span>
       </a>
     </div>
-    <a class="hero-web reveal" href="https://alixoapp.com/docs/" target="_blank" rel="noopener">
-      Pas envie d'installer&nbsp;? <strong>Essayer dans le navigateur&nbsp;→</strong>
-    </a>
+    <div class="hero-web reveal">
+      <a href="https://alixoapp.com/docs/" target="_blank" rel="noopener">Pas envie d'installer&nbsp;? <strong>Essayer dans le navigateur&nbsp;→</strong></a>
+      <span class="hero-web-sep">·</span>
+      <a href="https://alixoapp.com/docs/?login">Déjà un compte&nbsp;? <strong>Se connecter&nbsp;→</strong></a>
+    </div>
     <div class="hero-trust reveal">
       <span>✓ Sans compte pour télécharger</span>
       <span>✓ Mises à jour automatiques</span>
@@ -635,7 +641,12 @@
       </div>
       <p class="dl-mac-txt">La même application, dans Chrome, Edge, Firefox ou Safari. Idéal pour essayer, ou pour la BU. Sur téléphone, la version mobile s'ouvre toute seule.</p>
       <a class="btn ghost big full" href="https://alixoapp.com/docs/" target="_blank" rel="noopener">Ouvrir Alixo dans le navigateur</a>
+      <div class="dl-login">
+        <a class="dl-alt" href="https://alixoapp.com/docs/?login">Se connecter →</a>
+        <a class="dl-alt" href="https://alixoapp.com/docs/?login=signup">Créer un compte →</a>
+      </div>
       <ul class="dl-list">
+        <li>Sans compte&nbsp;: «&nbsp;Continuer sans compte&nbsp;», tout reste sur l'appareil</li>
         <li>Même compte, mêmes cours que sur PC</li>
         <li>Version mobile pour relire partout</li>
         <li>Toujours au niveau de la version PC</li>
@@ -682,6 +693,10 @@
     <details>
       <summary>Je peux essayer sans rien installer&nbsp;?</summary>
       <p>Oui. <a href="https://alixoapp.com/docs/" target="_blank" rel="noopener">La version web</a> est la même application, dans ton navigateur, toujours au niveau de la version PC. Sur téléphone, la version mobile s'ouvre automatiquement. Avec un compte, tes cours sont partagés entre le web, le mobile et l'application PC.</p>
+    </details>
+    <details>
+      <summary>Il faut un compte pour utiliser la version web&nbsp;?</summary>
+      <p>Non. À l'ouverture, l'écran de connexion propose «&nbsp;<strong>Continuer sans compte (local uniquement)</strong>&nbsp;»&nbsp;: tes cours restent alors dans ce navigateur. Un compte (Google, Apple ou e-mail) sert à retrouver tes cours sur tous tes appareils, à partager et à activer Alixo+. Tu peux en créer un plus tard depuis Paramètres › Compte, ou avec le bouton <a href="https://alixoapp.com/docs/?login=signup">Créer un compte</a>&nbsp;: les cours créés sans compte sont récupérés à la première connexion.</p>
     </details>
     <details>
       <summary id="faq-mac-q">Quand sort la version macOS&nbsp;?</summary>
@@ -742,7 +757,9 @@
       <a href="#fonctions">Fonctionnalités</a>
       <a href="#telecharger">Télécharger</a>
       <a href="#nouveautes">Nouveautés</a>
+      <a href="documentation.html">Documentation</a>
       <a href="#faq">FAQ</a>
+      <a href="https://alixoapp.com/docs/?login">Se connecter</a>
       <a href="https://github.com/Fayze-Kadox/alixo/releases" target="_blank" rel="noopener">Versions</a>
     </nav>
     <div class="foot-copy" id="foot-copy">© 2026 Alixo · Windows aujourd'hui, macOS bientôt.</div>
