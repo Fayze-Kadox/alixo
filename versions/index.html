@@ -3,15 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Maintenance en cours — Alixo</title>
-<meta name="description" content="Alixo est en cours de mise à jour. Vos cours restent en sécurité ; la page réessaie automatiquement.">
-<link rel="canonical" href="https://alixoapp.com/maintenance.html">
-<meta property="og:title" content="Maintenance en cours — Alixo">
-<meta property="og:description" content="Alixo est en cours de mise à jour. Vos cours restent en sécurité ; la page réessaie automatiquement.">
+<title>Versions et nouveautés — Alixo</title>
+<meta name="description" content="Toutes les versions d'Alixo et leurs nouveautés, de la première à la dernière.">
+<link rel="canonical" href="https://alixoapp.com/versions/">
+<meta property="og:title" content="Versions et nouveautés — Alixo">
+<meta property="og:description" content="Toutes les versions d'Alixo et leurs nouveautés, de la première à la dernière.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://alixoapp.com/maintenance.html">
+<meta property="og:url" content="https://alixoapp.com/versions/">
 <meta name="theme-color" content="#33658a">
-<meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
@@ -21,7 +20,7 @@
 <link rel="stylesheet" href="/systeme.css">
 <link rel="icon" type="image/png" href="/img/logo.png">
 </head>
-<body class="sys-page sys-maint-page">
+<body class="sys-page sys-versions-page">
 
 <header id="nav">
   <div class="nav-inner">
@@ -56,27 +55,25 @@
 <section class="doc-hero sys-hero">
   <div class="hero-bg" aria-hidden="true"><span class="orb o1"></span><span class="grid"></span></div>
   <div style="position:relative">
-    <div class="eyebrow">Maintenance</div>
-    <h1>Alixo revient <em>dans un instant.</em></h1>
-    <p>Le site ou l’application est en cours de mise à jour. Vos cours sont en sécurité : ils restent enregistrés sur vos appareils et dans votre compte.</p>
+    <div class="eyebrow">Versions</div>
+    <h1>Toutes les <em>nouveautés.</em></h1>
+    <p>Chaque version d'Alixo, de la plus récente à la première. La version installée se met à jour toute seule ; sur le web, rechargez la page.</p>
   </div>
 </section>
 
 <div class="sys-layout">
   <main class="doc-main sys-main">
-    <section>
-      <div class="sys-status"><span class="sys-dot"></span><span id="sys-countdown">Nouvelle tentative automatique dans 60 s</span></div>
-      <h3>En attendant</h3>
-      <ul>
-        <li><strong>L’application installée</strong> (Windows, macOS) continue de fonctionner hors ligne : vos cours sont sur l’ordinateur, la synchronisation reprend d’elle-même.</li>
-        <li><strong>La version web</strong> peut rester ouverte dans un onglet déjà chargé ; évitez simplement de le recharger.</li>
-        <li>Les installateurs restent disponibles sur la page <a href="/versions/">Versions</a>.</li>
-      </ul>
+    <section class="sys-dl-wrap">
+      <div class="sys-status"><span id="vs-latest">Dernière version</span></div>
       <div class="sys-actions">
-        <a class="btn primary" href="https://alixoapp.com/docs/">Réessayer maintenant</a>
-        <a class="btn ghost" href="/index.html?site">Accueil</a>
+        <a class="btn primary" href="/telecharger/windows/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 19h16"/></svg> Windows</a>
+        <a class="btn ghost" href="/telecharger/mac/">macOS</a>
+        <a class="btn ghost" href="/telecharger/windows-portable/">Windows portable</a>
+        <a class="btn ghost" href="https://alixoapp.com/docs/">Ouvrir dans le navigateur</a>
       </div>
-      <p class="sys-small">Un problème qui dure ? Écrivez-nous : <a href="mailto:contact@alixoapp.com">contact@alixoapp.com</a>.</p>
+    </section>
+    <section id="vs-list" class="sys-versions">
+      <p class="sys-small">Chargement des versions…</p>
     </section>
   </main>
 </div>
@@ -100,7 +97,6 @@
     <div class="foot-copy">© 2026 Alixo · Windows, macOS, web et mobile.</div>
   </div>
 </footer>
-
 <script>
 (function () {
   var b = document.getElementById('btn-theme');
@@ -114,14 +110,6 @@
   addEventListener('scroll', onScroll, { passive: true }); onScroll();
 })();
 </script>
-<script>
-(function () {
-  var n = 60, el = document.getElementById('sys-countdown');
-  setInterval(function () {
-    n--; if (el) el.textContent = n > 0 ? 'Nouvelle tentative automatique dans ' + n + ' s' : 'Nouvelle tentative…';
-    if (n <= 0) location.reload();
-  }, 1000);
-})();
-</script>
+<script src="/versions/versions.js"></script>
 </body>
 </html>

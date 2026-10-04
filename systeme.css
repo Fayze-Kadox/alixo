@@ -22,3 +22,23 @@
 .sys-maint-page .sys-main ul { text-align: left; display: inline-block; }
 .sys-legal-page .sys-main p, .sys-legal-page .sys-main li { font-size: 15px; line-height: 1.65; }
 @media (max-width: 640px) { .sys-layout { padding: 4px 16px 64px; } .sys-actions .btn { flex: 1 1 100%; justify-content: center; } }
+
+/* ---------- pages de téléchargement (/telecharger/…) et des versions (/versions/) ---------- */
+.sys-dl-wrap { text-align: center; }
+.sys-dl-meta { color: var(--ink-3); font-size: 14px; margin: -6px 0 0; }
+.sys-dl-meta span + span::before { content: " · "; }
+.sys-dl-after ol { padding-left: 22px; }
+.sys-dl-after li { margin: 8px 0; line-height: 1.6; }
+.sys-cmd { background: var(--bg-alt); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; overflow-x: auto; font-family: var(--font-mono); font-size: 14px; user-select: all; }
+.sys-cmd code { background: none; border: none; padding: 0; }
+.sys-versions .vs-item { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); margin: 0 0 12px; padding: 0; }
+.sys-versions summary { cursor: pointer; list-style: none; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; padding: 14px 18px; }
+.sys-versions summary::-webkit-details-marker { display: none; }
+.sys-versions summary::before { content: "›"; color: var(--ink-3); font-size: 18px; line-height: 1; transition: transform .15s; }
+.sys-versions details[open] summary::before { transform: rotate(90deg); }
+.sys-versions .vs-ver { font-weight: 700; color: var(--tint); }
+.sys-versions .vs-title { flex: 1 1 auto; color: var(--ink-2); font-size: 14.5px; }
+.sys-versions .vs-date { color: var(--ink-3); font-size: 13px; margin-left: auto; }
+.sys-versions .vs-notes { padding: 0 18px 16px; border-top: 1px solid var(--border); }
+.sys-versions .vs-notes h4 { margin: 16px 0 6px; }
+.sys-versions .vs-notes li, .sys-versions .vs-notes p { font-size: 14.5px; line-height: 1.6; }

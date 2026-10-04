@@ -2,18 +2,20 @@
    Alixo — Site vitrine (v2)
    Téléchargement direct, version live, macOS auto-détecté,
    thème, apparition au scroll, compteurs, démo de l'éditeur,
-   changelog live depuis GitHub.
+   changelog live depuis /releases.json (généré à chaque publication).
+   Le site ne nomme jamais l'hébergement des fichiers : les pages /telecharger/… s'en chargent en arrière-plan.
    ============================================================ */
 
-const REPO = 'Fayze-Kadox/alixo';
-const EXE_URL = `https://github.com/${REPO}/releases/latest/download/Alixo-Setup.exe`;
-const RELEASES_URL = `https://github.com/${REPO}/releases`;
+const DL_PAGE = { setup: '/telecharger/windows/', portable: '/telecharger/windows-portable/', mac: '/telecharger/mac/' };
+const MAC_URL = DL_PAGE.mac;
+let EXE_URL = null;   // adresse directe du fichier (lue dans releases.json) ; sinon la page /telecharger/windows/ s'en charge
 
 /* ---------- Téléchargement direct ---------- */
 const dlToast = document.getElementById('dl-toast');
 let toastTimer;
 
 function startDownload() {
+  if (!EXE_URL) { location.href = DL_PAGE.setup; return; }
   const a = document.createElement('a');
   a.href = EXE_URL;
   a.rel = 'noopener';
@@ -40,7 +42,7 @@ if (isMac) {
   if (n) n.hidden = false;
 }
 
-/* ---------- Version, poids, portable, macOS, changelog (API GitHub) ---------- */
+/* ---------- Version, poids, portable, macOS, changelog (/releases.json) ---------- */
 function escapeHtml(s) {
   return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
@@ -75,35 +77,32 @@ function renderNotes(md) {
   return html;
 }
 
-fetch(`https://api.github.com/repos/${REPO}/releases/latest`)
+fetch('/releases.json', { cache: 'no-cache' })
   .then(r => (r.ok ? r.json() : null))
   .then(rel => {
     if (!rel) return;
-    const assets = rel.assets || [];
+    const assets = rel.assets || {};
 
-    if (rel.tag_name) {
-      const v = rel.tag_name.replace(/^v?/i, 'v');
+    if (rel.version) {
+      const v = 'v' + rel.version;
       document.querySelectorAll('.js-version').forEach(el => { el.textContent = v; });
     }
-    const setup = assets.find(a => a.name === 'Alixo-Setup.exe');
+    const setup = assets.setup;
+    if (setup && setup.url) EXE_URL = setup.url;
     if (setup && setup.size) {
       const mo = (setup.size / 1048576).toFixed(setup.size > 104857600 ? 0 : 1).replace('.', ',');
       document.querySelectorAll('.js-size').forEach(el => { el.textContent = mo + ' Mo'; });
     }
-    const portable = assets.find(a => /portable\.exe$/i.test(a.name));
-    const portableLink = document.getElementById('dl-portable');
-    if (portable && portableLink) portableLink.href = portable.browser_download_url;
 
-    /* Le jour où un .dmg apparaît dans la release, tout ce qui dit « bientôt » passe à « disponible ». */
-    const mac = assets.find(a => /\.dmg$/i.test(a.name));
+    /* Le jour où un .dmg apparaît dans la version publiée, tout ce qui dit « bientôt » passe à « disponible ». */
+    const mac = assets.mac;
     if (mac) {
-      const MAC_URL = `https://github.com/${REPO}/releases/latest/download/Alixo-Mac.dmg`;
       const card = document.getElementById('dl-mac');
       const btn = document.getElementById('btn-mac');
       card.classList.add('available');
       btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 19h16"/></svg> Télécharger Alixo-Mac.dmg';
       btn.classList.remove('ghost'); btn.classList.add('primary');
-      btn.href = MAC_URL; btn.removeAttribute('target');
+      btn.href = MAC_URL; btn.removeAttribute('target'); btn.removeAttribute('rel');
       const tag = card.querySelector('.dl-soon-tag');
       if (tag) { tag.textContent = 'Disponible'; tag.style.display = 'inline-block'; }
       const txt = card.querySelector('.dl-mac-txt');
@@ -125,7 +124,7 @@ fetch(`https://api.github.com/repos/${REPO}/releases/latest`)
       const faqQ = document.getElementById('faq-mac-q'), faqA = document.getElementById('faq-mac-a');
       if (faqQ && faqA) {
         faqQ.textContent = 'Alixo existe sur Mac ?';
-        faqA.innerHTML = 'Oui, depuis la ' + (rel.tag_name || '').replace(/^v?/i, 'v') + ' : une application universelle (Apple Silicon et Intel), avec le même compte et les mêmes cours que sur Windows et sur le web. <a href="' + MAC_URL + '">Télécharge Alixo-Mac.dmg</a>, glisse Alixo dans Applications, puis au premier lancement fais un clic droit › « Ouvrir » (l\'application n\'est pas encore signée par Apple). Les nouvelles versions sont signalées dans l\'application.';
+        faqA.innerHTML = 'Oui, depuis la ' + (rel.tag_name || '').replace(/^v?/i, 'v') + ' : une application universelle (Apple Silicon et Intel), avec le même compte et les mêmes cours que sur Windows et sur le web. <a href="' + MAC_URL + '">Télécharge Alixo-Mac.dmg</a>, glisse Alixo dans Applications, puis au premier lancement autorise l\'ouverture une fois dans Réglages Système › Confidentialité et sécurité › « Ouvrir quand même » (l\'application n\'est pas encore signée par Apple) : <a href="' + MAC_URL + '">le mode d\'emploi en trois étapes</a>. Les nouvelles versions sont signalées dans l\'application.';
       }
       const foot = document.getElementById('foot-copy');
       if (foot) foot.textContent = '© 2026 Alixo · Windows, macOS et web.';
@@ -133,13 +132,13 @@ fetch(`https://api.github.com/repos/${REPO}/releases/latest`)
     }
 
     /* Changelog */
-    if (rel.body) {
+    if (rel.notes) {
       const body = document.getElementById('cl-body');
-      const html = renderNotes(rel.body);
+      const html = renderNotes(rel.notes);
       if (body && html) body.innerHTML = html;
     }
-    if (rel.published_at) {
-      const d = new Date(rel.published_at);
+    if (rel.date) {
+      const d = new Date(rel.date);
       const el = document.getElementById('cl-date');
       if (el) el.textContent = 'Publiée le ' + d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
     }
