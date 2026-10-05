@@ -4,7 +4,8 @@
    sync.js : utilise directement les fonctions globales de l'application.
 
    Données :
-   - profiles/{uid}            → { email, emailLower, name, pseudo, pseudoLower }
+   - profiles/{uid}            → { email, emailLower, name, pseudo, pseudoLower }  (lisible par le titulaire et les admins)
+   - handles/{pseudoLower}     → { uid, pseudo, name, email }  (1.26 : annuaire des pseudos, lu document par document)
    - shares/{sid}              → { owner, ownerName, ownerEmail, kind: doc|folder|event, target, title, color,
                                    members: { uid: { role: read|write, name, email, since } }, memberIds: [uid],
                                    invites: [{ email, role, name, by, ts }], inviteEmails: [email],
@@ -72,33 +73,40 @@ window.AlixoShare = (() => {
     if (/unavailable|network/.test(code)) return 'Serveur injoignable — vérifiez la connexion internet.';
     return (err && err.message) || String(err);
   }
+  /* 1.26 : annuaire des pseudos — handles/{pseudoLower} → { uid, pseudo, name, email }. Les profils ne sont plus
+     lisibles entre utilisateurs ; seul un pseudo connu permet de retrouver quelqu'un (lecture d'un document précis,
+     jamais de liste). Choisir un pseudo, c'est accepter que les personnes qui le connaissent puissent vous inviter. */
+  const handles = () => db.collection('handles');
   async function setPseudo(p) {
     p = String(p || '').trim().replace(/\s+/g, ' ');
     if (p && !/^[\p{L}\p{N} ._-]{3,24}$/u.test(p)) { toast('Pseudo : 3 à 24 caractères (lettres, chiffres, espace, . _ -)'); return false; }
+    const h = p ? norm2(p) : '', old = profile.pseudo ? norm2(profile.pseudo) : '';
     try {
-      if (p) {
-        const q = await db.collection('profiles').where('pseudoLower', '==', norm2(p)).limit(1).get();
-        if (!q.empty && q.docs[0].id !== uid) { toast('Ce pseudo est déjà pris'); return false; }
+      if (h) {
+        const s = await handles().doc(h).get();
+        if (s.exists && s.data().uid !== uid) { toast('Ce pseudo est déjà pris'); return false; }
+        await handles().doc(h).set({ uid, pseudo: p, name: me.name, email: me.email, updatedAt: now() });
       }
-      await db.collection('profiles').doc(uid).set({ uid, email: me.email, emailLower: me.email, name: me.name, pseudo: p, pseudoLower: norm2(p), updatedAt: now() }, { merge: true });
+      if (old && old !== h) await handles().doc(old).delete().catch(() => {});
+      await db.collection('profiles').doc(uid).set({ uid, email: me.email, emailLower: me.email, name: me.name, pseudo: p, pseudoLower: h, updatedAt: now() }, { merge: true });
     } catch (err) { console.error('Share (pseudo) :', err); toast(friendly(err), { duration: 7000 }); return false; }
     profile.pseudo = p;
-    toast(p ? `Pseudo « ${p} » enregistré — vos amis peuvent vous inviter avec` : 'Pseudo retiré');
+    toast(p ? `Pseudo « ${p} » enregistré — les personnes qui le connaissent peuvent vous inviter` : 'Pseudo retiré');
     return true;
   }
-  /* trouve un membre par pseudo ou par e-mail → { uid?, email, name } */
+  /* trouve un membre par pseudo ou par e-mail → { uid?, email, name }. Une adresse e-mail n'est plus cherchée dans
+     les profils (1.26) : l'invitation est rangée sous l'adresse, et l'invité la voit à sa connexion. */
   async function findUser(input) {
     const s = String(input || '').trim();
     if (!s) return null;
     if (s.includes('@')) {
       const email = norm2(s);
-      try { const q = await db.collection('profiles').where('emailLower', '==', email).limit(1).get(); if (!q.empty) { const d = q.docs[0].data(); return { uid: q.docs[0].id, email, name: d.pseudo || d.name || email }; } } catch { /* règles / hors ligne */ }
       return { email, name: email.split('@')[0] };
     }
-    const q = await db.collection('profiles').where('pseudoLower', '==', norm2(s.replace(/^@/, ''))).limit(1).get();
-    if (q.empty) return null;
-    const d = q.docs[0].data();
-    return { uid: q.docs[0].id, email: d.emailLower || d.email, name: d.pseudo || d.name || '' };
+    const snap = await handles().doc(norm2(s.replace(/^@/, ''))).get();
+    if (!snap.exists) return null;
+    const d = snap.data();
+    return { uid: d.uid, email: norm2(d.email || ''), name: d.pseudo || d.name || '' };
   }
 
   /* ---------------- contenu partagé par le propriétaire ---------------- */

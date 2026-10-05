@@ -3,7 +3,11 @@
    Firestore :
    - admins/{uid}            → { email, addedAt, addedBy }           (qui peut entrer ici)
    - profiles/{uid}          → écrit par l'application : email, name, pseudo, lastSeen, version, platform, nDocs,
-                                specialites ; + disabled, disabledReason (posés ici)
+                                specialites, storage (tailles, 1.26), ageGroup (1.26), plusConsent (1.26) ; + disabled, disabledReason (posés ici).
+                                Lisible par le titulaire et les administrateurs seulement (1.26).
+   - audit/{id}              → 1.26 : journal des actions d'administration { ts, by, byEmail, action, target, details } — écrit par
+                                l'administrateur qui agit, jamais modifié ni effacé ; le contenu des cours (users/{uid}/**) n'est
+                                plus lisible depuis le panneau
    - config/aikeys           → { keys: [{ id, key, label, enabled, addedAt }] }  (réservoir, admins seulement)
    - keys/{uid}              → { gemini, keyId, note, force, assignedAt }  (lisible par l'utilisateur seul)
    - config/public           → { announcements: [{ id, title, text, url, audience, ts, until, silent }],
@@ -58,6 +62,11 @@
   const planActive = pl => !!(pl && pl.plus && (!pl.until || +pl.until > Date.now()));
   const planLabel = pl => !planActive(pl) ? '' : (pl.until ? 'jusqu’au ' + new Date(+pl.until).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : 'sans fin');
   const unsubs = [];
+  /* 1.26 : journal des actions d'administration (collection audit, lecture seule pour tous, jamais effacée) */
+  const audit = (action, target, details) => {
+    if (!me) return Promise.resolve();
+    return db.collection('audit').add({ ts: Date.now(), by: me.uid, byEmail: me.email || '', action, target: String(target || ''), details: details || null }).catch(err => console.warn('Audit :', err.message));
+  };
 
   /* ---------------- connexion ---------------- */
   $('#google').addEventListener('click', async () => {
@@ -182,15 +191,16 @@
     if (act === 'msg') return openMsgModal(p);
     if (act === 'disable') {
       modal(`<h3>Suspendre ${esc(p.email || p.uid)}</h3><p class="muted">L’application affichera « Accès suspendu » à sa prochaine synchronisation ; ses cours restent sur ses appareils.</p><label class="field">Motif (affiché à l’utilisateur)<textarea id="dis-reason" placeholder="Ex. compte partagé entre plusieurs personnes, contactez…"></textarea></label><div class="modal-foot"><button class="btn ghost" data-close>Annuler</button><button class="btn danger ghost" id="dis-ok">Suspendre</button></div>`, (c, close) => {
-        c.querySelector('#dis-ok').onclick = async () => { await db.collection('profiles').doc(uid).set({ disabled: true, disabledReason: c.querySelector('#dis-reason').value.trim(), disabledAt: Date.now(), disabledBy: me.email || me.uid }, { merge: true }); close(); toast('Compte suspendu'); };
+        c.querySelector('#dis-ok').onclick = async () => { const reason = c.querySelector('#dis-reason').value.trim(); await db.collection('profiles').doc(uid).set({ disabled: true, disabledReason: reason, disabledAt: Date.now() }, { merge: true }); audit('user.suspend', uid, { reason }); close(); toast('Compte suspendu'); };
       });
       return;
     }
-    if (act === 'enable') { await db.collection('profiles').doc(uid).set({ disabled: false, disabledReason: FV.delete() }, { merge: true }); toast('Compte réactivé'); }
+    if (act === 'enable') { await db.collection('profiles').doc(uid).set({ disabled: false, disabledReason: FV.delete(), disabledAt: FV.delete() }, { merge: true }); audit('user.enable', uid); toast('Compte réactivé'); }
   });
   $('#users-csv').addEventListener('click', () => {
     const rows = [['uid', 'email', 'nom', 'pseudo', 'specialites', 'statut', 'derniere_ouverture', 'version', 'plateforme', 'seances', 'cle_ia', 'alixo_plus', 'alixo_plus_fin', 'suspendu']].concat(filteredUsers().map(p => { const pl = planOf(p.uid); return [p.uid, p.email || '', p.name || '', p.pseudo || '', (p.specialites || []).join('|'), presence(p).label, p.lastSeen ? new Date(p.lastSeen).toISOString() : '', p.version || '', p.platform || '', p.nDocs ?? '', state.assigned.has(p.uid) ? 'oui' : 'non', planActive(pl) ? 'oui' : 'non', planActive(pl) && pl.until ? new Date(+pl.until).toISOString() : '', p.disabled ? 'oui' : 'non']; }));
     const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\n');
+    audit('users.csv', '', { n: rows.length - 1 });
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })); a.download = `alixo-utilisateurs-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
   });
   /* ---------------- Alixo+ (1.16) : activer / prolonger / retirer ---------------- */
@@ -207,29 +217,23 @@
       const sel = c.querySelector('#pl-dur'), uw = c.querySelector('#pl-until-w');
       const sync = () => { uw.hidden = sel.value !== 'custom'; }; sel.onchange = sync; sync();
       const rm = c.querySelector('#pl-rm');
-      if (rm) rm.onclick = async () => { await db.collection('plans').doc(p.uid).delete(); close(); toast('Alixo+ retiré'); };
+      if (rm) rm.onclick = async () => { await db.collection('plans').doc(p.uid).delete(); audit('plan.remove', p.uid); close(); toast('Alixo+ retiré'); };
       c.querySelector('#pl-ok').onclick = async () => {
         let until = 0;
         if (sel.value === 'custom') { const v = c.querySelector('#pl-until').value; if (!v) { toast('Indiquez la date de fin'); return; } until = new Date(v + 'T23:59:59').getTime(); if (until < Date.now()) { toast('La date de fin est déjà passée'); return; } }
         else if (+sel.value > 0) { const d = new Date(base); d.setMonth(d.getMonth() + +sel.value); until = d.getTime(); }
         await db.collection('plans').doc(p.uid).set({ plus: true, until, since: on && cur.since ? cur.since : Date.now(), updatedAt: Date.now(), by: me.email || me.uid, note: c.querySelector('#pl-note').value.trim(), email: p.email || '' });
+        audit('plan.set', p.uid, { until });
         close(); toast(until ? `Alixo+ actif jusqu’au ${new Date(until).toLocaleDateString('fr-FR')}` : 'Alixo+ actif sans fin');
       };
     });
   }
   async function openStorageModal(p) {
-    modal(`<h3>Stockage de ${esc(p.email || p.uid)}</h3><div id="st-body" class="storage">Lecture de la base…</div><div class="modal-foot"><button class="btn ghost" data-close>Fermer</button></div>`, async c => {
-      try {
-        const u = db.collection('users').doc(p.uid);
-        const [meta, docs, imgs, files] = await Promise.all([u.get(), u.collection('docs').get(), u.collection('imgs').get(), u.collection('files').get()]);
-        const size = s => { let n = 0; s.forEach(d => { const x = d.data(); n += x.data ? String(x.data).length : JSON.stringify(x).length; }); return n; };
-        const bDocs = size(docs), bImgs = size(imgs);
-        let bFiles = 0; files.forEach(d => { bFiles += +(d.data().size || 0); });
-        const bMeta = meta.exists && meta.data().meta ? String(meta.data().meta).length : 0;
-        const tot = bDocs + bImgs + bFiles + bMeta;
-        c.querySelector('#st-body').innerHTML = `<p><b>${fmtBytes(tot)}</b> dans la base (${(tot / 1073741824).toFixed(3).replace('.', ',')} Go)</p><p>Cours : <b>${docs.size}</b> séances · ${fmtBytes(bDocs + bMeta)}<br>Images : <b>${imgs.size}</b> · ${fmtBytes(bImgs)}<br>Fichiers : <b>${files.size}</b> · ${fmtBytes(bFiles)}</p><p class="muted small">Dernière synchronisation : ${when(meta.exists ? meta.data().updatedAt : 0)}. Le contenu des cours n’est pas affiché.</p>`;
-      } catch (e) { c.querySelector('#st-body').innerHTML = `<p class="err">Lecture impossible : ${esc(e.message)}</p><p class="muted small">Les règles Firestore doivent autoriser la lecture de <code>users/{uid}</code> et de ses sous-collections aux administrateurs (SETUP-COMPTES.md § 6).</p>`; }
-    });
+    /* 1.26 : tailles déclarées par l'application (profiles/{uid}.storage) — le panneau ne lit plus users/{uid} */
+    const st = p.storage || null;
+    modal(`<h3>Stockage de ${esc(p.email || p.uid)}</h3><div id="st-body" class="storage">${st
+      ? `<p><b>${fmtBytes(st.total)}</b> dans la base (${((st.total || 0) / 1073741824).toFixed(3).replace('.', ',')} Go)</p><p>Cours : <b>${st.nDocs ?? '—'}</b> séances · ${fmtBytes(st.docs)}<br>Images : ${fmtBytes(st.imgs)}<br>Fichiers : <b>${st.nFiles ?? '—'}</b> · ${fmtBytes(st.files)}</p><p class="muted small">Tailles calculées par l’application le ${when(st.at)}. Le contenu des cours n’est pas accessible depuis le panneau.</p>`
+      : '<p class="muted">Pas encore de mesure : l’application (1.26 ou plus récente) envoie les tailles à sa prochaine ouverture.</p>'}</div><div class="modal-foot"><button class="btn ghost" data-close>Fermer</button></div>`);
   }
 
   /* ---------------- clés API ---------------- */
@@ -292,10 +296,11 @@
       const sync = () => { cw.hidden = sel.value !== '__custom'; }; sel.onchange = sync; sync();
       c.querySelector('#as-ok').onclick = async () => {
         const v = sel.value;
-        if (!v) { await db.collection('keys').doc(p.uid).delete(); close(); toast('Attribution retirée'); return; }
+        if (!v) { await db.collection('keys').doc(p.uid).delete(); audit('key.remove', p.uid); close(); toast('Attribution retirée'); return; }
         const key = v === '__custom' ? c.querySelector('#as-custom').value.trim() : keyById(v).key;
         if (!key || key.length < 20) { toast('Clé invalide'); return; }
         await db.collection('keys').doc(p.uid).set({ gemini: key, keyId: v === '__custom' ? 'custom' : v, note: c.querySelector('#as-note').value.trim(), force: c.querySelector('#as-force').checked, assignedAt: Date.now(), assignedBy: me.email || me.uid });
+        audit('key.assign', p.uid, { keyId: v === '__custom' ? 'custom' : v, force: c.querySelector('#as-force').checked });
         close(); toast('Clé attribuée');
       };
     });
@@ -310,6 +315,7 @@
       let batch = db.batch(), n = 0;
       for (const uid of state.assigned.keys()) { batch.delete(db.collection('keys').doc(uid)); if (++n % 400 === 0) { await batch.commit(); batch = db.batch(); } }
       if (n % 400) await batch.commit();
+      audit('key.clearAll', '', { n });
       log(`${n} attribution(s) retirée(s).`); return;
     }
     const K = state.keysDoc.keys.filter(k => k.enabled !== false);
@@ -328,6 +334,7 @@
       if (++n % 400 === 0) { await batch.commit(); batch = db.batch(); }
     }
     if (n % 400) await batch.commit();
+    audit(onlyMissing ? 'key.distribute' : 'key.rebalance', '', { n, force });
     log(`Terminé : ${n} attribution(s). Charge : ` + K.map(k => `${keyLabel(k)} ${load[k.id]}`).join(' · '));
     toast(`${n} clé(s) attribuée(s)`);
   }
@@ -364,6 +371,7 @@
         const batch = db.batch(); const made = [];
         for (let i = 0; i < n; i++) { const code = newCode(); made.push(code); batch.set(db.collection('codes').doc(code), { kind: 'plus', months, label, createdAt: Date.now(), by: me.email || me.uid, usedBy: null }); }
         try { await batch.commit(); } catch (e) { toast('Création impossible : ' + e.message); return; }
+        audit('code.create', '', { n, months, label });
         c.querySelector('#cg-out').hidden = false; c.querySelector('#cg-list').value = made.join('\n'); c.querySelector('#cg-ok').textContent = 'Générer encore';
         toast(`${n} clé${n > 1 ? 's' : ''} créée${n > 1 ? 's' : ''}`);
       };
@@ -377,7 +385,7 @@
     else if (b.dataset.ca === 'del') {
       if (c.usedBy) { toast('Cette clé a été utilisée : elle reste dans l’historique'); return; }
       if (!await confirmBox('Supprimer cette clé ?', `${code} ne pourra plus être activée.`, 'Supprimer', true)) return;
-      await db.collection('codes').doc(code).delete(); toast('Clé supprimée');
+      await db.collection('codes').doc(code).delete(); audit('code.delete', code); toast('Clé supprimée');
     }
   });
 
@@ -442,13 +450,14 @@
       uid = p.uid; email = p.email || v;
     } else { const p = state.profiles.find(x => x.uid === v); email = p ? p.email || '' : ''; }
     await db.collection('admins').doc(uid).set({ email, addedAt: Date.now(), addedBy: me.email || me.uid });
+    audit('admin.add', uid, { email });
     $('#adm-mail').value = ''; toast('Administrateur ajouté');
   });
   $('#adm-tbl').addEventListener('click', async e => {
     const b = e.target.closest('[data-ad]'); if (!b) return;
     const uid = b.closest('tr').dataset.uid; if (uid === me.uid) return;
     if (!await confirmBox('Retirer cet administrateur ?', 'Il perdra l’accès à ce panneau (ses cours ne sont pas touchés).', 'Retirer', true)) return;
-    await db.collection('admins').doc(uid).delete(); toast('Administrateur retiré');
+    await db.collection('admins').doc(uid).delete(); audit('admin.remove', uid); toast('Administrateur retiré');
   });
 
   /* ---------------- présence (1.12) ----------------
@@ -482,6 +491,7 @@
       if (++n % 400 === 0) { await batch.commit(); batch = db.batch(); }
     }
     if (n % 400) await batch.commit();
+    audit('msg.send', targets.length === 1 ? targets[0].uid : '', { n, title: m.title, popup: !!m.popup });
     /* journal (200 derniers envois) */
     const log = state.msglog.concat(items).sort((a, b) => b.ts - a.ts).slice(0, 200);
     await msgLogRef.set({ items: log, updatedAt: ts });
@@ -558,8 +568,8 @@
      Façon phpMyAdmin : collections racine, documents par pages de 50, recherche locale, filtre serveur,
      document complet avec ses sous-collections connues. Firestore ne liste pas les sous-collections
      depuis le navigateur : elles sont déclarées ici. */
-  const DB_ROOTS = ['profiles', 'users', 'admins', 'keys', 'inbox', 'config', 'shares', 'mail'];
-  const DB_SUBS = { users: ['docs', 'imgs', 'files'], 'users/*/files': ['chunks'], shares: ['docs', 'imgs', 'log'], inbox: ['msgs'] };
+  const DB_ROOTS = ['profiles', 'admins', 'keys', 'plans', 'codes', 'inbox', 'config', 'shares', 'mail', 'audit'];   // 1.26 : plus de users/ (contenu des cours)
+  const DB_SUBS = { shares: ['log', 'presence'], inbox: ['msgs'] };   // 1.26 : plus de users/** ni de contenu de partage
   const DB_PAGE = 50;
   const dbs = { path: '', docs: [], last: null, where: null, done: false, busy: false, ready: false };
   /* sous-collections connues d'un document : users/UID → docs, imgs, files ; users/UID/files/ID → chunks */
@@ -579,7 +589,7 @@
     $('#db-filter').addEventListener('click', () => { const f = $('#db-wf').value.trim(); if (!f) { toast('Indiquez un champ'); return; } dbOpen(dbs.path, { field: f, op: $('#db-wo').value, value: parseVal($('#db-wv').value) }); });
     $('#db-reset').addEventListener('click', () => { $('#db-wf').value = ''; $('#db-wv').value = ''; $('#db-q').value = ''; dbOpen(dbs.path); });
     $('#db-more').addEventListener('click', () => dbLoad());
-    $('#db-export').addEventListener('click', () => { if (!dbs.docs.length) { toast('Rien à exporter'); return; } const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(dbs.docs.map(d => Object.assign({ _id: d.id, _path: d.path }, plain(d.data))), null, 2)], { type: 'application/json' })); a.download = `alixo-${dbs.path.replace(/\//g, '_')}-${new Date().toISOString().slice(0, 10)}.json`; a.click(); });
+    $('#db-export').addEventListener('click', () => { if (!dbs.docs.length) { toast('Rien à exporter'); return; } audit('db.export', dbs.path, { n: dbs.docs.length }); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(dbs.docs.map(d => Object.assign({ _id: d.id, _path: d.path }, plain(d.data))), null, 2)], { type: 'application/json' })); a.download = `alixo-${dbs.path.replace(/\//g, '_')}-${new Date().toISOString().slice(0, 10)}.json`; a.click(); });
     $('#db-tbl').addEventListener('click', e => { const tr = e.target.closest('tr[data-path]'); if (tr) dbOpenDoc(tr.dataset.path); });
     $('#db-crumbs').addEventListener('click', e => { const b = e.target.closest('[data-cp]'); if (!b) return; const p = b.dataset.cp; if (!p) return; if (p.split('/').length % 2 === 0) dbOpenDoc(p); else dbOpen(p); });
     dbOpen('profiles');
@@ -600,6 +610,7 @@
   async function dbOpen(path, where) {
     if (!path) return;
     dbs.path = path; dbs.docs = []; dbs.last = null; dbs.where = where || null; dbs.done = false;
+    if (path !== 'audit') audit('db.list', path, where ? { where: `${where.field} ${where.op} ${JSON.stringify(where.value)}` } : null);
     if (!where) { $('#db-wf').value = ''; $('#db-wv').value = ''; }
     dbCrumbs(path);
     $('#db-tbl thead').innerHTML = ''; $('#db-tbl tbody').innerHTML = '';
@@ -653,6 +664,7 @@
       c.closest('.modal-card').classList.add('db-doc');
       c.querySelector('#dbd-open-col').onclick = () => { close(); dbOpen(col); };
       try {
+        audit('db.read', path);
         const snap = await db.doc(path).get();
         if (!snap.exists) { c.querySelector('#dbd-body').innerHTML = '<p class="err">Ce document n’existe pas (une sous-collection peut exister sans document parent).</p>' + subsHTML(path); bindSubs(c, close, path); return; }
         const data = plain(snap.data());

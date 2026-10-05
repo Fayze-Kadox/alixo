@@ -157,7 +157,7 @@
 
   <section id="v-admins" class="view" hidden>
     <div class="vhead"><h2>Administrateurs</h2><div class="tools"><input id="adm-mail" placeholder="E-mail d’un utilisateur Alixo (ou UID)" autocomplete="off"><button id="adm-add" class="btn">Ajouter</button></div></div>
-    <p class="muted">Un administrateur peut voir les utilisateurs, attribuer des clés, activer Alixo+, suspendre des comptes et publier des annonces. Il ne peut pas lire le contenu des cours depuis ce panneau.</p>
+    <p class="muted">Un administrateur peut voir les utilisateurs, attribuer des clés, activer Alixo+, suspendre des comptes et publier des annonces. Il ne peut pas lire le contenu des cours (les règles Firestore le lui interdisent). Chaque action faite ici (suspension, Alixo+, clé IA, message, export, consultation de la base) est inscrite dans le journal <code>audit</code>, consultable dans l’onglet Base de données.</p>
     <div class="card table-card"><table id="adm-tbl"><thead><tr><th>E-mail</th><th>UID</th><th>Ajouté</th><th></th></tr></thead><tbody></tbody></table></div>
   </section>
 </main>

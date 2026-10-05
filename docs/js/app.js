@@ -16,7 +16,7 @@ const fmtDate = ts => new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric',
 
 const DEFAULT_TINT = '#33658a';
 /* version de l'application (tenue à jour avec package.json) — sert aux notifications « nouvelle version installée » */
-const ALIXO_VERSION = '1.25.0';
+const ALIXO_VERSION = '1.26.0';
 /* version web d'Alixo (GitHub Pages) et téléchargement de la version PC */
 const ALIXO_WEB_URL = 'https://alixoapp.com/docs/';
 /* 1.23 : tout passe par le site (pages de téléchargement et de versions) — jamais de lien direct vers l'hébergement des fichiers */
@@ -1921,6 +1921,7 @@ function accountSectionHTML() {
         </div>
         <div class="acc-facts">
           <div class="acc-fact"><span>Études</span><b>${esc(niveau || 'Profil non renseigné')}</b></div>
+          <div class="acc-fact"><span>Âge</span><b>${p && p.birth ? esc(String(ageFromBirth(p.birth)) + ' ans') + (p.parent && p.parent.email ? ' · accord parental' : '') : 'À renseigner'}</b></div>
           <div class="acc-fact"><span>Spécialités</span><b>${esc(specs || '—')}</b></div>
           <div class="acc-fact"><span>Synchronisation</span><b class="acc-dot ${syncTone(sync)}">${esc(sync)}</b></div>
           <div class="acc-fact"><span>Formule</span><b>${esc(planLabel())}</b></div>
@@ -2119,10 +2120,49 @@ function refreshPlusUi() {
   applyAppLogo();
   if (window.AlixoTodo) AlixoTodo.refresh();
 }
+function openExternalUrl(url) {
+  if (window.alixoDesktop && alixoDesktop.openExternal) alixoDesktop.openExternal(url); else window.open(url, '_blank', 'noopener');
+}
+/* 1.26 : avant le lien de paiement — informations précontractuelles (C. conso., art. L. 221-5), acceptation des CGV
+   et renonciation expresse au droit de rétractation (art. L. 221-28) ; un mineur est renvoyé vers un parent. */
 function openPlusUrl() {
   const url = plusOffer.url;
   if (!url) return;
-  if (window.alixoDesktop && alixoDesktop.openExternal) alixoDesktop.openExternal(url); else window.open(url, '_blank', 'noopener');
+  const ag = ageGroup();
+  if (ag === 'u15' || ag === '15-17') {
+    openDialog({ id: 'plusminor', cls: 'plus-dlg', eyebrow: 'Alixo+', title: 'Demande à un parent',
+      sub: 'Un abonnement est un contrat : avant 18 ans, c’est un parent ou un tuteur qui l’achète.',
+      body: `<div class="po-hint">Ton parent ou tuteur peut ouvrir le lien ci-dessous, lire les <a href="${LEGAL_URLS.cgv}" target="_blank" rel="noopener">conditions générales de vente</a> et payer. Il recevra une clé d’activation à saisir ici, dans Paramètres › Alixo+ › Clé d’activation.</div>
+        <div class="po-row"><input id="pm-url" readonly value="${esc(url)}"><button class="pobtn" id="pm-copy" type="button">Copier le lien</button></div>`,
+      foot: '<button class="cta ghost" type="button" data-dlg-close>Fermer</button>',
+      onMount: card => { card.querySelector('#pm-copy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(url); toast('Lien copié'); } catch { card.querySelector('#pm-url').select(); } }); } });
+    return;
+  }
+  if (!ag && window.AlixoAuth && AlixoAuth.account()) { openOnboarding(true, { ageOnly: true }); return; }
+  const price = plusOffer.price ? esc(plusOffer.price) : 'prix indiqué sur la page de paiement';
+  openDialog({ id: 'plusbuy', cls: 'plus-dlg', eyebrow: 'Alixo+', title: 'Avant de payer',
+    sub: 'Ce que vous achetez, et vos droits.',
+    body: `<div class="plus-precontract">
+        <div class="acc-fact"><span>Offre</span><b>Alixo+ — ${price}</b></div>
+        <div class="acc-fact"><span>Durée</span><b>Celle choisie sur la page de paiement (1, 3, 6 ou 12 mois), sans reconduction automatique</b></div>
+        <div class="acc-fact"><span>Activation</span><b>Par une clé envoyée après paiement, à saisir dans Paramètres › Alixo+ › Clé d’activation</b></div>
+        <div class="acc-fact"><span>Vendeur</span><b>L’éditeur d’Alixo, identifié dans les <a href="https://alixoapp.com/mentions-legales.html" target="_blank" rel="noopener">mentions légales</a></b></div>
+        <div class="acc-fact"><span>Rétractation</span><b>14 jours après l’achat, sauf si vous demandez l’activation immédiate ci-dessous</b></div>
+      </div>
+      <label class="plus-chk"><input type="checkbox" id="pb-cgv"> J’ai lu et j’accepte les <a href="${LEGAL_URLS.cgv}" target="_blank" rel="noopener">conditions générales de vente</a> et la <a href="${LEGAL_URLS.privacy}" target="_blank" rel="noopener">politique de confidentialité</a>.</label>
+      <label class="plus-chk"><input type="checkbox" id="pb-ret"> Je demande que l’abonnement commence dès l’activation de ma clé et je reconnais perdre mon droit de rétractation une fois Alixo+ activé (Code de la consommation, art. L. 221-28).</label>
+      <div class="po-hint">Le paiement se fait sur une page externe sécurisée. Vous recevrez une facture et votre clé par e-mail.</div>`,
+    foot: `<button class="cta ghost" type="button" data-dlg-close>Annuler</button><button class="cta plus-cta" type="button" id="pb-go" disabled>Continuer vers le paiement</button>`,
+    onMount: (card, close) => {
+      const cgv = card.querySelector('#pb-cgv'), ret = card.querySelector('#pb-ret'), go = card.querySelector('#pb-go');
+      const sync = () => { go.disabled = !(cgv.checked && ret.checked); };
+      cgv.addEventListener('change', sync); ret.addEventListener('change', sync);
+      go.addEventListener('click', () => {
+        if (window.AlixoCloud && AlixoCloud.enabled && AlixoCloud.recordPlusConsent) AlixoCloud.recordPlusConsent({ price: plusOffer.price || '', cgv: true, waiver: true, version: ALIXO_VERSION });
+        close();
+        openExternalUrl(url);
+      });
+    } });
 }
 /* bloc « comment s'abonner » (fenêtre Alixo+ et Paramètres › Alixo+) */
 function plusCtaHTML() {
@@ -9365,6 +9405,22 @@ function healthMode() {
   const p = state.settings.profil;
   return !!(p && Array.isArray(p.specialites) && p.specialites.some(k => AlixoMed.HEALTH_KEYS.includes(k)));
 }
+/* 1.26 : âge — la date de naissance (profil.birth, AAAA-MM-JJ) n'est demandée qu'avec un compte ; elle reste dans les
+   réglages du compte (users/{uid}, lisible par le titulaire seul). Seule la tranche d'âge part dans profiles/{uid}. */
+const AGE_MIN_ALONE = 15;   // en dessous : accord d'un parent ou tuteur (loi Informatique et Libertés, art. 45)
+function ageFromBirth(birth) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(birth || '')); if (!m) return null;
+  const d = new Date(+m[1], +m[2] - 1, +m[3]); if (isNaN(d)) return null;
+  const t = new Date(); let a = t.getFullYear() - d.getFullYear();
+  if (t.getMonth() < d.getMonth() || (t.getMonth() === d.getMonth() && t.getDate() < d.getDate())) a--;
+  return a;
+}
+function ageGroup() {
+  const p = state.settings.profil; const a = p ? ageFromBirth(p.birth) : null;
+  if (a === null) return '';
+  return a < AGE_MIN_ALONE ? 'u15' : a < 18 ? '15-17' : 'adult';
+}
+const LEGAL_URLS = { cgu: 'https://alixoapp.com/conditions.html', privacy: 'https://alixoapp.com/confidentialite.html', cgv: 'https://alixoapp.com/cgv.html' };
 function profilNiveauLabel(p) {
   if (!p) return '';
   if (p.niveau === 'autre') return p.niveauAutre || 'Autre';
@@ -9385,33 +9441,92 @@ function closeOnboarding() {
   if (ov) ov.remove();
 }
 
-function openOnboarding(edit) {
+/* opts.ageOnly (1.26) : ne pose que la question de l'âge (compte existant dont le profil n'a pas de date de naissance) */
+function openOnboarding(edit, opts) {
   closeOnboarding();
+  opts = opts || {};
   const prev = state.settings.profil || null;
   const sel = {
     niveau: prev ? prev.niveau : null,
     niveauAutre: prev ? (prev.niveauAutre || '') : '',
     specialites: new Set(prev ? prev.specialites : []),
-    specialiteAutre: prev ? (prev.specialiteAutre || '') : ''
+    specialiteAutre: prev ? (prev.specialiteAutre || '') : '',
+    birth: prev ? (prev.birth || '') : '',
+    parentEmail: prev && prev.parent ? (prev.parent.email || '') : '',
+    parentOk: !!(prev && prev.parent && prev.parent.consentAt)
   };
 
   const acc = window.AlixoAuth && window.AlixoAuth.account();
   const prenom = acc && acc.name ? acc.name.split(' ')[0] : '';
+  const withAccount = !!acc;   // sans compte, rien ne quitte l'appareil : pas de vérification d'âge
+  const nSteps = withAccount ? 3 : 2;
+  const stepLabel = n => `Étape ${withAccount ? n : n - 1} sur ${nSteps}`;
   const ov = document.createElement('div');
   ov.id = 'obov';
   document.body.appendChild(ov);
 
+  /* ---- étape âge (1.26) : date de naissance ; sous 15 ans, e-mail et accord d'un parent ou tuteur ---- */
+  function renderStep0() {
+    const today = new Date().toISOString().slice(0, 10);
+    ov.innerHTML = `<div class="ob-card">
+      <div class="ob-step">${opts.ageOnly ? 'Ton compte Alixo' : stepLabel(1)}</div>
+      <h2 class="ob-title">${opts.ageOnly ? 'Une question avant de continuer' : `Bienvenue${prenom ? ' ' + esc(prenom) : ''} !`}</h2>
+      <p class="ob-sub">Quelle est ta date de naissance ? Alixo peut être utilisé seul à partir de ${AGE_MIN_ALONE} ans ; avant, l’accord d’un parent ou d’un tuteur est nécessaire.</p>
+      <input type="date" id="ob-birth" class="ob-other-input on" min="1900-01-01" max="${today}" value="${esc(sel.birth)}" required>
+      <div id="ob-parent" class="ob-parent" ${ageFromBirth(sel.birth) !== null && ageFromBirth(sel.birth) < AGE_MIN_ALONE ? '' : 'hidden'}>
+        <p class="ob-sub">Tu as moins de ${AGE_MIN_ALONE} ans : indique l’adresse e-mail d’un parent ou d’un tuteur. Il doit avoir lu la <a href="${LEGAL_URLS.privacy}" target="_blank" rel="noopener">politique de confidentialité</a> et donner son accord à la création de ce compte.</p>
+        <input type="email" id="ob-parent-email" class="ob-other-input on" placeholder="E-mail du parent ou tuteur" autocomplete="off" value="${esc(sel.parentEmail)}">
+        <label class="ob-check"><input type="checkbox" id="ob-parent-ok" ${sel.parentOk ? 'checked' : ''}> Mon parent ou tuteur a lu la politique de confidentialité et donne son accord.</label>
+      </div>
+      <div class="ob-hint">Ta date de naissance sert uniquement à vérifier ton âge. Elle reste dans les réglages de ton compte ; seule ta tranche d’âge est visible de l’administrateur d’Alixo.</div>
+      <div class="ob-foot">
+        <span></span>
+        <button class="cta ob-next" id="ob-next0" type="button">Continuer</button>
+      </div>
+    </div>`;
+    const birthEl = ov.querySelector('#ob-birth'), parentBox = ov.querySelector('#ob-parent');
+    const syncParent = () => { const a = ageFromBirth(birthEl.value); parentBox.hidden = !(a !== null && a < AGE_MIN_ALONE); };
+    birthEl.addEventListener('input', () => { sel.birth = birthEl.value; syncParent(); });
+    birthEl.addEventListener('change', () => { sel.birth = birthEl.value; syncParent(); });
+    ov.querySelector('#ob-parent-email').addEventListener('input', e => { sel.parentEmail = e.target.value.trim(); });
+    ov.querySelector('#ob-parent-ok').addEventListener('change', e => { sel.parentOk = e.target.checked; });
+    ov.querySelector('#ob-next0').addEventListener('click', () => {
+      const a = ageFromBirth(sel.birth);
+      if (a === null || a < 0 || a > 120) { toast('Indique ta date de naissance'); birthEl.focus(); return; }
+      if (a < AGE_MIN_ALONE) {
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(sel.parentEmail)) { toast('Indique l’e-mail d’un parent ou d’un tuteur'); ov.querySelector('#ob-parent-email').focus(); return; }
+        if (!sel.parentOk) { toast('L’accord d’un parent ou d’un tuteur est nécessaire avant ' + AGE_MIN_ALONE + ' ans'); return; }
+      }
+      if (opts.ageOnly) { finishAgeOnly(); return; }
+      renderStep1();
+    });
+    birthEl.focus();
+  }
+  function ageFields() {
+    const a = ageFromBirth(sel.birth);
+    const minor = a !== null && a < AGE_MIN_ALONE;
+    const prevParent = prev && prev.parent && prev.parent.email === sel.parentEmail ? prev.parent : null;
+    return { birth: sel.birth || '', parent: minor ? (prevParent || { email: sel.parentEmail, consentAt: Date.now() }) : null };
+  }
+  function finishAgeOnly() {
+    state.settings.profil = Object.assign({}, state.settings.profil || {}, ageFields(), { ts: Date.now() });
+    save();
+    closeOnboarding();
+    if (window.AlixoCloud && AlixoCloud.enabled) AlixoCloud.beat();
+    const sov = $('#setov'); if (sov && !sov.hidden) renderSettingsBody();
+  }
+
   function renderStep1() {
     ov.innerHTML = `<div class="ob-card">
-      <div class="ob-step">Étape 1 sur 2</div>
-      <h2 class="ob-title">${edit ? 'Ton profil' : `Bienvenue${prenom ? ' ' + esc(prenom) : ''} !`}</h2>
+      <div class="ob-step">${stepLabel(2)}</div>
+      <h2 class="ob-title">${edit || withAccount ? 'Ton profil' : `Bienvenue${prenom ? ' ' + esc(prenom) : ''} !`}</h2>
       <p class="ob-sub">Où en es-tu dans ton parcours ? Alixo s'adapte à ton niveau.</p>
       <div class="ob-levels">
         ${OB_NIVEAUX.map(n => `<button class="ob-level ${sel.niveau === n.k ? 'sel' : ''}" data-k="${n.k}">${n.label}</button>`).join('')}
       </div>
       <input class="ob-other-input ${sel.niveau === 'autre' ? 'on' : ''}" id="ob-niveau-autre" placeholder="Précise ton niveau (ex. BTS, prépa, autodidacte…)" maxlength="60" value="${esc(sel.niveauAutre)}">
       <div class="ob-foot">
-        <span></span>
+        ${withAccount ? '<button class="ob-back" id="ob-back0">‹ Retour</button>' : '<span></span>'}
         <button class="cta ob-next" id="ob-next1" ${sel.niveau ? '' : 'disabled'}>Continuer</button>
       </div>
     </div>`;
@@ -9423,12 +9538,13 @@ function openOnboarding(edit) {
       ov.querySelector('#ob-next1').disabled = false;
     }));
     ov.querySelector('#ob-niveau-autre').addEventListener('input', e => { sel.niveauAutre = e.target.value; });
+    const back0 = ov.querySelector('#ob-back0'); if (back0) back0.addEventListener('click', renderStep0);
     ov.querySelector('#ob-next1').addEventListener('click', renderStep2);
   }
 
   function renderStep2() {
     ov.innerHTML = `<div class="ob-card">
-      <div class="ob-step">Étape 2 sur 2</div>
+      <div class="ob-step">${stepLabel(3)}</div>
       <h2 class="ob-title">Tes spécialités</h2>
       <p class="ob-sub">Choisis-en une ou plusieurs — elles deviendront tes premiers dossiers.</p>
       <div class="ob-chips">
@@ -9456,13 +9572,13 @@ function openOnboarding(edit) {
 
   function finish() {
     const before = new Set((state.settings.profil && state.settings.profil.specialites) || []);
-    state.settings.profil = {
+    state.settings.profil = Object.assign({
       niveau: sel.niveau,
       niveauAutre: sel.niveau === 'autre' ? sel.niveauAutre.trim() : '',
       specialites: [...sel.specialites],
       specialiteAutre: sel.specialites.has('autre') ? sel.specialiteAutre.trim() : '',
       ts: Date.now()
-    };
+    }, withAccount ? ageFields() : { birth: (prev && prev.birth) || '', parent: (prev && prev.parent) || null });
     if (window.AlixoAuth && AlixoAuth.clearNewAccount) AlixoAuth.clearNewAccount();
     // 1.22 : plus de dossiers créés d'office pour les spécialités choisies (l'utilisateur crée les siens)
     save();
@@ -9470,9 +9586,10 @@ function openOnboarding(edit) {
     syncHealthUI();
     if (!currentDocId) { renderCrumbs(); renderLibrary(); }
     toast(edit ? 'Profil mis à jour' : 'Bienvenue sur Alixo !');
+    if (window.AlixoCloud && AlixoCloud.enabled) AlixoCloud.beat();   // 1.26 : tranche d'âge mise à jour
   }
 
-  renderStep1();
+  if (withAccount) renderStep0(); else renderStep1();
 }
 
 /* ============================================================
@@ -9532,7 +9649,12 @@ function closeUpdatePopup() { const ov = $('#updov'); if (ov) ov.remove(); updSh
 /* affiché après la première connexion : compte présent mais profil jamais rempli */
 function maybeOnboard() {
   if (!window.AlixoAuth || !window.AlixoAuth.account()) return;
-  if (state.settings.profil) { if (AlixoAuth.clearNewAccount) AlixoAuth.clearNewAccount(); return; }
+  if (state.settings.profil) {
+    if (AlixoAuth.clearNewAccount) AlixoAuth.clearNewAccount();
+    // 1.26 : compte créé avant la vérification d'âge → une seule question, posée une fois (le profil est synchronisé)
+    if (!state.settings.profil.birth) { const authov = $('#authov'); if (!(authov && !authov.hidden) && !$('#obov')) openOnboarding(true, { ageOnly: true }); }
+    return;
+  }
   // 1.15 : le questionnaire n'est posé qu'au compte tout juste créé sur cet appareil ; une connexion sur un
   // autre ordinateur ou téléphone récupère le profil par la synchronisation (ou se règle dans Paramètres › Compte)
   if (AlixoAuth.isNewAccount && !AlixoAuth.isNewAccount()) return;
@@ -9559,6 +9681,7 @@ window.AlixoApp = {
   openTodoHome, openSharedHome, openDoc, openSettings,
   /* Alixo+ (1.16) et fenêtres centrales : utilisés par js/cloudconfig.js, js/share.js, js/files.js, js/todo.js */
   isPlus, setPlan, setPlusOffer, openPlusDialog, requirePlus, storageAllows, openDialog, closeDialog,
+  storageUsage, ageGroup,   /* 1.26 : tailles et tranche d'âge envoyées par js/cloudconfig.js au panneau admin */
   showUpdatePopup, closeUpdatePopup,
   mergeRemoteDoc, renderAccess, onPresence: () => { renderAccess(); renderPeers(); if (!currentDocId && (libMode === 'docs' || libMode === 'shfolder')) renderLibrary(); },
   showLibrary: () => { showLibrary(); return true; },

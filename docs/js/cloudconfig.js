@@ -3,7 +3,8 @@
    - config/public        → annonces, dernière version (lu par tout compte connecté)
    - keys/{uid}           → clé API Google (Gemini) attribuée par l'administrateur
    - profiles/{uid}       → `disabled` : compte suspendu (posé par l'administrateur) ;
-                            présence (`online`, `activity`, `lastSeen`) écrite ici (1.12)
+                            présence (`online`, `activity`, `lastSeen`) écrite ici (1.12) ;
+                            1.26 : `storage` (tailles), `ageGroup`, `plusConsent` — lisible par le titulaire et les admins seulement
    - inbox/{uid}/msgs/{id} → messages directs de l'administrateur (1.12)
    - plans/{uid}          → Alixo+ (1.16) : { plus, until, since, by, note } posé par l'administrateur ;
                             config/public.plusPrice / plusUrl / plusNote : l'offre affichée dans l'application
@@ -171,12 +172,30 @@ window.AlixoCloud = (() => {
     if (document.hidden) return 'background';
     return document.body.classList.contains('mode-editor') ? 'editor' : 'library';
   };
+  /* 1.26 : tailles de l'espace du compte (cours, images, fichiers), recalculées au plus toutes les 10 min — le panneau
+     admin les lit ici car il n'a plus accès au contenu de users/{uid} */
+  let storageStats = null, storageAt = 0, storageBusy = false;
+  function refreshStorage() {
+    if (storageBusy || Date.now() - storageAt < 10 * 60000 || !window.AlixoApp || !AlixoApp.storageUsage) return;
+    storageBusy = true;
+    AlixoApp.storageUsage().then(u => { storageStats = { docs: u.docs + u.meta, imgs: u.imgs, files: u.filesCloud, nDocs: u.nDocs, nFiles: u.nFiles, total: u.docs + u.meta + u.imgs + u.filesCloud, at: Date.now() }; storageAt = Date.now(); }).catch(() => {}).finally(() => { storageBusy = false; });
+  }
   function beat(extra) {
     if (ended) return;
     lastBeat = Date.now();
+    refreshStorage();
     try {
-      profRef.set(Object.assign({ uid, email: (acc.email || '').toLowerCase(), name: acc.name || '', lastSeen: Date.now(), online: true, activity: activity(), activeAt: lastInput, version: window.AlixoApp ? AlixoApp.version : '', platform: window.alixoDesktop ? 'desktop' : 'web', nDocs: state.docs.length, specialites: (state.settings.profil && state.settings.profil.specialites) || [] }, extra || {}), { merge: true }).catch(() => {});
+      const data = { uid, email: (acc.email || '').toLowerCase(), name: acc.name || '', lastSeen: Date.now(), online: true, activity: activity(), activeAt: lastInput, version: window.AlixoApp ? AlixoApp.version : '', platform: window.alixoDesktop ? 'desktop' : 'web', nDocs: state.docs.length, specialites: (state.settings.profil && state.settings.profil.specialites) || [] };
+      /* 1.26 : tranche d'âge (jamais la date de naissance) pour le panneau admin : 'u15', '15-17', 'adult' ou '' */
+      if (window.AlixoApp && AlixoApp.ageGroup) data.ageGroup = AlixoApp.ageGroup();
+      if (storageStats) data.storage = storageStats;
+      profRef.set(Object.assign(data, extra || {}), { merge: true }).catch(() => {});
     } catch { /* hors ligne */ }
+  }
+  /* 1.26 : trace de l'acceptation des CGV et de la renonciation au droit de rétractation avant un paiement Alixo+
+     (preuve pour l'éditeur, lisible par le titulaire et les administrateurs) */
+  function recordPlusConsent(info) {
+    try { return profRef.set({ plusConsent: Object.assign({ at: Date.now() }, info || {}) }, { merge: true }); } catch { return Promise.resolve(); }
   }
   ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(ev => document.addEventListener(ev, () => { lastInput = Date.now(); }, { passive: true, capture: true }));
   beat();
@@ -215,5 +234,5 @@ window.AlixoCloud = (() => {
     return { ok: true, msg: until ? `Alixo+ activé jusqu’au ${new Date(until).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}` : 'Alixo+ activé sans limite de durée' };
   }
 
-  return { enabled: true, adminKey, beat, showMessage: showMessagePopup, redeemCode };
+  return { enabled: true, adminKey, beat, showMessage: showMessagePopup, redeemCode, recordPlusConsent };
 })();
