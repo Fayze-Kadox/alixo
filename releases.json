@@ -1,31 +1,36 @@
 {
- "generatedAt": "2026-10-05T07:53:19.004Z",
- "version": "1.23.0",
- "date": "2026-10-05T07:13:16Z",
- "notes": "Nouveautés 1.23.0 — pages A4 dans les séances, Planche (tableau blanc), macOS qui s'ouvre, site sans lien vers le code\n\n\n- **Séances découpées en pages A4** : la feuille n'est plus un long rouleau mais une suite de pages, exactement celles du PDF (même zone utile de 673 × 983 px que `printToPDF`, marges comprises) : bande grise et numéro « n / N » entre les pages, en-tête de la page 1 (titre, dossier, professeur, date, onglet) comme dans le PDF. Les sauts calculés à l'écran sont **forcés à l'export** (classe `pg-first` → `break-before: page`) : un PDF n'est plus coupé au hasard, il reproduit page pour page ce que l'on voit. Les blocs ne sont jamais déplacés dans le DOM (une marge haute et un calque `#pg-layer`, recalculés dès qu'une hauteur change). Nouveau bloc **« Saut de page »** (menu `/` › Saut de page, type `pb`) : ce qui suit commence sur une nouvelle page, aussi en Word et dans le PDF des archives. Réglage **Paramètres › Écriture › « Feuille découpée en pages A4 »** (activé par défaut ; décoché : feuille continue comme avant). Limite connue : un bloc ne se coupe pas en deux à l'écran, un long paragraphe qui ne tient pas passe entier à la page suivante (dans le PDF, le texte se coupe naturellement).\n- **Planche** (`app/js/board.js`, bouton **＋ Planche** à côté de « Tableur », aussi dans les menus « créer ici ») : un **tableau blanc libre**, quatrième type de document après la séance, la présentation et le tableur (`kind: 'board'`, `items: [...]`, `blocks` vide : onglets, bibliothèque, corbeille, synchronisation et partage fonctionnent sans rien de nouveau). Un canevas infini (déplacement à la souris, molette, zoom Ctrl+molette, « Tout voir ») où l'on pose des **post-it** colorés, du **texte libre**, des **images**, des **flèches** d'un élément à l'autre (avec libellé) et des **blocs de cours épinglés** : une copie en lecture seule d'un bloc d'une séance, qui ouvre la séance au double-clic. Double-clic sur le fond : nouveau post-it ; sélection (Maj+clic, rectangle), déplacement aimanté (Alt : libre), redimensionnement, double-clic pour écrire, couleur et inclinaison des post-it, devant / derrière, dupliquer (Ctrl+D), Suppr, Ctrl+Z / Ctrl+Y, flèches du clavier, touches N / T / V / H / F (post-it, texte, sélection, main, flèche), collage et glisser-déposer d'images ; aperçu schématique sur la carte de la bibliothèque, recherche Ctrl+K dans les post-it, export PDF (A4 paysage, vue d'ensemble), vue Galaxie et partage. Choix assumé : la Planche complète le dessin (un croquis dans un bloc), l'arbre (hiérarchie) et la galaxie (vue de la bibliothèque) sans les remplacer — c'est le seul endroit où l'on étale librement des idées et des morceaux de plusieurs cours côte à côte.\n- **macOS : l'application s'ouvre enfin** (`build/after-pack.js`) : faute de certificat Apple, l'application est maintenant signée « ad hoc » après l'assemblage. Sans aucune signature, un Mac Apple Silicon refusait l'application (« Alixo est endommagé et ne peut pas être ouvert ») sans recours ; avec la signature ad hoc, macOS demande une autorisation à lever une fois (« Apple ne peut pas vérifier… » › Terminé, puis **Réglages Système › Confidentialité et sécurité › Ouvrir quand même** ; macOS 13-14 : clic droit › Ouvrir). Le .dmg contient « Première ouverture sur Mac.txt », et la page <https://alixoapp.com/telecharger/mac/> donne les trois étapes (l'application et les notifications Mac y renvoient). **Signature et notarisation Apple prêtes** : dès que les secrets `MAC_CERT_P12`, `MAC_CERT_PASSWORD`, `APPLE_ID`, `APPLE_APP_PASSWORD` et `APPLE_TEAM_ID` existent (compte Apple Developer, 99 $/an), le workflow signe (hardened runtime, `build/entitlements.mac.plist`) et notarise tout seul, et l'avertissement disparaît.\n- **Le site ne laisse plus voir l'hébergement du code** : plus aucun lien vers l'hébergement des fichiers ni vers un compte sur alixoapp.com (accueil, documentation, pages système, pied de page, application, cloche, panneau admin). Les téléchargements passent par **alixoapp.com/telecharger/windows/**, **/windows-portable/** et **/mac/** (le fichier part tout seul, avec les étapes d'installation), les nouveautés par **alixoapp.com/versions/**. Le site lit un fichier `releases.json` à sa racine (version, poids, adresses des installateurs, notes de version nettoyées de toute mention de dépôt), généré par `scripts/site-releases.js` dans le workflow « Site web » à chaque publication (aussi après un installateur lancé par un tag). La version portable prend le nom fixe `Alixo-Portable.exe`. Le dépôt public reste là où il est : seul le lien visuel disparaît. Contact des pages légales : contact@alixoapp.com (adresse à créer ou à rediriger).",
+ "generatedAt": "2026-10-05T07:59:28.267Z",
+ "version": "1.23.1",
+ "date": "2026-10-05T07:59:12Z",
+ "notes": "Nouveautés 1.23.1 — vue par pages : plus de trous ni de saut du défilement\n\n\n- **Vue par pages** : le défilement ne « remonte » plus de deux pages quand on passe à la ligne (les sauts de page sont recalculés avant de replacer le curseur, et le bloc sous le curseur reste au même endroit de l'écran quand une page s'ouvre ou se ferme au-dessus). **Plus de pages presque vides** : un bloc plus haut qu'une page (long tableau, grande image) ne part plus entier à la page suivante, il se coupe à l'écran comme dans le PDF ; un bloc qui déborde légèrement n'ouvre plus une page blanche derrière lui. Les numéros de pages tiennent compte des blocs qui s'étalent sur plusieurs pages ; le PDF reste identique à l'écran.",
  "assets": {
   "setup": {
    "name": "Alixo-Setup.exe",
-   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.0/Alixo-Setup.exe",
-   "size": 76823042
+   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.1/Alixo-Setup.exe",
+   "size": 76823213
   },
   "portable": {
    "name": "Alixo-Portable.exe",
-   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.0/Alixo-Portable.exe",
-   "size": 76588434
+   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.1/Alixo-Portable.exe",
+   "size": 76588611
   },
   "mac": {
    "name": "Alixo-Mac.dmg",
-   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.0/Alixo-Mac.dmg",
-   "size": 183873669
+   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.1/Alixo-Mac.dmg",
+   "size": 183857532
   },
   "macZip": {
-   "name": "Alixo-1.23.0-mac.zip",
-   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.0/Alixo-1.23.0-mac.zip",
-   "size": 177295888
+   "name": "Alixo-1.23.1-mac.zip",
+   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.1/Alixo-1.23.1-mac.zip",
+   "size": 177296250
   }
  },
  "history": [
+  {
+   "version": "1.23.1",
+   "date": "2026-10-05T07:59:12Z",
+   "notes": "Nouveautés 1.23.1 — vue par pages : plus de trous ni de saut du défilement\n\n\n- **Vue par pages** : le défilement ne « remonte » plus de deux pages quand on passe à la ligne (les sauts de page sont recalculés avant de replacer le curseur, et le bloc sous le curseur reste au même endroit de l'écran quand une page s'ouvre ou se ferme au-dessus). **Plus de pages presque vides** : un bloc plus haut qu'une page (long tableau, grande image) ne part plus entier à la page suivante, il se coupe à l'écran comme dans le PDF ; un bloc qui déborde légèrement n'ouvre plus une page blanche derrière lui. Les numéros de pages tiennent compte des blocs qui s'étalent sur plusieurs pages ; le PDF reste identique à l'écran."
+  },
   {
    "version": "1.23.0",
    "date": "2026-10-05T07:13:16Z",
