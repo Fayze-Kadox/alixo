@@ -16,7 +16,7 @@ const fmtDate = ts => new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric',
 
 const DEFAULT_TINT = '#33658a';
 /* version de l'application (tenue à jour avec package.json) — sert aux notifications « nouvelle version installée » */
-const ALIXO_VERSION = '1.23.2';
+const ALIXO_VERSION = '1.23.3';
 /* version web d'Alixo (GitHub Pages) et téléchargement de la version PC */
 const ALIXO_WEB_URL = 'https://alixoapp.com/docs/';
 /* 1.23 : tout passe par le site (pages de téléchargement et de versions) — jamais de lien direct vers l'hébergement des fichiers */
@@ -8190,11 +8190,12 @@ function paginate(force) {
   const rects = kids.map(el => { const r = el.getBoundingClientRect(); return { el, top: r.top - top0, bottom: r.bottom - top0, pb: el.classList.contains('pb') }; });
   let shift = 0, pageBase = 0, forced = false, pages = 1;
   const ends = [];   // fin de chaque page terminée par une bande grise (coordonnées finales, depuis top0) et son numéro
+  const cuts = [];   // fin de page à l'intérieur d'un bloc plus haut qu'une page (ligne pointillée : le PDF se coupe là)
   rects.forEach((r, i) => {
     const ft = r.top + shift, fb = r.bottom + shift;
     // le bloc précédent dépasse la page (plus haut qu'une page, ou presque) : il continue sur la page suivante,
     // comme dans le PDF où le texte se coupe tout seul — pas de page blanche, on avance simplement de page
-    while (ft > pageBase + H) { pageBase += H; pages++; }
+    while (ft > pageBase + H) { cuts.push({ y: pageBase + H, k: pages }); pageBase += H; pages++; }
     // un bloc plus haut qu'une page entière ne gagne rien à changer de page (il déborderait de toute façon) :
     // il reste à sa place et se coupe comme dans le PDF, au lieu de laisser une page presque vide derrière lui
     const brk = i > 0 && !r.pb && (forced || (fb - pageBase > H && ft > pageBase + 1 && fb - ft <= H));
@@ -8211,9 +8212,12 @@ function paginate(force) {
   const lastBottom = rects.length ? rects[rects.length - 1].bottom + shift : 0;
   const lastEnd = pageBase + H * Math.max(1, Math.ceil((lastBottom - pageBase) / H));
   const n = pages + Math.max(0, Math.ceil((lastBottom - pageBase) / H) - 1);
+  for (let y = pageBase + H, k = pages; y < lastBottom; y += H, k++) cuts.push({ y, k });   // dernier bloc étalé sur plusieurs pages
   if (rects.length) blocksEl.style.paddingBottom = Math.max(0, (lastEnd - lastBottom) / s) + 'px';
   const num = (y, k) => `<div class="pg-num" style="top:${((padTop + y + padBottom / 2) / s - 7).toFixed(1)}px">${k} / ${n}</div>`;
-  layer.innerHTML = ends.map(e => `<div class="pg-gap" style="top:${((padTop + e.y + padBottom) / s).toFixed(1)}px;height:${(PG_BAND / s).toFixed(1)}px"></div>` + num(e.y, e.k)).join('') + num(lastEnd, n);
+  layer.innerHTML = ends.map(e => `<div class="pg-gap" style="top:${((padTop + e.y + padBottom) / s).toFixed(1)}px;height:${(PG_BAND / s).toFixed(1)}px"></div>` + num(e.y, e.k)).join('')
+    + cuts.map(c => `<div class="pg-cut" style="top:${((padTop + c.y) / s).toFixed(1)}px"><span>${c.k} / ${n} · suite page ${c.k + 1} ↓</span></div>`).join('')
+    + num(lastEnd, n);
   if (caretEl) {   // le bloc du curseur a bougé (une page s'est ouverte ou fermée au-dessus) : on suit
     const dy = caretEl.getBoundingClientRect().top - caretTop;
     if (Math.abs(dy) > 1) { const w = $('#docwrap'); if (w) w.scrollTo({ top: w.scrollTop + dy, behavior: 'instant' }); }

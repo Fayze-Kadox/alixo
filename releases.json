@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-10-05T08:14:03.607Z",
+ "generatedAt": "2026-10-05T11:09:43.183Z",
  "version": "1.23.2",
  "date": "2026-10-05T08:13:46Z",
  "notes": "Nouveautés 1.23.2 — mise à jour automatique : message réel et journal\n\n\n- **Mise à jour automatique (Windows)** : quand le téléchargement de la nouvelle version échoue, la cloche le dit clairement (serveur de téléchargement injoignable depuis ce réseau, ou le message d'erreur réel) au lieu de « Vérification des mises à jour impossible », et propose d'un clic la page de téléchargement du site pour installer la version par-dessus. Le téléchargement est toujours complet (le téléchargement différentiel échouait dès qu'un installateur avait été republié). Journal des mises à jour dans `%APPDATA%\\Alixo\\updater.log`, à joindre en cas de problème.",
