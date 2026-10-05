@@ -1,31 +1,36 @@
 {
- "generatedAt": "2026-10-05T08:08:12.000Z",
- "version": "1.23.1",
- "date": "2026-10-05T07:59:12Z",
- "notes": "Nouveautés 1.23.1 — vue par pages : plus de trous ni de saut du défilement\n\n\n- **Vue par pages** : le défilement ne « remonte » plus de deux pages quand on passe à la ligne (les sauts de page sont recalculés avant de replacer le curseur, et le bloc sous le curseur reste au même endroit de l'écran quand une page s'ouvre ou se ferme au-dessus). **Plus de pages presque vides** : un bloc plus haut qu'une page (long tableau, grande image) ne part plus entier à la page suivante, il se coupe à l'écran comme dans le PDF ; un bloc qui déborde légèrement n'ouvre plus une page blanche derrière lui. Les numéros de pages tiennent compte des blocs qui s'étalent sur plusieurs pages ; le PDF reste identique à l'écran.",
+ "generatedAt": "2026-10-05T08:14:03.607Z",
+ "version": "1.23.2",
+ "date": "2026-10-05T08:13:46Z",
+ "notes": "Nouveautés 1.23.2 — mise à jour automatique : message réel et journal\n\n\n- **Mise à jour automatique (Windows)** : quand le téléchargement de la nouvelle version échoue, la cloche le dit clairement (serveur de téléchargement injoignable depuis ce réseau, ou le message d'erreur réel) au lieu de « Vérification des mises à jour impossible », et propose d'un clic la page de téléchargement du site pour installer la version par-dessus. Le téléchargement est toujours complet (le téléchargement différentiel échouait dès qu'un installateur avait été republié). Journal des mises à jour dans `%APPDATA%\\Alixo\\updater.log`, à joindre en cas de problème.",
  "assets": {
   "setup": {
    "name": "Alixo-Setup.exe",
-   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.1/Alixo-Setup.exe",
-   "size": 76823213
+   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.2/Alixo-Setup.exe",
+   "size": 76822512
   },
   "portable": {
    "name": "Alixo-Portable.exe",
-   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.1/Alixo-Portable.exe",
-   "size": 76588611
+   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.2/Alixo-Portable.exe",
+   "size": 76587911
   },
   "mac": {
    "name": "Alixo-Mac.dmg",
-   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.1/Alixo-Mac.dmg",
-   "size": 183857532
+   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.2/Alixo-Mac.dmg",
+   "size": 183863377
   },
   "macZip": {
-   "name": "Alixo-1.23.1-mac.zip",
-   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.1/Alixo-1.23.1-mac.zip",
-   "size": 177296250
+   "name": "Alixo-1.23.2-mac.zip",
+   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.2/Alixo-1.23.2-mac.zip",
+   "size": 177296762
   }
  },
  "history": [
+  {
+   "version": "1.23.2",
+   "date": "2026-10-05T08:13:46Z",
+   "notes": "Nouveautés 1.23.2 — mise à jour automatique : message réel et journal\n\n\n- **Mise à jour automatique (Windows)** : quand le téléchargement de la nouvelle version échoue, la cloche le dit clairement (serveur de téléchargement injoignable depuis ce réseau, ou le message d'erreur réel) au lieu de « Vérification des mises à jour impossible », et propose d'un clic la page de téléchargement du site pour installer la version par-dessus. Le téléchargement est toujours complet (le téléchargement différentiel échouait dès qu'un installateur avait été republié). Journal des mises à jour dans `%APPDATA%\\Alixo\\updater.log`, à joindre en cas de problème."
+  },
   {
    "version": "1.23.1",
    "date": "2026-10-05T07:59:12Z",
