@@ -1,31 +1,36 @@
 {
- "generatedAt": "2026-10-05T11:35:49.773Z",
- "version": "1.23.3",
- "date": "2026-10-05T11:15:02Z",
- "notes": "Nouveautés 1.23.3 — vue par pages : fin de page visible dans un long bloc\n\n\n- **Vue par pages** : quand un bloc est plus haut qu'une page (long encadré où l'on saute des lignes, grand tableau), deux pages semblaient « regroupées » sans séparation alors que le compte de pages les comptait. Une **ligne pointillée** marque maintenant la fin de page à l'intérieur du bloc, avec son numéro (« 2 / 5 · suite page 3 ») : c'est là que le PDF se coupe.",
+ "generatedAt": "2026-10-05T11:42:45.575Z",
+ "version": "1.23.4",
+ "date": "2026-10-05T11:42:26Z",
+ "notes": "Nouveautés 1.23.4 — mise à jour automatique : installateur verrouillé\n\n\n- **Mise à jour automatique (Windows)** : l'erreur « EPERM: operation not permitted, rename …\\\\alixo-updater\\\\… » (installateur déjà téléchargé verrouillé par l'antivirus ou reste d'un téléchargement interrompu) est maintenant traitée : le dossier `pending` est vidé et le téléchargement recommence tout seul quelques secondes plus tard ; si cela échoue encore, la cloche explique quoi faire (fermer et rouvrir Alixo, ou supprimer `%LOCALAPPDATA%\\\\alixo-updater`) et renvoie vers le site.",
  "assets": {
   "setup": {
    "name": "Alixo-Setup.exe",
-   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.3/Alixo-Setup.exe",
-   "size": 76824517
+   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.4/Alixo-Setup.exe",
+   "size": 76823510
   },
   "portable": {
    "name": "Alixo-Portable.exe",
-   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.3/Alixo-Portable.exe",
-   "size": 76589912
+   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.4/Alixo-Portable.exe",
+   "size": 76588899
   },
   "mac": {
    "name": "Alixo-Mac.dmg",
-   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.3/Alixo-Mac.dmg",
-   "size": 183865780
+   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.4/Alixo-Mac.dmg",
+   "size": 183877183
   },
   "macZip": {
-   "name": "Alixo-1.23.3-mac.zip",
-   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.3/Alixo-1.23.3-mac.zip",
-   "size": 177297211
+   "name": "Alixo-1.23.4-mac.zip",
+   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.4/Alixo-1.23.4-mac.zip",
+   "size": 177297695
   }
  },
  "history": [
+  {
+   "version": "1.23.4",
+   "date": "2026-10-05T11:42:26Z",
+   "notes": "Nouveautés 1.23.4 — mise à jour automatique : installateur verrouillé\n\n\n- **Mise à jour automatique (Windows)** : l'erreur « EPERM: operation not permitted, rename …\\\\alixo-updater\\\\… » (installateur déjà téléchargé verrouillé par l'antivirus ou reste d'un téléchargement interrompu) est maintenant traitée : le dossier `pending` est vidé et le téléchargement recommence tout seul quelques secondes plus tard ; si cela échoue encore, la cloche explique quoi faire (fermer et rouvrir Alixo, ou supprimer `%LOCALAPPDATA%\\\\alixo-updater`) et renvoie vers le site."
+  },
   {
    "version": "1.23.3",
    "date": "2026-10-05T11:15:02Z",
