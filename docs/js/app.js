@@ -16,11 +16,13 @@ const fmtDate = ts => new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric',
 
 const DEFAULT_TINT = '#33658a';
 /* version de l'application (tenue à jour avec package.json) — sert aux notifications « nouvelle version installée » */
-const ALIXO_VERSION = '1.22.0';
+const ALIXO_VERSION = '1.23.0';
 /* version web d'Alixo (GitHub Pages) et téléchargement de la version PC */
 const ALIXO_WEB_URL = 'https://alixoapp.com/docs/';
-const ALIXO_PC_URL = 'https://github.com/Fayze-Kadox/alixo/releases/latest/download/Alixo-Setup.exe';
-const ALIXO_MAC_URL = 'https://github.com/Fayze-Kadox/alixo/releases/latest/download/Alixo-Mac.dmg';
+/* 1.23 : tout passe par le site (pages de téléchargement et de versions) — jamais de lien direct vers l'hébergement des fichiers */
+const ALIXO_PC_URL = 'https://alixoapp.com/telecharger/windows/';
+const ALIXO_MAC_URL = 'https://alixoapp.com/telecharger/mac/';
+const ALIXO_VERSIONS_URL = 'https://alixoapp.com/versions/';
 const IS_MAC_BROWSER = /Mac|iPhone|iPad/.test(navigator.platform || '') || /Macintosh/.test(navigator.userAgent || '');
 const IS_DESKTOP = !!window.alixoDesktop;
 
@@ -214,8 +216,10 @@ function showLibrary() {
   rememberScroll();
   if (window.AlixoSlides) AlixoSlides.leave();
   if (window.AlixoSheets) AlixoSheets.leave();
+  if (window.AlixoBoard) AlixoBoard.leave();
   if (window.AlixoShare && AlixoShare.enabled) AlixoShare.setPresence(null, null);
   currentDocId = null;
+  applyPagesMode();
   renderAccess();
   readOnly = false; document.body.classList.remove('readonly'); blocksEl.contentEditable = 'true';
   if (cropCtx) cancelCrop();
@@ -237,8 +241,10 @@ function openDoc(id) {
   if (!d) { toast('Cette séance n’existe plus'); showLibrary(); return; }
   if (isSlidesDoc(d)) { if (window.AlixoSlides) AlixoSlides.open(id); else toast('Module de présentation indisponible'); return; }
   if (isSheetDoc(d)) { if (window.AlixoSheets) AlixoSheets.open(id); else toast('Module de tableur indisponible'); return; }
+  if (isBoardDoc(d)) { if (window.AlixoBoard) AlixoBoard.open(id); else toast('Module de planche indisponible'); return; }
   if (window.AlixoSlides) AlixoSlides.leave();
   if (window.AlixoSheets) AlixoSheets.leave();
+  if (window.AlixoBoard) AlixoBoard.leave();
   const shared = isSharedDoc(id);
   readOnly = shared && !AlixoShare.canWrite(id);
   document.body.classList.toggle('readonly', readOnly);
@@ -276,6 +282,7 @@ function openDoc(id) {
   renderTabs();
   renderCrumbs();
   renderEditor();
+  applyPagesMode();
   renderPageTabs();
   renderAccess();
   if (window.AlixoShare && AlixoShare.enabled) AlixoShare.setPresence(id, null);
@@ -569,7 +576,7 @@ function renderCrumbs() {
   const path = folderPath(d.folderId);
   c.innerHTML = `<button class="crumb-root" data-nav="" title="Retour à Mes cours">Mes cours</button>` +
     path.map(f => `<span class="sep">›</span><button class="chip" data-nav="${f.id}" title="Ouvrir le dossier">${f.icone ? AlixoIcons.svg(f.icone, 'chip-ico') : ''}${esc(f.nom)}</button>`).join('') +
-    `<span class="sep">›</span><input id="tb-title" placeholder="Sans titre" value="${esc(d.titre || '')}" spellcheck="false" autocomplete="off" title="${isSlidesDoc(d) ? 'Renommer la présentation' : isSheetDoc(d) ? 'Renommer le tableur' : 'Renommer la séance'}">`;
+    `<span class="sep">›</span><input id="tb-title" placeholder="Sans titre" value="${esc(d.titre || '')}" spellcheck="false" autocomplete="off" title="${isSlidesDoc(d) ? 'Renommer la présentation' : isSheetDoc(d) ? 'Renommer le tableur' : isBoardDoc(d) ? 'Renommer la planche' : 'Renommer la séance'}">`;
 }
 
 /* navigation par le fil d'Ariane (depuis l'éditeur) */
@@ -589,6 +596,7 @@ $('#breadcrumb').addEventListener('input', e => {
   if (isSpecialDoc(d)) { d.updatedAt = Date.now(); save(); }
   else touch({ typing: true, blockId: '__title' });
   const t = $(`#tabbar [data-tab="${d.id}"] .tab-name`); if (t) t.textContent = d.titre || 'Sans titre';
+  if (pagesActive()) schedulePaginate(true);   // en-tête de la page 1
 });
 $('#breadcrumb').addEventListener('keydown', e => {
   if (e.target.id !== 'tb-title') return;
@@ -610,15 +618,18 @@ const SHEET_ICON = '<svg class="dicon" viewBox="0 0 24 24"><rect x="3" y="4" wid
 const isSlidesDoc = d => !!d && d.kind === 'slides';
 /* séance « tableur » (grille de calcul, js/sheets.js) : d.kind === 'sheet', d.sheets = [...] ; d.blocks reste vide */
 const isSheetDoc = d => !!d && d.kind === 'sheet';
-/* séance qui n'utilise pas l'éditeur de texte (présentation, tableur) */
-const isSpecialDoc = d => isSlidesDoc(d) || isSheetDoc(d);
-const docIcon = d => (isSlidesDoc(d) ? SLIDES_ICON : isSheetDoc(d) ? SHEET_ICON : DOC_ICON);
+/* séance « planche » (tableau blanc libre, js/board.js) : d.kind === 'board', d.items = [...] ; d.blocks reste vide */
+const BOARD_ICON = '<svg class="dicon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><rect x="6" y="7" width="5" height="5" rx="1"/><path d="M14 9h4M14 12h3M11 18v3M9 21h4"/></svg>';
+const isBoardDoc = d => !!d && d.kind === 'board';
+/* séance qui n'utilise pas l'éditeur de texte (présentation, tableur, planche) */
+const isSpecialDoc = d => isSlidesDoc(d) || isSheetDoc(d) || isBoardDoc(d);
+const docIcon = d => (isSlidesDoc(d) ? SLIDES_ICON : isSheetDoc(d) ? SHEET_ICON : isBoardDoc(d) ? BOARD_ICON : DOC_ICON);
 
 function treeDocsHTML(pid) {
   const docs = folderDocs(pid).slice().sort((a, b) => (b.pinned - a.pinned) || (b.updatedAt - a.updatedAt));
   return docs.map(d => `<div class="tree-row doc">
       <button class="tree-caret leaf">▶</button>
-      <button class="tree-label" data-doc="${d.id}" title="${isSlidesDoc(d) ? 'Ouvrir la présentation' : 'Ouvrir la séance'}">
+      <button class="tree-label" data-doc="${d.id}" title="${isSlidesDoc(d) ? 'Ouvrir la présentation' : isSheetDoc(d) ? 'Ouvrir le tableur' : isBoardDoc(d) ? 'Ouvrir la planche' : 'Ouvrir la séance'}">
         ${docIcon(d)}<span class="tree-name">${esc(d.titre || 'Sans titre')}</span>
       </button>
     </div>`).join('');
@@ -738,6 +749,19 @@ function renderLibrary() {
         <svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></span>
     </button>`;
     }
+    if (isBoardDoc(d)) {
+      const ni = window.AlixoBoard ? AlixoBoard.itemCount(d) : (d.items || []).length;
+      return `<button class="doc-card board-card" data-id="${d.id}" draggable="true" style="--mc:${tint}">
+      <span class="mat-chip">${BOARD_ICON}${esc(folder(d.folderId)?.nom || 'Planche')}</span>
+      <h3>${esc(d.titre || 'Sans titre')}</h3>
+      <div class="preview board-prev">${window.AlixoBoard ? AlixoBoard.preview(d) : ''}</div>
+      <div class="meta">${fmtDate(d.updatedAt)} · ${ni} élément${ni > 1 ? 's' : ''}${d.prof ? ` · <span class="card-prof">${esc(d.prof)}</span>` : ''}</div>
+      <span class="pin-btn ${d.pinned ? 'pinned' : ''}" data-pin="${d.id}" title="Épingler">
+        <svg viewBox="0 0 24 24"><path d="M12 17v5M9 3h6l1 7 2.5 3h-13L8 10Z"/></svg></span>
+      <span class="del-btn" data-del="${d.id}" title="Supprimer">
+        <svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></span>
+    </button>`;
+    }
     const firstText = d.blocks.find(b => ['p', 'callout', 'quote', 'li'].includes(b.type));
     const preview = firstText ? stripTags(firstText.text) : (d.blocks.length ? d.blocks.length + ' blocs' : 'Document vide');
     const nb = d.blocks.length;
@@ -768,18 +792,21 @@ let sharedNav = null;   // { sid, fid } dossier partagé affiché (libMode 'shfo
 function sharedDocCardHTML(d, tint, owner, role) {
   const ns = isSlidesDoc(d) ? (d.slides || []).length : 0;
   const nf = isSheetDoc(d) ? (d.sheets || []).length : 0;
+  const ni = isBoardDoc(d) ? (window.AlixoBoard ? AlixoBoard.itemCount(d) : (d.items || []).length) : 0;
   const firstText = !isSpecialDoc(d) && (d.blocks || []).find(b => ['p', 'callout', 'quote', 'li'].includes(b.type));
   const preview = isSlidesDoc(d) ? (window.AlixoSlides ? AlixoSlides.preview(d) : '')
     : isSheetDoc(d) ? (window.AlixoSheets ? AlixoSheets.preview(d) : '')
+    : isBoardDoc(d) ? (window.AlixoBoard ? AlixoBoard.preview(d) : '')
     : esc(firstText ? stripTags(firstText.text) : ((d.blocks || []).length ? d.blocks.length + ' blocs' : 'Document vide'));
   const count = isSlidesDoc(d) ? `${ns} diapositive${ns > 1 ? 's' : ''}`
     : isSheetDoc(d) ? `${nf} feuille${nf > 1 ? 's' : ''}`
+    : isBoardDoc(d) ? `${ni} élément${ni > 1 ? 's' : ''}`
     : `${(d.blocks || []).length} bloc${(d.blocks || []).length > 1 ? 's' : ''}`;
   const peers = window.AlixoShare && AlixoShare.enabled ? AlixoShare.peersFor(d.id) : [];
-  return `<button class="doc-card shared-card ${isSlidesDoc(d) ? 'slides-card' : ''}${isSheetDoc(d) ? 'sheet-card' : ''}" data-id="${d.id}" style="--mc:${tint}">
+  return `<button class="doc-card shared-card ${isSlidesDoc(d) ? 'slides-card' : ''}${isSheetDoc(d) ? 'sheet-card' : ''}${isBoardDoc(d) ? 'board-card' : ''}" data-id="${d.id}" style="--mc:${tint}">
       <span class="mat-chip">${SHARE_ICO}${esc(owner || 'Partagé')}</span>
       <h3>${esc(d.titre || 'Sans titre')}</h3>
-      <div class="preview ${isSlidesDoc(d) ? 'slides-prev' : ''}${isSheetDoc(d) ? 'sheet-prev' : ''}">${preview}</div>
+      <div class="preview ${isSlidesDoc(d) ? 'slides-prev' : ''}${isSheetDoc(d) ? 'sheet-prev' : ''}${isBoardDoc(d) ? 'board-prev' : ''}">${preview}</div>
       <div class="meta">${fmtDate(d.updatedAt || Date.now())} · ${count} · <span class="sh-role ${role}">${role === 'write' ? 'écriture' : 'lecture'}</span>${peers.length ? `<span class="peer-live" title="${esc(peers.map(p => p.name).join(', '))}">● ${peers.length === 1 ? esc(peers[0].name) + ' est dessus' : peers.length + ' personnes dessus'}</span>` : ''}</div>
     </button>`;
 }
@@ -875,6 +902,11 @@ function mergeRemoteDoc(remote, byName) {
   if (isSheetDoc(remote) || isSheetDoc(d)) {
     Object.assign(d, remote);
     if (window.AlixoSheets) AlixoSheets.remoteChanged();
+    return d;
+  }
+  if (isBoardDoc(remote) || isBoardDoc(d)) {
+    Object.assign(d, remote);
+    if (window.AlixoBoard) AlixoBoard.remoteChanged();
     return d;
   }
   if (!readOnly) syncAllFromDom();
@@ -1037,6 +1069,7 @@ function openCreateMenu(x, y) {
     <button data-cm="cnewdoc">${CM_ICO.open}Nouvelle séance ici</button>
     <button data-cm="cnewslides">${SLIDES_ICON}Nouvelle présentation ici</button>
     <button data-cm="cnewsheet">${SHEET_ICON}Nouveau tableur ici</button>
+    <button data-cm="cnewboard">${BOARD_ICON}Nouvelle planche ici</button>
     <button data-cm="cnewfolder">${CM_ICO.folder}Nouveau dossier ici</button>
     <button data-cm="cimport">${CM_ICO.plus}Importer des fichiers ici… (PDF, Word, images…)</button>
     ${cur ? `<button data-cm="cagenda">${CM_ICO.plus}Ajouter ce cours à l’agenda</button>` : ''}`;
@@ -1215,8 +1248,13 @@ function duplicateDoc(did) {
   (copy.blocks || []).forEach(b => { b.id = uid(); });
   (copy.pages || []).forEach(p => { (p.blocks || []).forEach(b => { b.id = uid(); }); });
   (copy.slides || []).forEach(sl => { sl.id = uid(); (sl.els || []).forEach(el => { el.id = uid(); }); });
+  if (Array.isArray(copy.items)) {
+    /* planche : nouveaux identifiants, en gardant les flèches entre les éléments copiés */
+    const ids = new Map(copy.items.map(it => [it.id, uid()]));
+    copy.items.forEach(it => { it.id = ids.get(it.id); if (it.t === 'arrow') { it.from = ids.get(it.from) || it.from; it.to = ids.get(it.to) || it.to; } });
+  }
   state.docs.push(copy); save(); renderLibrary();
-  toast(isSlidesDoc(copy) ? 'Présentation dupliquée' : isSheetDoc(copy) ? 'Tableur dupliqué' : 'Séance dupliquée');
+  toast(isSlidesDoc(copy) ? 'Présentation dupliquée' : isSheetDoc(copy) ? 'Tableur dupliqué' : isBoardDoc(copy) ? 'Planche dupliquée' : 'Séance dupliquée');
 }
 
 /* choix d'un dossier de destination (séance ou dossier) */
@@ -1379,6 +1417,7 @@ $('#lib-path').addEventListener('drop', e => {
 $('#btn-new-doc').addEventListener('click', () => createDocIn(currentFolderId));
 $('#btn-new-slides').addEventListener('click', () => createSlidesIn(currentFolderId));
 $('#btn-new-sheet').addEventListener('click', () => createSheetIn(currentFolderId));
+$('#btn-new-board').addEventListener('click', () => createBoardIn(currentFolderId));
 /* nouvelle présentation (diapositives) : même fiche qu'une séance, avec kind: 'slides' — voir js/slides.js */
 function createSlidesIn(fid) {
   if (!window.AlixoSlides) { toast('Module de présentation indisponible'); return; }
@@ -1391,6 +1430,14 @@ function createSlidesIn(fid) {
 function createSheetIn(fid) {
   if (!window.AlixoSheets) { toast('Module de tableur indisponible'); return; }
   const d = AlixoSheets.newDoc(fid || null, folderProf(fid));
+  state.docs.push(d); save();
+  openDoc(d.id);
+  setTimeout(() => { const t = $('#tb-title'); if (t) t.focus(); }, 60);
+}
+/* nouvelle planche (tableau blanc libre) : même fiche qu'une séance, avec kind: 'board' — voir js/board.js */
+function createBoardIn(fid) {
+  if (!window.AlixoBoard) { toast('Module de planche indisponible'); return; }
+  const d = AlixoBoard.newDoc(fid || null, folderProf(fid));
   state.docs.push(d); save();
   openDoc(d.id);
   setTimeout(() => { const t = $('#tb-title'); if (t) t.focus(); }, 60);
@@ -1470,6 +1517,7 @@ function openFolderCtxMenu(x, y, fid) {
     <button data-cm="newdoc">${CM_ICO.plus}Nouvelle séance ici</button>
     <button data-cm="newslides">${SLIDES_ICON}Nouvelle présentation ici</button>
     <button data-cm="newsheet">${SHEET_ICON}Nouveau tableur ici</button>
+    <button data-cm="newboard">${BOARD_ICON}Nouvelle planche ici</button>
     <button data-cm="newfolder">${CM_ICO.plus}Nouveau sous-dossier…</button>
     <button data-cm="import">${CM_ICO.plus}Importer des fichiers…</button>
     <button data-cm="rename">${CM_ICO.pen}Renommer / couleur…</button>
@@ -1497,6 +1545,7 @@ $('#ctxmenu').addEventListener('click', e => {
   if (cm === 'cnewdoc') { createDocIn(currentFolderId); return; }
   if (cm === 'cnewslides') { createSlidesIn(currentFolderId); return; }
   if (cm === 'cnewsheet') { createSheetIn(currentFolderId); return; }
+  if (cm === 'cnewboard') { createBoardIn(currentFolderId); return; }
   if (cm === 'cnewfolder') { openFolderPopover(null, currentFolderId); return; }
   if (cm === 'cimport') { if (window.AlixoFiles) AlixoFiles.pick(currentFolderId); return; }
   if (cm === 'cagenda') { openEventPopover(null, { folderId: currentFolderId }); return; }
@@ -1542,6 +1591,7 @@ $('#ctxmenu').addEventListener('click', e => {
   if (cm === 'newdoc') createDocIn(f.id);
   if (cm === 'newslides') createSlidesIn(f.id);
   if (cm === 'newsheet') createSheetIn(f.id);
+  if (cm === 'newboard') createBoardIn(f.id);
   if (cm === 'newfolder') openFolderPopover(null, f.id);
   if (cm === 'import' && window.AlixoFiles) AlixoFiles.pick(f.id);
   if (cm === 'rename') openFolderPopover(f);
@@ -1678,6 +1728,8 @@ async function downloadFolderZip(fid) {
         }
         continue;
       }
+      /* une planche (tableau blanc) n'a pas d'équivalent texte : elle s'exporte en PDF depuis sa vue, pas dans l'archive */
+      if (isBoardDoc(d)) continue;
       let name = `${path}${base}${ext}`;
       for (let k = 2; used.has(name); k++) name = `${path}${base} (${k})${ext}`;
       used.add(name);
@@ -2116,6 +2168,7 @@ function applyDocFont() {
   if (fh && fh.css) r.setProperty('--doc-font-head', fh.css); else r.removeProperty('--doc-font-head');
   const sz = DOC_SIZES.find(x => x[0] === (state.settings.docSize || 'm')) || DOC_SIZES[1];
   if (sz[2] !== 1) r.setProperty('--doc-scale', String(sz[2])); else r.removeProperty('--doc-scale');
+  if (pagesActive()) schedulePaginate(true);
 }
 const SET_CATS = [
   { k: 'compte', name: 'Compte', sub: 'Connexion, profil, stockage, pseudo Alixo Share' },
@@ -2132,7 +2185,8 @@ const SHORTCUTS = [
   ['Alt + ←', 'Retour à la bibliothèque'], ['Ctrl + Maj + A', 'Agenda'], ['Ctrl + Maj + K', 'Tâches'], ['Ctrl + Maj + D', 'Dictionnaire'],
   ['Ctrl + Maj + T', 'Chronomètre'], ['/', 'Insérer un bloc (ligne vide)'], ['F7', 'Correction par IA'], ['Ctrl + Alt + 1…4', 'Niveau de titre'],
   ['F5', 'Présenter (présentation)'], ['Suppr', 'Supprimer le bloc sélectionné (présentation)'],
-  ['F2', 'Modifier la cellule (tableur)'], ['Ctrl + flèches', 'Bord de la zone remplie (tableur)']
+  ['F2', 'Modifier la cellule (tableur)'], ['Ctrl + flèches', 'Bord de la zone remplie (tableur)'],
+  ['Ctrl + molette', 'Zoom (planche)'], ['Espace + glisser', 'Déplacer la vue (planche)'], ['Ctrl + D', 'Dupliquer la sélection (planche)'], ['N / T / F', 'Post-it, texte, flèche (planche)']
 ];
 
 function settingsSectionHTML(k) {
@@ -2162,7 +2216,8 @@ function settingsSectionHTML(k) {
       <div class="po-row" style="gap:16px; margin-top:12px; flex-wrap:wrap; align-items:center">
         <label class="set-inline">Titres <select id="set-fonthead">${[{ k: '', name: 'Comme le texte' }].concat(DOC_FONTS.slice(1)).map(f => `<option value="${f.k}" ${(state.settings.docFontHead || '') === f.k ? 'selected' : ''} ${f.k && fontLocked(f.k) ? 'disabled' : ''}>${esc(f.name)}${f.k && fontLocked(f.k) ? ' (Alixo+)' : ''}</option>`).join('')}</select></label>
         <label class="set-inline">Taille <select id="set-fontsize">${DOC_SIZES.map(([v, l]) => `<option value="${v}" ${(state.settings.docSize || 'm') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
-      </div></div>
+      </div>
+      <div class="set-checks" style="margin-top:12px"><label><input type="checkbox" id="set-pageview" ${state.settings.pageView !== false ? 'checked' : ''}><span><b>Feuille découpée en pages A4</b><small>Le cours s’affiche page par page, exactement comme dans le PDF (Ctrl+P) ; le bloc « Saut de page » du menu / force le passage à la page suivante. Décoché : une seule feuille continue.</small></span></label></div></div>
     <div class="set-sect"><div class="po-label">Fautes de frappe</div>
       <div class="set-checks"><label><input type="checkbox" id="set-autotypo" ${state.settings.autoTypo !== false ? 'checked' : ''}><span><b>Corriger seul les fautes de frappe courantes</b><small>« qaund » → « quand », « aevc » → « avec », « etre » → « être », « contart » → « contrat »… dès que vous tapez un espace ou une ponctuation, sans Internet ni IA : liste de fautes courantes, lexique de 24 000 mots (lettres inversées, lettre doublée, accent oublié — jamais un mot ambigu) et mots appris des corrections précédentes. Retour arrière juste après garde le mot tel que vous l’avez tapé (et il n’est plus corrigé). Les textes dans une autre langue ne sont pas touchés.</small></span></label></div></div>
     <div class="set-sect"><div class="po-label">Raccourcis de frappe</div>
@@ -2255,6 +2310,7 @@ function bindSettingsSection(k, root) {
     });
     root.querySelector('#set-fonthead').addEventListener('change', e => { if (e.target.value) state.settings.docFontHead = e.target.value; else delete state.settings.docFontHead; save(); applyDocFont(); });
     root.querySelector('#set-fontsize').addEventListener('change', e => { if (e.target.value !== 'm') state.settings.docSize = e.target.value; else delete state.settings.docSize; save(); applyDocFont(); });
+    root.querySelector('#set-pageview').addEventListener('change', e => { if (e.target.checked) delete state.settings.pageView; else state.settings.pageView = false; save(); applyPagesMode(); toast(e.target.checked ? 'Feuille découpée en pages A4' : 'Feuille continue'); });
     root.querySelector('#set-autotypo').addEventListener('change', e => { state.settings.autoTypo = e.target.checked; save(); toast(e.target.checked ? 'Fautes de frappe corrigées automatiquement' : 'Correction automatique des fautes de frappe désactivée'); });
     const box = root.querySelector('#po-snips');
     const syncRow = row => {
@@ -2304,7 +2360,7 @@ function bindSettingsSection(k, root) {
   }
   if (k === 'apropos') {
     const news = root.querySelector('#set-news');
-    if (news) news.addEventListener('click', () => { const url = 'https://github.com/Fayze-Kadox/alixo/releases'; if (window.alixoDesktop && alixoDesktop.openExternal) alixoDesktop.openExternal(url); else window.open(url, '_blank'); });
+    if (news) news.addEventListener('click', () => { const url = ALIXO_VERSIONS_URL; if (window.alixoDesktop && alixoDesktop.openExternal) alixoDesktop.openExternal(url); else window.open(url, '_blank'); });
     const upd = root.querySelector('#set-upd');
     if (upd) upd.addEventListener('click', () => { alixoDesktop.checkUpdates(); toast('Recherche des mises à jour…'); });
     const other = root.querySelector('#set-other');
@@ -2450,7 +2506,7 @@ function ficheDef(b) {
 const PH_P = 'Écrivez, ou tapez « / » pour insérer…';
 const TEXT_TYPES = ['p', 'h', 'li', 'quote', 'callout'];
 const MULTILINE_TYPES = ['callout', 'quote'];          // Entrée = saut de ligne dans le bloc
-const OBJECT_TYPES = ['formula', 'graph', 'table', 'img', 'draw', 'chart', 'score', 'mcalc', 'timer', 'hr', 'tree'];
+const OBJECT_TYPES = ['formula', 'graph', 'table', 'img', 'draw', 'chart', 'score', 'mcalc', 'timer', 'hr', 'pb', 'tree'];
 const BLOCK_PROPS = ['text', 'level', 'ct', 'src', 'gtype', 'params', 'fields', 'lt', 'ind', 'done', 'iid', 'nw', 'nh', 'w', 'align', 'crop', 'cap', 'alt', 'rows', 'head', 'widths', 'bg', 'al', 'ta', 'shapes', 'h', 'cite', 'fk', 'ck', 'title', 'labels', 'series', 'opts', 'sk', 'vals', 'mode', 'secs', 'label', 'cards', 'root', 'spans'];
 /* « atomes » non éditables dans le texte : références d'articles, items LiSA, résultats de calcul, liens, rangs */
 const ATOM_SEL = '.refart, .calc-res, .lnk, .rtag';
@@ -2638,6 +2694,8 @@ function blockHTML(b, numMap) {
     }
     case 'hr':
       return `<div class="block hr" data-id="${b.id}" contenteditable="false">${MV_HANDLE}<hr></div>`;
+    case 'pb':   // 1.23 : saut de page (le texte qui suit commence sur une nouvelle page, à l'écran comme dans le PDF)
+      return `<div class="block pb" data-id="${b.id}" contenteditable="false">${MV_HANDLE}<div class="pb-line">Saut de page</div></div>`;
     case 'tree':
       return trBlockHTML(b);
     case 'cards': {
@@ -2784,6 +2842,7 @@ function renderBlocks(focusId, caretPos, caretKey) {
   if (window.AlixoDraw) AlixoDraw.afterRender();
   if (readOnly) blocksEl.querySelectorAll('[contenteditable="true"], input, select, textarea').forEach(el => { if (el.getAttribute('contenteditable') === 'true') el.setAttribute('contenteditable', 'false'); else el.disabled = true; });
   renderPeers();
+  if (pagesActive()) schedulePaginate(true);   // 1.23 : vue par pages — les sauts sont recalculés après chaque rendu
 }
 /* bandeau « séance partagée » au-dessus du cours */
 function renderReadOnlyBanner(info) {
@@ -2951,7 +3010,7 @@ function markCurrent() {
 /* ---------------- lecture de l'écran → modèle ---------------- */
 function blockElType(el) {
   const c = el.classList;
-  for (const t of ['h', 'li', 'quote', 'callout', 'fiche', 'juris', 'formula', 'table', 'graph', 'img', 'draw', 'chart', 'score', 'mcalc', 'timer', 'hr', 'cards', 'tree']) if (c.contains(t)) return t;
+  for (const t of ['h', 'li', 'quote', 'callout', 'fiche', 'juris', 'formula', 'table', 'graph', 'img', 'draw', 'chart', 'score', 'mcalc', 'timer', 'hr', 'pb', 'cards', 'tree']) if (c.contains(t)) return t;
   return 'p';
 }
 const levelOfEl = el => { const m = el.className.match(/\bl([1-4])\b/); return m ? +m[1] : 1; };
@@ -5598,6 +5657,7 @@ const SLASH_ITEMS = [
   { id: 'tree', icon: 'wave', name: 'Arbre', sub: 'Arborescence : racine, branches, feuilles (plan, arbre de décision, généalogie, organigramme)', kw: 'arbre arborescence hierarchie organigramme decision branches noeud genealogique schema' },
   { id: 'cards', icon: 'layers', name: 'Cartes', sub: '3 cartes par ligne, chacune avec un titre et un texte (notions, acteurs, étapes…)', kw: 'cartes carte grille vignettes tuiles colonnes trois 3' },
   { id: 'hr', ico: '—', name: 'Séparateur', sub: 'Trait horizontal — ou tapez « -- » puis Entrée', kw: 'separateur ligne trait horizontal hr divider barre' },
+  { id: 'pb', ico: '⤓', name: 'Saut de page', sub: 'Ce qui suit commence sur une nouvelle page (à l’écran et dans le PDF)', kw: 'saut page nouvelle page break pagebreak feuille suivante' },
   { sect: 'Symboles', spec: 'sym' },
   ...AlixoMed.SYMBOLS.map(([k, s]) => ({ id: 'sym-' + k, ico: s, name: s + '  ' + k, kw: k + ' symbole grec lettre', spec: 'sym', inline: true, sym: s }))
 ];
@@ -5765,8 +5825,8 @@ function applySlash(sid) {
   if (sid === 'table') { const nb = transform({ type: 'table', rows: [['', '', ''], ['', '', ''], ['', '', '']], head: true }); focusTableCell(nb.id, 0, 0); toast('Tableau — Tab pour passer de case en case, boutons au-dessus pour lignes et colonnes'); return; }
   if (sid === 'tree') { const nb = transform({ type: 'tree', root: { t: '', k: [{ t: '', k: [] }, { t: '', k: [] }] } }); focusBlock(nb.id, 'start'); setTimeout(() => treeFocus(nb.id, ''), 30); toast('Arbre — Entrée : nouveau frère, Tab : nouvel enfant'); return; }
   if (sid === 'cards') { const nb = transform({ type: 'cards', cards: [{ t: '', x: '' }, { t: '', x: '' }, { t: '', x: '' }] }); focusBlock(nb.id, 'start', 'f:t0'); toast('Cartes — Entrée : du titre au texte, Tab : carte suivante, « ＋ carte » pour en ajouter'); return; }
-  if (sid === 'hr') {
-    const nb = transform({ type: 'hr' });
+  if (sid === 'hr' || sid === 'pb') {
+    const nb = transform({ type: sid });
     const d = doc(); const i = blockIndex(nb.id); const next = d.blocks[i + 1];
     if (next && isEmptyPara(next)) focusBlock(next.id, 'start');
     else { const np = { id: uid(), type: 'p', text: '' }; d.blocks.splice(i + 1, 0, np); touch(); renderBlocks(np.id, 'start'); }
@@ -5796,7 +5856,7 @@ blocksEl.addEventListener('click', e => {
     else if (cd.dataset.cd === 'rm') deleteObj(b.id);
     return;
   }
-  const hr = e.target.closest('#blocks > .block.hr');
+  const hr = e.target.closest('#blocks > .block.hr, #blocks > .block.pb');
   if (hr) { e.preventDefault(); selectObj(hr.dataset.id); }
 });
 
@@ -7862,7 +7922,7 @@ function blockPlain(b) {
   if (b.type === 'score') return (AlixoMed.SCORES[b.sk] || {}).name || 'Score';
   if (b.type === 'mcalc') return (AlixoMed.CALCS[b.ck] || {}).name || 'Calculateur';
   if (b.type === 'timer') return b.label || 'Minuteur';
-  if (b.type === 'hr') return '';
+  if (b.type === 'hr' || b.type === 'pb') return '';
   if (b.type === 'cards') return cardsOf(b).map(c => stripTags(c.t) + (c.x ? ' — ' + stripTags(c.x) : '')).join('\n');
   if (b.type === 'tree') return treePlain(b.root);
   if (b.type === 'table') return (b.rows || []).map(r => r.map(c => stripTags(c)).join(' | ')).join('\n');
@@ -7885,6 +7945,15 @@ function doSearch(q) {
       /* tableur : on cherche dans les cellules (js/sheets.js) */
       if (window.AlixoSheets) for (const hit of AlixoSheets.search(d, q, 8)) {
         results.push({ d, f, blockId: null, snippet: `${hit.sheetName} · ${hit.ref} : ${hit.text}`, cell: hit });
+        if (results.length > 30) break;
+      }
+      if (results.length > 30) break;
+      continue;
+    }
+    if (isBoardDoc(d)) {
+      /* planche : post-it, textes, flèches et blocs épinglés (js/board.js) */
+      if (window.AlixoBoard) for (const hit of AlixoBoard.search(d, q, 8)) {
+        results.push({ d, f, blockId: null, snippet: hit.text, item: hit.itemId });
         if (results.length > 30) break;
       }
       if (results.length > 30) break;
@@ -7916,7 +7985,7 @@ function doSearch(q) {
   $('#search-results').innerHTML = results.map((r, i) => {
     const snip = esc(r.snippet).replace(new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'), '<mark>$1</mark>');
     const tint = folderTint(r.d.folderId);
-    return `<button class="sr-item ${i === 0 ? 'sel' : ''}" data-doc="${r.d.id}" data-block="${r.blockId || ''}" data-page="${r.page || ''}"${r.cell ? ` data-sheet="${esc(r.cell.sheetId)}" data-cell="${esc(r.cell.ref)}"` : ''}>
+    return `<button class="sr-item ${i === 0 ? 'sel' : ''}" data-doc="${r.d.id}" data-block="${r.blockId || ''}" data-page="${r.page || ''}"${r.cell ? ` data-sheet="${esc(r.cell.sheetId)}" data-cell="${esc(r.cell.ref)}"` : ''}${r.item ? ` data-item="${esc(r.item)}"` : ''}>
       <div class="sr-top"><span class="mat-chip" style="--mc:${tint}">${esc(r.f ? r.f.nom : 'Mes cours')}</span>
       <span class="sr-doc">${esc(r.d.titre || 'Sans titre')}</span></div>
       <div class="sr-snippet">${snip}</div></button>`;
@@ -7941,6 +8010,7 @@ $('#search-results').addEventListener('click', e => {
   if (it.dataset.file) { if (window.AlixoFiles) AlixoFiles.open(it.dataset.file); return; }
   openDoc(it.dataset.doc);
   if (it.dataset.cell) { setTimeout(() => { if (window.AlixoSheets) AlixoSheets.reveal(it.dataset.sheet, it.dataset.cell); }, 120); return; }
+  if (it.dataset.item) { setTimeout(() => { if (window.AlixoBoard) AlixoBoard.reveal(it.dataset.item); }, 120); return; }
   const bid = it.dataset.block;
   if (bid && it.dataset.page && doc() && doc().page !== it.dataset.page) { switchPage(it.dataset.page, bid); return; }
   if (bid) setTimeout(() => {
@@ -7995,6 +8065,7 @@ function opaqueOnWhite(c) {
    certains PDF les rendaient en noir ; renvoie une fonction qui rétablit l'état */
 function prepareForPrint() {
   renderBlocks();   // état à jour (QR codes des liens, notes…)
+  if (pagesActive()) paginate(true);   // 1.23 : les sauts de page de l'écran sont forcés dans le PDF (.pg-first)
   // plusieurs onglets : les autres onglets sont ajoutés à la suite, avec leur titre
   const dd = doc();
   if (dd && docPages(dd).length > 1) {
@@ -8040,6 +8111,103 @@ function preparePrintHead(d) {
   const sub = [folderPath(d.folderId).map(x => x.nom).join(' › '), d.prof ? 'Professeur : ' + d.prof : '', fmtDate(d.updatedAt)].filter(Boolean).join('  ·  ');
   ph.innerHTML = `<div class="ph-title">${esc(d.titre || 'Sans titre')}</div><div class="ph-sub">${esc(sub)}</div>`;
 }
+/* ============================================================
+   1.23 — Vue par pages : la feuille est découpée en pages A4 identiques à celles du PDF.
+   La zone utile d'une page (largeur, hauteur) est celle de printToPDF (main.js › pdfOptions) et de
+   @page : 673 × 983 px à 96 dpi ; les marges sont le padding de #doc (styles.css › body.pages-mode).
+   Les blocs ne sont jamais déplacés dans le DOM : le bloc qui ouvre une page reçoit la classe
+   .pg-first et une marge haute (--pg-mt) qui le pousse au début de la page suivante ; un calque
+   #pg-layer dessine la bande grise entre les pages et les numéros. À l'impression, .pg-first force
+   un saut de page (break-before) : le PDF reproduit exactement les pages de l'écran.
+   Bloc « Saut de page » (/saut, type 'pb') : ce qui suit commence sur une nouvelle page.
+   Réglage : Paramètres › Écriture › « Feuille découpée en pages A4 » (state.settings.pageView).
+   ============================================================ */
+const PG_H = 983;      // hauteur utile d'une page imprimée (px rendus)
+const PG_SAFE = 14;    // la page écran est un peu plus courte : jamais de débordement dans le PDF (arrondis, polices)
+const PG_BAND = 26;    // bande grise entre deux pages (px rendus)
+let pgSig = '', pgRaf = 0, pgObs = null, pgMut = null;
+const pagesActive = () => document.body.classList.contains('pages-mode');
+/* active ou coupe la vue par pages selon le document ouvert et le réglage */
+function applyPagesMode() {
+  const d = doc();
+  const on = !!d && !isSpecialDoc(d) && state.settings.pageView !== false && !document.body.classList.contains('mobile');
+  document.body.classList.toggle('pages-mode', on);
+  if (on) {
+    if (!pgObs && typeof ResizeObserver === 'function') { pgObs = new ResizeObserver(() => schedulePaginate()); pgObs.observe(blocksEl); }
+    if (!pgMut) { pgMut = new MutationObserver(() => schedulePaginate(true)); pgMut.observe(blocksEl, { childList: true }); }
+    schedulePaginate(true);
+  } else {
+    if (pgObs) { pgObs.disconnect(); pgObs = null; }
+    if (pgMut) { pgMut.disconnect(); pgMut = null; }
+    clearPagination();
+  }
+}
+function clearPagination() {
+  pgSig = '';
+  blocksEl.querySelectorAll('.pg-first').forEach(el => { el.classList.remove('pg-first'); el.style.removeProperty('--pg-mt'); });
+  blocksEl.style.paddingBottom = '';
+  const layer = $('#pg-layer'); if (layer) layer.innerHTML = '';
+}
+function schedulePaginate(reset) {
+  if (reset) pgSig = '';
+  if (pgRaf) return;
+  pgRaf = requestAnimationFrame(() => { pgRaf = 0; paginate(); });
+}
+/* en-tête de la page 1 (titre, dossier, professeur, date, onglet) : le même que celui du PDF */
+function renderPgHead(d) {
+  let h = $('#pg-head');
+  if (!h) { h = document.createElement('div'); h.id = 'pg-head'; h.contentEditable = 'false'; $('#doc').insertBefore(h, blocksEl); }
+  const sub = [folderPath(d.folderId).map(x => x.nom).join(' › '), d.prof ? 'Professeur : ' + d.prof : '', fmtDate(d.updatedAt)].filter(Boolean).join('  ·  ');
+  const tabs = docPages(d);
+  const html = `<div class="ph-title">${esc(d.titre || 'Sans titre')}</div><div class="ph-sub">${esc(sub)}</div>${tabs.length > 1 ? `<div class="ph-tab">${esc((curPage(d) || {}).titre || '')}</div>` : ''}`;
+  if (h.innerHTML !== html) h.innerHTML = html;
+  return h;
+}
+/* calcule les sauts de page ; force : recalcul même si rien n'a changé (après un rendu complet) */
+function paginate(force) {
+  if (!pagesActive()) return;
+  const d = doc(); if (!d) return;
+  const docEl = $('#doc');
+  const head = renderPgHead(d);
+  let layer = $('#pg-layer');
+  if (!layer) { layer = document.createElement('div'); layer.id = 'pg-layer'; layer.contentEditable = 'false'; docEl.appendChild(layer); }
+  const s = parseFloat(getComputedStyle(docEl).zoom) || 1;    // Paramètres › Écriture › Taille
+  const kids = [...blocksEl.children].filter(el => el.classList.contains('block'));
+  const heights = kids.map(el => el.getBoundingClientRect().height);
+  const sig = s + '|' + head.offsetHeight + '|' + kids.map((el, i) => el.dataset.id + ':' + Math.round(heights[i]) + (el.classList.contains('pb') ? '!' : '')).join(',');
+  if (!force && sig === pgSig) return;    // les hauteurs n'ont pas bougé : les sauts restent valables
+  pgSig = sig;
+  for (const el of kids) if (el.classList.contains('pg-first')) { el.classList.remove('pg-first'); el.style.removeProperty('--pg-mt'); }
+  blocksEl.style.paddingBottom = '';
+  const cs = getComputedStyle(docEl);
+  const padTop = parseFloat(cs.paddingTop) * s, padBottom = parseFloat(cs.paddingBottom) * s;
+  const top0 = docEl.getBoundingClientRect().top + padTop;      // haut de la zone utile de la page 1
+  const H = PG_H - PG_SAFE, GAPT = padBottom + PG_BAND + padTop;  // hauteur utile ; espace entre deux zones utiles
+  const rects = kids.map(el => { const r = el.getBoundingClientRect(); return { el, top: r.top - top0, bottom: r.bottom - top0, pb: el.classList.contains('pb') }; });
+  let shift = 0, pageBase = 0, forced = false;
+  const ends = [];   // fin de chaque page terminée (coordonnées finales, depuis top0)
+  rects.forEach((r, i) => {
+    const ft = r.top + shift, fb = r.bottom + shift;
+    const brk = i > 0 && !r.pb && (forced || (fb - pageBase > H && ft > pageBase + 1));
+    forced = r.pb;
+    if (!brk) return;
+    let pageEnd = pageBase + H;
+    if (ft > pageEnd) pageEnd = pageBase + H * Math.ceil((ft - pageBase) / H);   // le bloc précédent dépasse une page
+    const extra = pageEnd + GAPT - ft;
+    r.el.classList.add('pg-first');
+    r.el.style.setProperty('--pg-mt', ((r.top - rects[i - 1].bottom + extra) / s) + 'px');
+    ends.push(pageEnd);
+    shift += extra;
+    pageBase = pageEnd + GAPT;
+  });
+  const lastBottom = rects.length ? rects[rects.length - 1].bottom + shift : 0;
+  const lastEnd = pageBase + H * Math.max(1, Math.ceil((lastBottom - pageBase) / H));
+  if (rects.length) blocksEl.style.paddingBottom = Math.max(0, (lastEnd - (rects[rects.length - 1].bottom + shift)) / s) + 'px';
+  const n = ends.length + 1;
+  const num = (y, k) => `<div class="pg-num" style="top:${((padTop + y + padBottom / 2) / s - 7).toFixed(1)}px">${k} / ${n}</div>`;
+  layer.innerHTML = ends.map((y, i) => `<div class="pg-gap" style="top:${((padTop + y + padBottom) / s).toFixed(1)}px;height:${(PG_BAND / s).toFixed(1)}px"></div>` + num(y, i + 1)).join('') + num(lastEnd, n);
+}
+
 let pdfBusy = false;
 /* export PDF : version PC → rendu par Electron (printToPDF) puis boîte « Enregistrer sous » au nom de la séance ;
    version web → boîte d'impression du navigateur */
@@ -8047,6 +8215,7 @@ async function exportPDF() {
   const d = doc(); if (!d || pdfBusy) return;
   if (isSlidesDoc(d)) { if (window.AlixoSlides) AlixoSlides.exportPDF(); return; }
   if (isSheetDoc(d)) { if (window.AlixoSheets) AlixoSheets.exportPDF(); return; }
+  if (isBoardDoc(d)) { if (window.AlixoBoard) AlixoBoard.exportPDF(); return; }
   const numMap = computeNumbers(d.blocks);
   const hs = d.blocks.filter(b => b.type === 'h');
   // sommaire uniquement pour les cours longs (sinon il ajoutait une page inutile)
@@ -8087,7 +8256,7 @@ async function exportPDF() {
 async function exportDoc() {
   const d = doc(); if (!d) return;
   const fmt = EXPORT_FORMATS[state.settings.exportFormat] ? state.settings.exportFormat : 'pdf';
-  if (fmt === 'pdf' || isSlidesDoc(d) || isSheetDoc(d)) { exportPDF(); return; }
+  if (fmt === 'pdf' || isSpecialDoc(d)) { exportPDF(); return; }
   toast(`Préparation du fichier ${EXPORT_FORMATS[fmt].label}…`, { duration: 3000 });
   let css = '';
   if (fmt === 'html') { try { css = await (await fetch('styles.css')).text(); } catch { /* sans styles hors ligne */ } }
@@ -8134,6 +8303,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && !$('#searchov').hidden) { closeSearch(); return; }
   if (document.body.classList.contains('mode-slides')) return;   // présentation : raccourcis dans js/slides.js
   if (document.body.classList.contains('mode-sheet')) return;    // tableur : raccourcis dans js/sheets.js
+  if (document.body.classList.contains('mode-board')) return;    // planche : raccourcis dans js/board.js
   if (!document.body.classList.contains('mode-editor')) {
     if (mod && e.shiftKey && e.key.toLowerCase() === 'a' && $('#authov') && $('#authov').hidden !== false) { e.preventDefault(); if (libMode === 'agenda') { libMode = 'docs'; renderLibrary(); } else openAgendaHome(); }
     if (mod && e.shiftKey && e.code === 'KeyK' && $('#authov') && $('#authov').hidden !== false) { e.preventDefault(); if (libMode === 'todo') { libMode = 'docs'; renderLibrary(); } else openTodoHome(); }
@@ -9066,7 +9236,7 @@ function showUpdatePopup(o) {
   if (prev) prev.remove();
   updShown = { version, forced, ready };
   const desk = window.alixoDesktop;
-  const url = o.url || (desk && desk.platform === 'darwin' ? ALIXO_MAC_URL : desk ? ALIXO_PC_URL : 'https://github.com/Fayze-Kadox/alixo/releases/latest');
+  const url = o.url || (desk && desk.platform === 'darwin' ? ALIXO_MAC_URL : desk ? ALIXO_PC_URL : ALIXO_VERSIONS_URL);
   const ov = document.createElement('div'); ov.id = 'updov';
   const how = ready
     ? 'La nouvelle version est téléchargée : redémarrez Alixo pour l’appliquer (vos cours sont conservés).'
@@ -9118,8 +9288,8 @@ window.AlixoApp = {
   get state() { return state; },
   maybeOnboard,
   /* utilisés par le menu Édition / Fichier de la version PC (main.js) */
-  undo: () => (currentDocId ? (isSlidesDoc(doc()) ? (window.AlixoSlides && AlixoSlides.undo()) : isSheetDoc(doc()) ? (window.AlixoSheets && AlixoSheets.undo()) : undoEdit()) : false),
-  redo: () => (currentDocId ? (isSlidesDoc(doc()) ? (window.AlixoSlides && AlixoSlides.redo()) : isSheetDoc(doc()) ? (window.AlixoSheets && AlixoSheets.redo()) : redoEdit()) : false),
+  undo: () => (currentDocId ? (isSlidesDoc(doc()) ? (window.AlixoSlides && AlixoSlides.undo()) : isSheetDoc(doc()) ? (window.AlixoSheets && AlixoSheets.undo()) : isBoardDoc(doc()) ? (window.AlixoBoard && AlixoBoard.undo()) : undoEdit()) : false),
+  redo: () => (currentDocId ? (isSlidesDoc(doc()) ? (window.AlixoSlides && AlixoSlides.redo()) : isSheetDoc(doc()) ? (window.AlixoSheets && AlixoSheets.redo()) : isBoardDoc(doc()) ? (window.AlixoBoard && AlixoBoard.redo()) : redoEdit()) : false),
   exportPDF: () => { if (!currentDocId) return false; exportPDF(); return true; },
   version: ALIXO_VERSION,
   openTodoHome, openSharedHome, openDoc, openSettings,
@@ -9206,7 +9376,7 @@ setTimeout(() => {
     const prev = state.settings.lastVersion;
     if (prev !== ALIXO_VERSION) {
       state.settings.lastVersion = ALIXO_VERSION; save();
-      if (prev && window.AlixoNotify) AlixoNotify.push({ id: 'ver_' + ALIXO_VERSION, kind: 'update', title: `Alixo ${ALIXO_VERSION} installé`, text: 'Nouveautés : Alixo+ (formule gratuite et abonnement), grandes fenêtres de partage et d’événement, réglages IA corrigés, police et thème qui ne reviennent plus en arrière entre appareils…', action: { type: 'url', url: 'https://github.com/Fayze-Kadox/alixo/releases' } });
+      if (prev && window.AlixoNotify) AlixoNotify.push({ id: 'ver_' + ALIXO_VERSION, kind: 'update', title: `Alixo ${ALIXO_VERSION} installé`, text: 'Nouveautés : séances découpées en pages A4 identiques au PDF (bloc « Saut de page »), nouveau document « Planche » (tableau blanc : post-it, flèches, images, blocs de cours épinglés), version Mac qui s’ouvre après « Ouvrir quand même »…', action: { type: 'url', url: ALIXO_VERSIONS_URL } });
     }
   } catch { /* stockage indisponible */ }
   if (window.AlixoStats) AlixoStats.maybeOpen();

@@ -70,7 +70,7 @@ window.AlixoCloud = (() => {
     }
     if (window.AlixoApp && AlixoApp.setPlusOffer) AlixoApp.setPlusOffer({ price: d.plusPrice || '', url: d.plusUrl || '', note: d.plusNote || '' });
     if (d.latestVersion && window.AlixoApp && cmpVer(d.latestVersion, AlixoApp.version) > 0 && !(window.alixoDesktop && alixoDesktop.onUpdate)) {
-      notify({ id: 'latest_' + d.latestVersion, kind: 'update', title: `Alixo ${d.latestVersion} est disponible`, text: d.latestNote || 'Téléchargez la nouvelle version depuis la page d’Alixo.', action: { type: 'url', url: d.downloadUrl || 'https://github.com/Fayze-Kadox/alixo/releases' } });
+      notify({ id: 'latest_' + d.latestVersion, kind: 'update', title: `Alixo ${d.latestVersion} est disponible`, text: d.latestNote || 'Téléchargez la nouvelle version depuis la page d’Alixo.', action: { type: 'url', url: d.downloadUrl || 'https://alixoapp.com/versions/' } });
     }
     /* 1.18 : fenêtre de mise à jour (au démarrage puis toutes les 6 h) ; bloquante sous la version minimale */
     updInfo = d.latestVersion && window.AlixoApp && cmpVer(d.latestVersion, AlixoApp.version) > 0

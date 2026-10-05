@@ -93,7 +93,7 @@ window.AlixoNotify = (() => {
   if (window.alixoDesktop && alixoDesktop.onUpdate) {
     alixoDesktop.onUpdate(info => {
       if (!info || !info.state) return;
-      if (info.state === 'download') push({ id: 'upd_mac_' + info.version, kind: 'update', title: `Alixo ${info.version} est disponible`, text: 'Sur Mac, la mise à jour se télécharge à la main : cliquez pour récupérer le nouveau .dmg, puis glissez Alixo dans Applications (vos cours sont conservés).', action: { type: 'url', url: info.url || 'https://github.com/Fayze-Kadox/alixo/releases/latest' } });
+      if (info.state === 'download') push({ id: 'upd_mac_' + info.version, kind: 'update', title: `Alixo ${info.version} est disponible`, text: 'Sur Mac, la mise à jour se télécharge à la main : cliquez pour récupérer le nouveau .dmg, puis glissez Alixo dans Applications (vos cours sont conservés).', action: { type: 'url', url: info.url || 'https://alixoapp.com/telecharger/mac/' } });
       else if (info.state === 'available') push({ id: 'upd_av_' + info.version, kind: 'update', title: `Alixo ${info.version} est disponible`, text: 'Téléchargement en arrière-plan… Vous serez prévenu quand elle sera prête à installer.', silent: true });
       else if (info.state === 'downloaded') push({ id: 'upd_dl_' + info.version, kind: 'update', title: `Alixo ${info.version} est prêt à être installé`, text: 'Cliquez pour redémarrer et appliquer la mise à jour (vos cours sont conservés). Sinon elle s’installera à la fermeture.', action: { type: 'update-install' } });
       else if (info.state === 'error' && info.manual) push({ kind: 'update', title: 'Vérification des mises à jour impossible', text: 'Impossible de contacter le serveur (hors ligne ?).', silent: true });

@@ -120,6 +120,7 @@ window.AlixoGalaxy3D = (() => {
         const white = dark ? 0xffffff : col.getHex();
         const geo = n.kind === 'slides' ? new T.OctahedronGeometry(n.r * 1.8)
           : n.kind === 'sheet' ? new T.BoxGeometry(n.r * 2.4, n.r * 2.4, n.r * 0.7)
+          : n.kind === 'board' ? new T.BoxGeometry(n.r * 3, n.r * 2, n.r * 0.5)
           : n.kind === 'file' ? new T.BoxGeometry(n.r * 2.2, n.r * 2.2, n.r * 2.2)
           : new T.SphereGeometry(n.r * 1.4, 14, 14);
         it.mesh = new T.Mesh(geo, new T.MeshBasicMaterial({ color: white }));
@@ -189,7 +190,7 @@ window.AlixoGalaxy3D = (() => {
         if (it.glow) it.glow.position.set(x, y, z);
         if (it.ring) { it.ring.position.set(x, y, z); it.ring.rotation.z = t * 0.25; }
         if (n.kind === 'folder' || n.kind === 'root') it.mesh.rotation.y = t * 0.2;
-        if (n.kind === 'slides' || n.kind === 'sheet') it.mesh.rotation.y = t * 0.8;
+        if (n.kind === 'slides' || n.kind === 'sheet' || n.kind === 'board') it.mesh.rotation.y = t * 0.8;
         const k = hover === n ? 1.25 : 1;
         it.mesh.scale.setScalar(k);
         if (n.kind === 'root') { sunLight.position.set(x, y, z + 40); it.glow.scale.setScalar(n.r * (11 + Math.sin(t * 1.3) * 0.8)); }

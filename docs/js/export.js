@@ -457,6 +457,7 @@
           pdf.y += 5;
           layoutRuns(pdf, [{ text: b.src || '', i: true }], { size: 12, x: pdf.M, width: pdf.cw, align: 'center' });
           pdf.y += 5; break;
+        case 'pb': pdf.newPage(); break;   // 1.23 : saut de page
         case 'hr':
           pdf.y += 9; pdf.ensure(12);
           pdf.rect(pdf.M + pdf.cw * 0.1, pdf.y, pdf.cw * 0.8, 0.8, HAIR);
@@ -771,6 +772,7 @@ ${[1, 2, 3, 4].map(l => `<w:style w:type="paragraph" w:styleId="Heading${l}"><w:
         case 'fiche': body += jurisTableXml(b); break;
         case 'table': body += tableXml(b); break;
         case 'hr': body += para('', '<w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="C9CCD1"/></w:pBdr><w:spacing w:before="120" w:after="200"/>'); break;
+        case 'pb': body += '<w:p><w:r><w:br w:type="page"/></w:r></w:p>'; break;   // 1.23 : saut de page
         case 'cards': body += cardsTableXml(b); break;
         case 'tree': {   // 1.20 : arbre → plan indenté
           const walk = (n, depth) => { if (!n) return; body += para((depth ? runXml({ text: '└ ', color: INK3 }) : '') + runsXml(htmlRuns(n.t || ''), depth ? {} : { b: true }), `<w:ind w:left="${360 + depth * 360}"/>`); (n.k || []).forEach(c => walk(c, depth + 1)); };
