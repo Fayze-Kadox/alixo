@@ -16,7 +16,7 @@ const fmtDate = ts => new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric',
 
 const DEFAULT_TINT = '#33658a';
 /* version de l'application (tenue à jour avec package.json) — sert aux notifications « nouvelle version installée » */
-const ALIXO_VERSION = '1.23.3';
+const ALIXO_VERSION = '1.23.4';
 /* version web d'Alixo (GitHub Pages) et téléchargement de la version PC */
 const ALIXO_WEB_URL = 'https://alixoapp.com/docs/';
 /* 1.23 : tout passe par le site (pages de téléchargement et de versions) — jamais de lien direct vers l'hébergement des fichiers */

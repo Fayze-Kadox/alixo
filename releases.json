@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-10-05T11:15:23.354Z",
+ "generatedAt": "2026-10-05T11:35:49.773Z",
  "version": "1.23.3",
  "date": "2026-10-05T11:15:02Z",
  "notes": "Nouveautés 1.23.3 — vue par pages : fin de page visible dans un long bloc\n\n\n- **Vue par pages** : quand un bloc est plus haut qu'une page (long encadré où l'on saute des lignes, grand tableau), deux pages semblaient « regroupées » sans séparation alors que le compte de pages les comptait. Une **ligne pointillée** marque maintenant la fin de page à l'intérieur du bloc, avec son numéro (« 2 / 5 · suite page 3 ») : c'est là que le PDF se coupe.",
