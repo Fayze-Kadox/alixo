@@ -1,31 +1,36 @@
 {
- "generatedAt": "2026-10-05T11:09:43.183Z",
- "version": "1.23.2",
- "date": "2026-10-05T08:13:46Z",
- "notes": "Nouveautés 1.23.2 — mise à jour automatique : message réel et journal\n\n\n- **Mise à jour automatique (Windows)** : quand le téléchargement de la nouvelle version échoue, la cloche le dit clairement (serveur de téléchargement injoignable depuis ce réseau, ou le message d'erreur réel) au lieu de « Vérification des mises à jour impossible », et propose d'un clic la page de téléchargement du site pour installer la version par-dessus. Le téléchargement est toujours complet (le téléchargement différentiel échouait dès qu'un installateur avait été republié). Journal des mises à jour dans `%APPDATA%\\Alixo\\updater.log`, à joindre en cas de problème.",
+ "generatedAt": "2026-10-05T11:15:23.354Z",
+ "version": "1.23.3",
+ "date": "2026-10-05T11:15:02Z",
+ "notes": "Nouveautés 1.23.3 — vue par pages : fin de page visible dans un long bloc\n\n\n- **Vue par pages** : quand un bloc est plus haut qu'une page (long encadré où l'on saute des lignes, grand tableau), deux pages semblaient « regroupées » sans séparation alors que le compte de pages les comptait. Une **ligne pointillée** marque maintenant la fin de page à l'intérieur du bloc, avec son numéro (« 2 / 5 · suite page 3 ») : c'est là que le PDF se coupe.",
  "assets": {
   "setup": {
    "name": "Alixo-Setup.exe",
-   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.2/Alixo-Setup.exe",
-   "size": 76822512
+   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.3/Alixo-Setup.exe",
+   "size": 76824517
   },
   "portable": {
    "name": "Alixo-Portable.exe",
-   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.2/Alixo-Portable.exe",
-   "size": 76587911
+   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.3/Alixo-Portable.exe",
+   "size": 76589912
   },
   "mac": {
    "name": "Alixo-Mac.dmg",
-   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.2/Alixo-Mac.dmg",
-   "size": 183863377
+   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.3/Alixo-Mac.dmg",
+   "size": 183865780
   },
   "macZip": {
-   "name": "Alixo-1.23.2-mac.zip",
-   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.2/Alixo-1.23.2-mac.zip",
-   "size": 177296762
+   "name": "Alixo-1.23.3-mac.zip",
+   "url": "https://github.com/Fayze-Kadox/alixo/releases/download/v1.23.3/Alixo-1.23.3-mac.zip",
+   "size": 177297211
   }
  },
  "history": [
+  {
+   "version": "1.23.3",
+   "date": "2026-10-05T11:15:02Z",
+   "notes": "Nouveautés 1.23.3 — vue par pages : fin de page visible dans un long bloc\n\n\n- **Vue par pages** : quand un bloc est plus haut qu'une page (long encadré où l'on saute des lignes, grand tableau), deux pages semblaient « regroupées » sans séparation alors que le compte de pages les comptait. Une **ligne pointillée** marque maintenant la fin de page à l'intérieur du bloc, avec son numéro (« 2 / 5 · suite page 3 ») : c'est là que le PDF se coupe."
+  },
   {
    "version": "1.23.2",
    "date": "2026-10-05T08:13:46Z",
