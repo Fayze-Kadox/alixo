@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-10-05T11:42:45.575Z",
+ "generatedAt": "2026-10-05T15:12:11.443Z",
  "version": "1.23.4",
  "date": "2026-10-05T11:42:26Z",
  "notes": "Nouveautés 1.23.4 — mise à jour automatique : installateur verrouillé\n\n\n- **Mise à jour automatique (Windows)** : l'erreur « EPERM: operation not permitted, rename …\\\\alixo-updater\\\\… » (installateur déjà téléchargé verrouillé par l'antivirus ou reste d'un téléchargement interrompu) est maintenant traitée : le dossier `pending` est vidé et le téléchargement recommence tout seul quelques secondes plus tard ; si cela échoue encore, la cloche explique quoi faire (fermer et rouvrir Alixo, ou supprimer `%LOCALAPPDATA%\\\\alixo-updater`) et renvoie vers le site.",

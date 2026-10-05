@@ -1271,14 +1271,16 @@ window.AlixoSheets = (() => {
     document.title = title + ' — Alixo';
     document.body.classList.add('printing-sheet');
     const desk = window.alixoDesktop;
-    const done = () => { document.body.classList.remove('printing-sheet'); box.innerHTML = ''; document.title = 'Alixo — Cockpit d’amphi'; };
-    if (!desk || !desk.printToPDF || !desk.saveFile) { try { print(); } finally { done(); } return; }
+    const done = () => { document.body.classList.remove('printing-sheet'); if (typeof exportWatermark === 'function') exportWatermark(false); box.innerHTML = ''; document.title = 'Alixo — Cockpit d’amphi'; };
+    if (!desk || !desk.printToPDF || !desk.saveFile) { if (typeof exportWatermark === 'function') exportWatermark(true); try { print(); } finally { done(); if (typeof exportWatermark === 'function') exportWatermark(false); } return; }
     pdfBusy = true;
     toast('Préparation du PDF…', { duration: 4000 });
     let pdf = null, err = null;
     try {
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      if (typeof exportWatermark === 'function') exportWatermark(true);
       pdf = await desk.printToPDF({ sheet: true, title });
+      if (typeof exportWatermark === 'function') exportWatermark(false);
     } catch (e) { err = e; }
     done(); pdfBusy = false;
     if (!pdf || err) { console.error(err); toast('Export PDF impossible' + (err && err.message ? ' : ' + err.message : '')); return; }

@@ -16,7 +16,7 @@ const fmtDate = ts => new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric',
 
 const DEFAULT_TINT = '#33658a';
 /* version de l'application (tenue à jour avec package.json) — sert aux notifications « nouvelle version installée » */
-const ALIXO_VERSION = '1.23.4';
+const ALIXO_VERSION = '1.24.0';
 /* version web d'Alixo (GitHub Pages) et téléchargement de la version PC */
 const ALIXO_WEB_URL = 'https://alixoapp.com/docs/';
 /* 1.23 : tout passe par le site (pages de téléchargement et de versions) — jamais de lien direct vers l'hébergement des fichiers */
@@ -217,6 +217,7 @@ function showLibrary() {
   if (window.AlixoSlides) AlixoSlides.leave();
   if (window.AlixoSheets) AlixoSheets.leave();
   if (window.AlixoBoard) AlixoBoard.leave();
+  if (window.AlixoQuiz) AlixoQuiz.leave();
   if (window.AlixoShare && AlixoShare.enabled) AlixoShare.setPresence(null, null);
   currentDocId = null;
   applyPagesMode();
@@ -242,9 +243,11 @@ function openDoc(id) {
   if (isSlidesDoc(d)) { if (window.AlixoSlides) AlixoSlides.open(id); else toast('Module de présentation indisponible'); return; }
   if (isSheetDoc(d)) { if (window.AlixoSheets) AlixoSheets.open(id); else toast('Module de tableur indisponible'); return; }
   if (isBoardDoc(d)) { if (window.AlixoBoard) AlixoBoard.open(id); else toast('Module de planche indisponible'); return; }
+  if (isQuizDoc(d)) { if (window.AlixoQuiz) AlixoQuiz.open(id); else toast('Module de quiz indisponible'); return; }
   if (window.AlixoSlides) AlixoSlides.leave();
   if (window.AlixoSheets) AlixoSheets.leave();
   if (window.AlixoBoard) AlixoBoard.leave();
+  if (window.AlixoQuiz) AlixoQuiz.leave();
   const shared = isSharedDoc(id);
   readOnly = shared && !AlixoShare.canWrite(id);
   document.body.classList.toggle('readonly', readOnly);
@@ -576,7 +579,7 @@ function renderCrumbs() {
   const path = folderPath(d.folderId);
   c.innerHTML = `<button class="crumb-root" data-nav="" title="Retour à Mes cours">Mes cours</button>` +
     path.map(f => `<span class="sep">›</span><button class="chip" data-nav="${f.id}" title="Ouvrir le dossier">${f.icone ? AlixoIcons.svg(f.icone, 'chip-ico') : ''}${esc(f.nom)}</button>`).join('') +
-    `<span class="sep">›</span><input id="tb-title" placeholder="Sans titre" value="${esc(d.titre || '')}" spellcheck="false" autocomplete="off" title="${isSlidesDoc(d) ? 'Renommer la présentation' : isSheetDoc(d) ? 'Renommer le tableur' : isBoardDoc(d) ? 'Renommer la planche' : 'Renommer la séance'}">`;
+    `<span class="sep">›</span><input id="tb-title" placeholder="Sans titre" value="${esc(d.titre || '')}" spellcheck="false" autocomplete="off" title="${isSlidesDoc(d) ? 'Renommer la présentation' : isSheetDoc(d) ? 'Renommer le tableur' : isBoardDoc(d) ? 'Renommer la planche' : isQuizDoc(d) ? 'Renommer le quiz' : 'Renommer la séance'}">`;
 }
 
 /* navigation par le fil d'Ariane (depuis l'éditeur) */
@@ -621,15 +624,18 @@ const isSheetDoc = d => !!d && d.kind === 'sheet';
 /* séance « planche » (tableau blanc libre, js/board.js) : d.kind === 'board', d.items = [...] ; d.blocks reste vide */
 const BOARD_ICON = '<svg class="dicon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><rect x="6" y="7" width="5" height="5" rx="1"/><path d="M14 9h4M14 12h3M11 18v3M9 21h4"/></svg>';
 const isBoardDoc = d => !!d && d.kind === 'board';
-/* séance qui n'utilise pas l'éditeur de texte (présentation, tableur, planche) */
-const isSpecialDoc = d => isSlidesDoc(d) || isSheetDoc(d) || isBoardDoc(d);
-const docIcon = d => (isSlidesDoc(d) ? SLIDES_ICON : isSheetDoc(d) ? SHEET_ICON : isBoardDoc(d) ? BOARD_ICON : DOC_ICON);
+/* séance « quiz » (1.24, js/quiz.js) : d.kind === 'quiz', d.questions = [...], d.results = [...] ; d.blocks reste vide */
+const QUIZ_ICON = '<svg class="dicon" viewBox="0 0 24 24"><path d="M9 9a3 3 0 1 1 4.5 2.6c-1 .6-1.5 1.2-1.5 2.4"/><path d="M12 17h.01"/><rect x="3" y="3" width="18" height="18" rx="4"/></svg>';
+const isQuizDoc = d => !!d && d.kind === 'quiz';
+/* séance qui n'utilise pas l'éditeur de texte (présentation, tableur, planche, quiz) */
+const isSpecialDoc = d => isSlidesDoc(d) || isSheetDoc(d) || isBoardDoc(d) || isQuizDoc(d);
+const docIcon = d => (isSlidesDoc(d) ? SLIDES_ICON : isSheetDoc(d) ? SHEET_ICON : isBoardDoc(d) ? BOARD_ICON : isQuizDoc(d) ? QUIZ_ICON : DOC_ICON);
 
 function treeDocsHTML(pid) {
   const docs = folderDocs(pid).slice().sort((a, b) => (b.pinned - a.pinned) || (b.updatedAt - a.updatedAt));
   return docs.map(d => `<div class="tree-row doc">
       <button class="tree-caret leaf">▶</button>
-      <button class="tree-label" data-doc="${d.id}" title="${isSlidesDoc(d) ? 'Ouvrir la présentation' : isSheetDoc(d) ? 'Ouvrir le tableur' : isBoardDoc(d) ? 'Ouvrir la planche' : 'Ouvrir la séance'}">
+      <button class="tree-label" data-doc="${d.id}" title="${isSlidesDoc(d) ? 'Ouvrir la présentation' : isSheetDoc(d) ? 'Ouvrir le tableur' : isBoardDoc(d) ? 'Ouvrir la planche' : isQuizDoc(d) ? 'Ouvrir le quiz' : 'Ouvrir la séance'}">
         ${docIcon(d)}<span class="tree-name">${esc(d.titre || 'Sans titre')}</span>
       </button>
     </div>`).join('');
@@ -762,6 +768,19 @@ function renderLibrary() {
         <svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></span>
     </button>`;
     }
+    if (isQuizDoc(d)) {
+      const nq = window.AlixoQuiz ? AlixoQuiz.count(d) : (d.questions || []).length;
+      return `<button class="doc-card quiz-card" data-id="${d.id}" draggable="true" style="--mc:${tint}">
+      <span class="mat-chip">${QUIZ_ICON}${esc(folder(d.folderId)?.nom || 'Quiz')}</span>
+      <h3>${esc(d.titre || 'Sans titre')}</h3>
+      <div class="preview quiz-prev">${window.AlixoQuiz ? AlixoQuiz.preview(d) : ''}</div>
+      <div class="meta">${fmtDate(d.updatedAt)} · ${nq} question${nq > 1 ? 's' : ''}${(d.results || []).length ? ` · ${d.results.length} résultat${d.results.length > 1 ? 's' : ''}` : ''}${d.prof ? ` · <span class="card-prof">${esc(d.prof)}</span>` : ''}</div>
+      <span class="pin-btn ${d.pinned ? 'pinned' : ''}" data-pin="${d.id}" title="Épingler">
+        <svg viewBox="0 0 24 24"><path d="M12 17v5M9 3h6l1 7 2.5 3h-13L8 10Z"/></svg></span>
+      <span class="del-btn" data-del="${d.id}" title="Supprimer">
+        <svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></span>
+    </button>`;
+    }
     const firstText = d.blocks.find(b => ['p', 'callout', 'quote', 'li'].includes(b.type));
     const preview = firstText ? stripTags(firstText.text) : (d.blocks.length ? d.blocks.length + ' blocs' : 'Document vide');
     const nb = d.blocks.length;
@@ -793,20 +812,23 @@ function sharedDocCardHTML(d, tint, owner, role) {
   const ns = isSlidesDoc(d) ? (d.slides || []).length : 0;
   const nf = isSheetDoc(d) ? (d.sheets || []).length : 0;
   const ni = isBoardDoc(d) ? (window.AlixoBoard ? AlixoBoard.itemCount(d) : (d.items || []).length) : 0;
+  const nq = isQuizDoc(d) ? (d.questions || []).length : 0;
   const firstText = !isSpecialDoc(d) && (d.blocks || []).find(b => ['p', 'callout', 'quote', 'li'].includes(b.type));
   const preview = isSlidesDoc(d) ? (window.AlixoSlides ? AlixoSlides.preview(d) : '')
     : isSheetDoc(d) ? (window.AlixoSheets ? AlixoSheets.preview(d) : '')
     : isBoardDoc(d) ? (window.AlixoBoard ? AlixoBoard.preview(d) : '')
+    : isQuizDoc(d) ? (window.AlixoQuiz ? AlixoQuiz.preview(d) : '')
     : esc(firstText ? stripTags(firstText.text) : ((d.blocks || []).length ? d.blocks.length + ' blocs' : 'Document vide'));
   const count = isSlidesDoc(d) ? `${ns} diapositive${ns > 1 ? 's' : ''}`
     : isSheetDoc(d) ? `${nf} feuille${nf > 1 ? 's' : ''}`
     : isBoardDoc(d) ? `${ni} élément${ni > 1 ? 's' : ''}`
+    : isQuizDoc(d) ? `${nq} question${nq > 1 ? 's' : ''}`
     : `${(d.blocks || []).length} bloc${(d.blocks || []).length > 1 ? 's' : ''}`;
   const peers = window.AlixoShare && AlixoShare.enabled ? AlixoShare.peersFor(d.id) : [];
-  return `<button class="doc-card shared-card ${isSlidesDoc(d) ? 'slides-card' : ''}${isSheetDoc(d) ? 'sheet-card' : ''}${isBoardDoc(d) ? 'board-card' : ''}" data-id="${d.id}" style="--mc:${tint}">
+  return `<button class="doc-card shared-card ${isSlidesDoc(d) ? 'slides-card' : ''}${isSheetDoc(d) ? 'sheet-card' : ''}${isBoardDoc(d) ? 'board-card' : ''}${isQuizDoc(d) ? 'quiz-card' : ''}" data-id="${d.id}" style="--mc:${tint}">
       <span class="mat-chip">${SHARE_ICO}${esc(owner || 'Partagé')}</span>
       <h3>${esc(d.titre || 'Sans titre')}</h3>
-      <div class="preview ${isSlidesDoc(d) ? 'slides-prev' : ''}${isSheetDoc(d) ? 'sheet-prev' : ''}${isBoardDoc(d) ? 'board-prev' : ''}">${preview}</div>
+      <div class="preview ${isSlidesDoc(d) ? 'slides-prev' : ''}${isSheetDoc(d) ? 'sheet-prev' : ''}${isBoardDoc(d) ? 'board-prev' : ''}${isQuizDoc(d) ? 'quiz-prev' : ''}">${preview}</div>
       <div class="meta">${fmtDate(d.updatedAt || Date.now())} · ${count} · <span class="sh-role ${role}">${role === 'write' ? 'écriture' : 'lecture'}</span>${peers.length ? `<span class="peer-live" title="${esc(peers.map(p => p.name).join(', '))}">● ${peers.length === 1 ? esc(peers[0].name) + ' est dessus' : peers.length + ' personnes dessus'}</span>` : ''}</div>
     </button>`;
 }
@@ -907,6 +929,11 @@ function mergeRemoteDoc(remote, byName) {
   if (isBoardDoc(remote) || isBoardDoc(d)) {
     Object.assign(d, remote);
     if (window.AlixoBoard) AlixoBoard.remoteChanged();
+    return d;
+  }
+  if (isQuizDoc(remote) || isQuizDoc(d)) {
+    Object.assign(d, remote);
+    if (window.AlixoQuiz) AlixoQuiz.remoteChanged();
     return d;
   }
   if (!readOnly) syncAllFromDom();
@@ -1070,6 +1097,7 @@ function openCreateMenu(x, y) {
     <button data-cm="cnewslides">${SLIDES_ICON}Nouvelle présentation ici</button>
     <button data-cm="cnewsheet">${SHEET_ICON}Nouveau tableur ici</button>
     <button data-cm="cnewboard">${BOARD_ICON}Nouvelle planche ici</button>
+    <button data-cm="cnewquiz">${QUIZ_ICON}Nouveau quiz ici</button>
     <button data-cm="cnewfolder">${CM_ICO.folder}Nouveau dossier ici</button>
     <button data-cm="cimport">${CM_ICO.plus}Importer des fichiers ici… (PDF, Word, images…)</button>
     ${cur ? `<button data-cm="cagenda">${CM_ICO.plus}Ajouter ce cours à l’agenda</button>` : ''}`;
@@ -1253,8 +1281,13 @@ function duplicateDoc(did) {
     const ids = new Map(copy.items.map(it => [it.id, uid()]));
     copy.items.forEach(it => { it.id = ids.get(it.id); if (it.t === 'arrow') { it.from = ids.get(it.from) || it.from; it.to = ids.get(it.to) || it.to; } });
   }
+  if (Array.isArray(copy.questions)) {
+    /* quiz : nouveaux identifiants de questions et de propositions (les bonnes réponses suivent) ; les résultats ne sont pas copiés */
+    copy.questions.forEach(q => { q.id = uid(); if (Array.isArray(q.opts)) { const m = new Map(q.opts.map(o => [o.id, uid()])); q.opts.forEach(o => { o.id = m.get(o.id); }); if (q.t === 'mcq' && Array.isArray(q.ans)) q.ans = q.ans.map(a => m.get(a) || a); } });
+    copy.results = [];
+  }
   state.docs.push(copy); save(); renderLibrary();
-  toast(isSlidesDoc(copy) ? 'Présentation dupliquée' : isSheetDoc(copy) ? 'Tableur dupliqué' : isBoardDoc(copy) ? 'Planche dupliquée' : 'Séance dupliquée');
+  toast(isSlidesDoc(copy) ? 'Présentation dupliquée' : isSheetDoc(copy) ? 'Tableur dupliqué' : isBoardDoc(copy) ? 'Planche dupliquée' : isQuizDoc(copy) ? 'Quiz dupliqué' : 'Séance dupliquée');
 }
 
 /* choix d'un dossier de destination (séance ou dossier) */
@@ -1418,6 +1451,7 @@ $('#btn-new-doc').addEventListener('click', () => createDocIn(currentFolderId));
 $('#btn-new-slides').addEventListener('click', () => createSlidesIn(currentFolderId));
 $('#btn-new-sheet').addEventListener('click', () => createSheetIn(currentFolderId));
 $('#btn-new-board').addEventListener('click', () => createBoardIn(currentFolderId));
+$('#btn-new-quiz').addEventListener('click', () => createQuizIn(currentFolderId));
 /* nouvelle présentation (diapositives) : même fiche qu'une séance, avec kind: 'slides' — voir js/slides.js */
 function createSlidesIn(fid) {
   if (!window.AlixoSlides) { toast('Module de présentation indisponible'); return; }
@@ -1438,6 +1472,15 @@ function createSheetIn(fid) {
 function createBoardIn(fid) {
   if (!window.AlixoBoard) { toast('Module de planche indisponible'); return; }
   const d = AlixoBoard.newDoc(fid || null, folderProf(fid));
+  state.docs.push(d); save();
+  openDoc(d.id);
+  setTimeout(() => { const t = $('#tb-title'); if (t) t.focus(); }, 60);
+}
+
+/* nouveau quiz (1.24) : même fiche qu'une séance, avec kind: 'quiz' — voir js/quiz.js */
+function createQuizIn(fid) {
+  if (!window.AlixoQuiz) { toast('Module de quiz indisponible'); return; }
+  const d = AlixoQuiz.newDoc(fid || null, folderProf(fid));
   state.docs.push(d); save();
   openDoc(d.id);
   setTimeout(() => { const t = $('#tb-title'); if (t) t.focus(); }, 60);
@@ -1518,6 +1561,7 @@ function openFolderCtxMenu(x, y, fid) {
     <button data-cm="newslides">${SLIDES_ICON}Nouvelle présentation ici</button>
     <button data-cm="newsheet">${SHEET_ICON}Nouveau tableur ici</button>
     <button data-cm="newboard">${BOARD_ICON}Nouvelle planche ici</button>
+    <button data-cm="newquiz">${QUIZ_ICON}Nouveau quiz ici</button>
     <button data-cm="newfolder">${CM_ICO.plus}Nouveau sous-dossier…</button>
     <button data-cm="import">${CM_ICO.plus}Importer des fichiers…</button>
     <button data-cm="rename">${CM_ICO.pen}Renommer / couleur…</button>
@@ -1546,6 +1590,7 @@ $('#ctxmenu').addEventListener('click', e => {
   if (cm === 'cnewslides') { createSlidesIn(currentFolderId); return; }
   if (cm === 'cnewsheet') { createSheetIn(currentFolderId); return; }
   if (cm === 'cnewboard') { createBoardIn(currentFolderId); return; }
+  if (cm === 'cnewquiz') { createQuizIn(currentFolderId); return; }
   if (cm === 'cnewfolder') { openFolderPopover(null, currentFolderId); return; }
   if (cm === 'cimport') { if (window.AlixoFiles) AlixoFiles.pick(currentFolderId); return; }
   if (cm === 'cagenda') { openEventPopover(null, { folderId: currentFolderId }); return; }
@@ -1592,6 +1637,7 @@ $('#ctxmenu').addEventListener('click', e => {
   if (cm === 'newslides') createSlidesIn(f.id);
   if (cm === 'newsheet') createSheetIn(f.id);
   if (cm === 'newboard') createBoardIn(f.id);
+  if (cm === 'newquiz') createQuizIn(f.id);
   if (cm === 'newfolder') openFolderPopover(null, f.id);
   if (cm === 'import' && window.AlixoFiles) AlixoFiles.pick(f.id);
   if (cm === 'rename') openFolderPopover(f);
@@ -1693,7 +1739,7 @@ body { overflow: auto; background: #fff; padding: 40px 16px; }
 #blocks [data-ph]::before, #blocks .jref::before, #blocks .jval::before, #blocks figcaption::before, #blocks .qcite::before { content: none !important; }
 .exp-title { font-family: var(--font-serif); font-size: 28px; font-weight: 650; margin-bottom: 24px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
 </style></head>
-<body><article id="doc"><h1 class="exp-title">${esc(d.titre || 'Sans titre')}</h1><div id="blocks">${body}</div></article></body></html>`;
+<body><article id="doc"><h1 class="exp-title">${esc(d.titre || 'Sans titre')}</h1><div id="blocks">${body}</div></article>${exportWatermarked() ? `<div id="alixo-wm" class="wm-screen" aria-hidden="true"><span class="wm-big">${WM_TEXT}</span><span class="wm-foot">Fait avec Alixo · alixoapp.com</span></div>` : ''}</body></html>`;
 }
 
 const EXPORT_FORMATS = { pdf: { label: 'PDF', ext: '.pdf' }, docx: { label: 'Word (.docx)', ext: '.docx' }, html: { label: 'Page web (.html)', ext: '.html' } };
@@ -1730,6 +1776,8 @@ async function downloadFolderZip(fid) {
       }
       /* une planche (tableau blanc) n'a pas d'équivalent texte : elle s'exporte en PDF depuis sa vue, pas dans l'archive */
       if (isBoardDoc(d)) continue;
+      /* un quiz s'exporte en PDF depuis sa vue (questions et réponses), pas dans l'archive */
+      if (isQuizDoc(d)) continue;
       let name = `${path}${base}${ext}`;
       for (let k = 2; used.has(name); k++) name = `${path}${base} (${k})${ext}`;
       used.add(name);
@@ -2019,6 +2067,19 @@ const plusBadge = (t = 'Alixo+') => `<span class="plus-badge">${t}</span>`;
 /* Abonnement Alixo+ réellement actif sur ce compte. isPlus() renvoie aussi vrai en mode 100 % local
    (tout est ouvert) : pour le logo et les marques « Alixo+ », c'est l'abonnement qui compte. */
 const hasPlusPlan = () => editionActive() || !!(window.AlixoAuth && window.AlixoAuth.isConfigured && planActive(planInfo));
+/* 1.24 : filigrane « Alixo » sur les exports (PDF de tous les types de documents, Word, page web, archive .zip)
+   tant que le compte n'a pas Alixo+ ; Alixo+ exporte des documents vierges. Un calque fixe est posé sur la page
+   le temps de l'impression (position: fixed → répété sur chaque page du PDF, voir #alixo-wm dans styles.css). */
+const WM_TEXT = 'Alixo';
+const exportWatermarked = () => !isPlus();
+function exportWatermark(on) {
+  let el = $('#alixo-wm');
+  if (!on || !exportWatermarked()) { if (el) el.remove(); return; }
+  if (el) return;
+  el = document.createElement('div'); el.id = 'alixo-wm'; el.setAttribute('aria-hidden', 'true');
+  el.innerHTML = `<span class="wm-big">${WM_TEXT}</span><span class="wm-foot">Fait avec Alixo · alixoapp.com</span>`;
+  document.body.appendChild(el);
+}
 /* logo de l'application : le « A » Alixo+ (orange, avec le +) dès que le compte a Alixo+ */
 const APP_LOGO = 'logo.png', APP_LOGO_PLUS = 'logo-plus.png';
 const appLogoSrc = () => (hasPlusPlan() ? APP_LOGO_PLUS : APP_LOGO);
@@ -2183,11 +2244,78 @@ let settingsCat = 'compte';
 const SHORTCUTS = [
   ['Ctrl + K', 'Recherche universelle'], ['Ctrl + P', 'Exporter en PDF'], ['Ctrl + W', 'Fermer l’onglet'], ['Ctrl + Tab', 'Onglet suivant'],
   ['Alt + ←', 'Retour à la bibliothèque'], ['Ctrl + Maj + A', 'Agenda'], ['Ctrl + Maj + K', 'Tâches'], ['Ctrl + Maj + D', 'Dictionnaire'],
-  ['Ctrl + Maj + T', 'Chronomètre'], ['/', 'Insérer un bloc (ligne vide)'], ['F7', 'Correction par IA'], ['Ctrl + Alt + 1…4', 'Niveau de titre'],
+  ['Ctrl + Maj + T', 'Chronomètre'], ['/', 'Insérer un bloc (ligne vide)'], ['F7', 'Correction par IA'], ['Ctrl + Alt + 1…6', 'Niveau de titre (selon le plan)'],
   ['F5', 'Présenter (présentation)'], ['Suppr', 'Supprimer le bloc sélectionné (présentation)'],
   ['F2', 'Modifier la cellule (tableur)'], ['Ctrl + flèches', 'Bord de la zone remplie (tableur)'],
-  ['Ctrl + molette', 'Zoom (planche)'], ['Espace + glisser', 'Déplacer la vue (planche)'], ['Ctrl + D', 'Dupliquer la sélection (planche)'], ['N / T / F', 'Post-it, texte, flèche (planche)']
+  ['F5', 'Tester le quiz'], ['Ctrl + molette', 'Zoom (planche)'], ['Espace + glisser', 'Déplacer la vue (planche)'], ['Ctrl + D', 'Dupliquer la sélection (planche)'], ['N / T / F', 'Post-it, texte, flèche (planche)']
 ];
+
+/* ---------------- Paramètres › Écriture › Plan du cours (1.24) : pyramide des niveaux ---------------- */
+function planRowsHTML() {
+  const lv = planLevels();
+  return lv.map((l, i) => `<div class="plan-lv" draggable="true" data-i="${i}" style="--d:${i}">
+      <span class="plan-grip" title="Glisser pour déplacer ce niveau">⋮⋮</span>
+      <span class="plan-sample" title="Exemple de numéro">${esc(NUM_STYLES[l.num][0])}</span>
+      <input class="plan-name" value="${esc(l.name)}" placeholder="Nom du niveau" maxlength="30" spellcheck="false" title="Nom du niveau (menu /, bouton Niveau de plan)">
+      <select class="plan-num" title="Numérotation de ce niveau">${Object.keys(NUM_STYLES).map(k => `<option value="${esc(k)}" ${l.num === k ? 'selected' : ''}>${esc(NUM_STYLE_NAMES[k])}</option>`).join('')}</select>
+      <input class="plan-pre" value="${esc(l.pre)}" placeholder="Mots déclencheurs : Chapitre, Chap." spellcheck="false" title="Une ligne qui commence par l’un de ces mots (séparés par des virgules) devient un titre de ce niveau">
+      <span class="plan-mv"><button type="button" data-mv="-1" title="Monter" ${i === 0 ? 'disabled' : ''}>▲</button><button type="button" data-mv="1" title="Descendre" ${i === lv.length - 1 ? 'disabled' : ''}>▼</button></span>
+      <button type="button" class="plan-del" title="Retirer ce niveau" ${lv.length <= 1 ? 'disabled' : ''}>✕</button>
+    </div>`).join('');
+}
+function bindPlanEditor(root) {
+  const box = root.querySelector('#set-plan'); if (!box) return;
+  const addBtn = root.querySelector('#set-planadd');
+  const levels = () => planLevels().map(l => Object.assign({}, l));
+  const commit = (lv, rerender = true) => {
+    state.settings.plan = { levels: lv.slice(0, PLAN_MAX) };
+    save(); applyPlanChange();
+    if (rerender) { box.innerHTML = planRowsHTML(); if (addBtn) addBtn.disabled = planDepth() >= PLAN_MAX; }
+  };
+  const readRows = () => [...box.querySelectorAll('.plan-lv')].map(row => ({ name: row.querySelector('.plan-name').value.trim(), num: row.querySelector('.plan-num').value, pre: row.querySelector('.plan-pre').value }));
+  box.addEventListener('input', e => {
+    const row = e.target.closest('.plan-lv'); if (!row) return;
+    const lv = readRows();
+    const i = +row.dataset.i;
+    if (!lv[i].name) lv[i].name = `Niveau ${i + 1}`;
+    commit(lv, false);
+    row.querySelector('.plan-sample').textContent = NUM_STYLES[lv[i].num][0];
+  });
+  box.addEventListener('change', e => { if (e.target.classList.contains('plan-num')) { commit(readRows(), false); const row = e.target.closest('.plan-lv'); row.querySelector('.plan-sample').textContent = NUM_STYLES[e.target.value][0]; } });
+  box.addEventListener('click', e => {
+    const row = e.target.closest('.plan-lv'); if (!row) return;
+    const i = +row.dataset.i;
+    const mv = e.target.closest('[data-mv]');
+    if (mv) { const lv = readRows(); const j = i + (+mv.dataset.mv); if (j < 0 || j >= lv.length) return; [lv[i], lv[j]] = [lv[j], lv[i]]; commit(lv); return; }
+    if (e.target.closest('.plan-del')) { const lv = readRows(); if (lv.length <= 1) return; lv.splice(i, 1); commit(lv); toast('Niveau retiré — les titres de ce niveau prennent celui du dessous'); return; }
+  });
+  /* glisser-déposer d'un niveau dans la pyramide */
+  let dragI = null;
+  box.addEventListener('dragstart', e => { const row = e.target.closest('.plan-lv'); if (!row || e.target.matches('input, select')) { e.preventDefault(); return; } dragI = +row.dataset.i; row.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', String(dragI)); } catch { /* */ } });
+  box.addEventListener('dragend', () => { dragI = null; box.querySelectorAll('.plan-lv').forEach(r => r.classList.remove('dragging', 'over-up', 'over-down')); });
+  box.addEventListener('dragover', e => {
+    if (dragI === null) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+    const row = e.target.closest('.plan-lv'); box.querySelectorAll('.plan-lv').forEach(r => r.classList.remove('over-up', 'over-down'));
+    if (!row || +row.dataset.i === dragI) return;
+    const r = row.getBoundingClientRect(); row.classList.add(e.clientY < r.top + r.height / 2 ? 'over-up' : 'over-down');
+  });
+  box.addEventListener('drop', e => {
+    if (dragI === null) return; e.preventDefault();
+    const row = e.target.closest('.plan-lv'); if (!row) return;
+    const r = row.getBoundingClientRect(); let to = +row.dataset.i + (e.clientY < r.top + r.height / 2 ? 0 : 1);
+    const lv = readRows(); const [it] = lv.splice(dragI, 1); if (to > dragI) to--; lv.splice(to, 0, it);
+    dragI = null; commit(lv);
+  });
+  if (addBtn) addBtn.addEventListener('click', () => {
+    const lv = levels(); if (lv.length >= PLAN_MAX) return;
+    const used = new Set(lv.map(l => l.num));
+    const num = ['I', 'A', '1', 'a', 'i', '§', '-'].find(k => !used.has(k)) || '1';
+    lv.push({ name: ['Chapitre', 'Titre', 'Sous-partie', 'Point', 'Alinéa'].find(n => !lv.some(l => l.name === n)) || `Niveau ${lv.length + 1}`, num, pre: '' });
+    commit(lv);
+    const rows = box.querySelectorAll('.plan-lv'); if (rows.length) rows[rows.length - 1].querySelector('.plan-name').select();
+  });
+  root.querySelector('#set-planreset').addEventListener('click', () => { delete state.settings.plan; save(); applyPlanChange(); box.innerHTML = planRowsHTML(); if (addBtn) addBtn.disabled = false; toast('Plan par défaut rétabli : I. A. 1. a.'); });
+}
 
 function settingsSectionHTML(k) {
   const fmt = state.settings.exportFormat || 'pdf';
@@ -2218,6 +2346,10 @@ function settingsSectionHTML(k) {
         <label class="set-inline">Taille <select id="set-fontsize">${DOC_SIZES.map(([v, l]) => `<option value="${v}" ${(state.settings.docSize || 'm') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
       </div>
       <div class="set-checks" style="margin-top:12px"><label><input type="checkbox" id="set-pageview" ${state.settings.pageView !== false ? 'checked' : ''}><span><b>Feuille découpée en pages A4</b><small>Le cours s’affiche page par page, exactement comme dans le PDF (Ctrl+P) ; le bloc « Saut de page » du menu / force le passage à la page suivante. Décoché : une seule feuille continue.</small></span></label></div></div>
+    <div class="set-sect"><div class="po-label">Plan du cours</div>
+      <div class="po-hint" style="margin:0 0 10px">Les niveaux de titres, du plus général (en haut de la pyramide) au plus fin. <b>Glissez un niveau</b> pour le monter ou le descendre (ou ▲ ▼), ajoutez-en (Chapitre, Titre, §…), choisissez sa numérotation. Les <b>mots déclencheurs</b> transforment une ligne qui commence par l’un d’eux en titre de ce niveau : avec « Chapitre » sur le niveau placé au-dessus de « Section », taper « Chapitre 1 : Le contrat » crée un chapitre — comme « I. », « A. », « 1. » et « a. » le font déjà. Tab / Maj+Tab change le niveau d’un titre ; Ctrl+Alt+1…6 le fixe.</div>
+      <div id="set-plan" class="plan-pyr">${planRowsHTML()}</div>
+      <div class="po-row" style="gap:8px; margin-top:10px; flex-wrap:wrap"><button id="set-planadd" class="cta ghost small" type="button" ${planDepth() >= PLAN_MAX ? 'disabled' : ''}>＋ Ajouter un niveau</button><button id="set-planreset" class="cta ghost small" type="button">Plan par défaut (I. A. 1. a.)</button></div></div>
     <div class="set-sect"><div class="po-label">Fautes de frappe</div>
       <div class="set-checks"><label><input type="checkbox" id="set-autotypo" ${state.settings.autoTypo !== false ? 'checked' : ''}><span><b>Corriger seul les fautes de frappe courantes</b><small>« qaund » → « quand », « aevc » → « avec », « etre » → « être », « contart » → « contrat »… dès que vous tapez un espace ou une ponctuation, sans Internet ni IA : liste de fautes courantes, lexique de 24 000 mots (lettres inversées, lettre doublée, accent oublié — jamais un mot ambigu) et mots appris des corrections précédentes. Retour arrière juste après garde le mot tel que vous l’avez tapé (et il n’est plus corrigé). Les textes dans une autre langue ne sont pas touchés.</small></span></label></div></div>
     <div class="set-sect"><div class="po-label">Raccourcis de frappe</div>
@@ -2311,6 +2443,7 @@ function bindSettingsSection(k, root) {
     root.querySelector('#set-fonthead').addEventListener('change', e => { if (e.target.value) state.settings.docFontHead = e.target.value; else delete state.settings.docFontHead; save(); applyDocFont(); });
     root.querySelector('#set-fontsize').addEventListener('change', e => { if (e.target.value !== 'm') state.settings.docSize = e.target.value; else delete state.settings.docSize; save(); applyDocFont(); });
     root.querySelector('#set-pageview').addEventListener('change', e => { if (e.target.checked) delete state.settings.pageView; else state.settings.pageView = false; save(); applyPagesMode(); toast(e.target.checked ? 'Feuille découpée en pages A4' : 'Feuille continue'); });
+    bindPlanEditor(root);
     root.querySelector('#set-autotypo').addEventListener('change', e => { state.settings.autoTypo = e.target.checked; save(); toast(e.target.checked ? 'Fautes de frappe corrigées automatiquement' : 'Correction automatique des fautes de frappe désactivée'); });
     const box = root.querySelector('#po-snips');
     const syncRow = row => {
@@ -2428,9 +2561,67 @@ const ALPHA = n => String.fromCharCode(64 + Math.min(n, 26));
 const alpha = n => String.fromCharCode(96 + Math.min(n, 26));
 const roman = n => ROMAN(n).toLowerCase();
 
-/* numéros des titres (I. A. 1. a.) et des listes numérotées (1. a. i.) */
+/* ============================================================
+   1.24 — Plan modifiable (Paramètres › Écriture › Plan du cours)
+   state.settings.plan = { levels: [{ name, num, pre }] } : les niveaux du plus général (en haut de la pyramide)
+   au plus fin. name : libellé (Partie, Chapitre, Section…) ; num : style de numéro ('I' romain, 'A', '1', 'a',
+   'i' romain minuscule, '§', '-' aucun) ; pre : mots déclencheurs séparés par des virgules (« Chapitre, Chap. ») —
+   une ligne qui commence par l'un d'eux devient un titre de ce niveau, comme « I. » ou « A. » le font déjà.
+   Jusqu'à 6 niveaux. Les séances gardent leur numéro de niveau (b.level) : seuls l'affichage (numéro, libellé,
+   retrait) et la détection suivent le plan ; un niveau au-delà du plan est affiché comme le dernier.
+   ============================================================ */
+const PLAN_MAX = 6;
+const PLAN_DEFAULT = [
+  { name: 'Partie', num: 'I', pre: '' },
+  { name: 'Section', num: 'A', pre: '' },
+  { name: 'Sous-section', num: '1', pre: '' },
+  { name: 'Paragraphe', num: 'a', pre: '' }
+];
+/* styles de numérotation : [exemple, fonction] */
+const NUM_STYLES = { I: ['I.', ROMAN], A: ['A.', ALPHA], '1': ['1.', String], a: ['a.', alpha], i: ['i.', roman], '§': ['§ 1', n => '§ ' + n], '-': ['—', () => ''] };
+const NUM_STYLE_NAMES = { I: 'I. II. III.', A: 'A. B. C.', '1': '1. 2. 3.', a: 'a. b. c.', i: 'i. ii. iii.', '§': '§ 1, § 2', '-': 'Sans numéro' };
+function planLevels() {
+  const p = state.settings && state.settings.plan;
+  const raw = p && Array.isArray(p.levels) && p.levels.length ? p.levels : PLAN_DEFAULT;
+  return raw.slice(0, PLAN_MAX).map((l, i) => ({
+    name: String((l && l.name) || (PLAN_DEFAULT[i] ? PLAN_DEFAULT[i].name : '') || `Niveau ${i + 1}`),
+    num: l && NUM_STYLES[l.num] ? l.num : (PLAN_DEFAULT[i] ? PLAN_DEFAULT[i].num : '1'),
+    pre: String((l && l.pre) || '')
+  }));
+}
+const planDepth = () => planLevels().length;
+const planLevelOf = level => { const lv = planLevels(); return lv[Math.min(lv.length, Math.max(1, +level || 1)) - 1]; };
+const planName = level => planLevelOf(level).name;
+const planSample = level => NUM_STYLES[planLevelOf(level).num][0];
+function planNum(level, n) {
+  const st = planLevelOf(level).num;
+  const v = NUM_STYLES[st][1](n);
+  return st === '§' || st === '-' ? v : v + '.';
+}
+/* mots déclencheurs : [{ level, re }] — « Chapitre 1 », « chapitre : … », « Chap. II » (suivi d'un espace ou d'une ponctuation) */
+let planPrefixCache = { key: '', rules: [] };
+function planPrefixRules() {
+  const lv = planLevels();
+  const key = lv.map(l => l.pre).join('\u0000');
+  if (planPrefixCache.key === key) return planPrefixCache.rules;
+  const rules = [];
+  lv.forEach((l, i) => {
+    for (const w of l.pre.split(/[,;]/).map(x => x.trim()).filter(Boolean)) {
+      try { rules.push({ level: i + 1, re: new RegExp('^' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[\\s:.,;\u2013\u2014-]', 'iu') }); } catch { /* mot invalide */ }
+    }
+  });
+  planPrefixCache = { key, rules };
+  return rules;
+}
+/* le plan a changé (Paramètres) : numéros, volet plan et menus suivent */
+function applyPlanChange() {
+  planPrefixCache = { key: '', rules: [] };
+  if (currentDocId && !isSpecialDoc(doc())) { renderBlocks('__none'); renderPlan(); }
+}
+
+/* numéros des titres (I. A. 1. a. — ou le plan personnalisé) et des listes numérotées (1. a. i.) */
 function computeNumbers(blocks) {
-  const counters = [0, 0, 0, 0];
+  const counters = new Array(PLAN_MAX).fill(0);
   const map = {};
   const lc = [0, 0, 0, 0];
   let inList = false;
@@ -2446,10 +2637,10 @@ function computeNumbers(blocks) {
     }
     inList = b.type === 'li';   // une puce ou une case au milieu ne casse pas la numérotation
     if (b.type !== 'h') continue;
-    const L = b.level;
+    const L = Math.min(PLAN_MAX, Math.max(1, +b.level || 1));
     counters[L - 1]++;
-    for (let i = L; i < 4; i++) counters[i] = 0;
-    map[b.id] = [ROMAN, ALPHA, String, alpha][L - 1](counters[L - 1]) + '.';
+    for (let i = L; i < PLAN_MAX; i++) counters[i] = 0;
+    map[b.id] = planNum(L, counters[L - 1]);
   }
   return map;
 }
@@ -2728,16 +2919,24 @@ function blockHTML(b, numMap) {
       const covered = tableCovered(b), anchors = new Map(tableSpans(b).map(x => [x.r + ':' + x.c, x]));
       return `<div class="block table" data-id="${b.id}" contenteditable="false">${MV_HANDLE}
         <div class="tbl-tools">
-          <button data-t="row+" title="Ajouter une ligne en dessous">＋ ligne</button>
-          <button data-t="col+" title="Ajouter une colonne à droite">＋ colonne</button>
-          <button data-t="row-" title="Supprimer cette ligne">− ligne</button>
-          <button data-t="col-" title="Supprimer cette colonne">− colonne</button>
-          <button data-t="merge" title="Fusionner les cases sélectionnées (glissez d’une case à l’autre, ou Maj+clic) : une ligne d’une seule case au-dessus d’une ligne de trois, par exemple">Fusionner</button>
-          <button data-t="split" title="Scinder la case fusionnée">Scinder</button>
-          <button data-t="head" class="${b.head ? 'on' : ''}" title="Première ligne en en-tête">En-tête</button>
-          <button data-t="copy" title="Copier tout le tableau (à coller ailleurs dans le cours, dans une case, un encadré, ou dans Word / Excel)">Copier</button>
-          <button data-t="dup" title="Dupliquer le tableau juste en dessous">Dupliquer</button>
-          <button data-t="del" class="danger" title="Supprimer le tableau">Supprimer</button>
+          <span class="tt-grp">
+            <button data-t="row+" title="Ajouter une ligne en dessous"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="10" rx="1.5"/><path d="M3 9h18M12 17v4M10 19h4"/></svg><span>Ligne</span></button>
+            <button data-t="col+" title="Ajouter une colonne à droite"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="11" height="18" rx="1.5"/><path d="M8.5 3v18M17 10v4M15 12h4"/></svg><span>Colonne</span></button>
+            <button data-t="row-" title="Supprimer cette ligne"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="10" rx="1.5"/><path d="M3 9h18M10 19h4"/></svg></button>
+            <button data-t="col-" title="Supprimer cette colonne"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="11" height="18" rx="1.5"/><path d="M8.5 3v18M15 12h4"/></svg></button>
+          </span>
+          <span class="tt-sep"></span>
+          <span class="tt-grp">
+            <button data-t="merge" title="Fusionner les cases sélectionnées (glissez d’une case à l’autre, ou Maj+clic) : une ligne d’une seule case au-dessus d’une ligne de trois, par exemple"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M9 12h6M9 12l2-2M9 12l2 2M15 12l-2-2M15 12l-2 2"/></svg><span>Fusionner</span></button>
+            <button data-t="split" title="Scinder la case fusionnée"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M12 5v14M7 12h2M15 12h2"/></svg><span>Scinder</span></button>
+            <button data-t="head" class="${b.head ? 'on' : ''}" title="Première ligne en en-tête"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M3 9h18M9 9v11M15 9v11"/><path d="M3 4h18v5H3z" fill="currentColor" stroke="none" opacity=".35"/></svg><span>En-tête</span></button>
+          </span>
+          <span class="tt-sep"></span>
+          <span class="tt-grp">
+            <button data-t="copy" title="Copier tout le tableau (à coller ailleurs dans le cours, dans une case, un encadré, ou dans Word / Excel)"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>Copier</span></button>
+            <button data-t="dup" title="Dupliquer le tableau juste en dessous"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="7" rx="1.5"/><rect x="4" y="14" width="16" height="7" rx="1.5" stroke-dasharray="2 2"/></svg><span>Dupliquer</span></button>
+            <button data-t="del" class="danger" title="Supprimer le tableau"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+          </span>
         </div>
         <div class="tbl-wrap"><table class="tbl ${b.head ? 'has-head' : ''}"><colgroup>${widths.map(w => `<col style="width:${w.toFixed(2)}%">`).join('')}</colgroup><tbody>${rows.map((r, ri) =>
           `<tr>${Array.from({ length: nc }, (_, ci) => { if (covered.has(ri + ':' + ci)) return ''; const sp = anchors.get(ri + ':' + ci); const last = ci + (sp ? sp.cs : 1) - 1; const bg = cellBg(b, ri, ci); const ta = cellTa(b, ri, ci); return `<td${sp ? ` colspan="${sp.cs}" rowspan="${sp.rs}"` : ''}${bg ? ` style="background:${esc(bg)}; color:${contrastInk(bg)}"` : ''}><div class="tcell" contenteditable="true" data-r="${ri}" data-c="${ci}"${ta ? ` style="text-align:${ta}"` : ''}>${r[ci] || ''}</div>${last < nc - 1 ? `<span class="tbl-rz" data-c="${last}" title="Glisser pour redimensionner la colonne"></span>` : ''}</td>`; }).join('')}</tr>`).join('')}</tbody></table></div></div>`;
@@ -3013,7 +3212,7 @@ function blockElType(el) {
   for (const t of ['h', 'li', 'quote', 'callout', 'fiche', 'juris', 'formula', 'table', 'graph', 'img', 'draw', 'chart', 'score', 'mcalc', 'timer', 'hr', 'pb', 'cards', 'tree']) if (c.contains(t)) return t;
   return 'p';
 }
-const levelOfEl = el => { const m = el.className.match(/\bl([1-4])\b/); return m ? +m[1] : 1; };
+const levelOfEl = el => { const m = el.className.match(/\bl([1-6])\b/); return m ? +m[1] : 1; };
 function cleanHTML(h) {
   let t = (h || '').replace(/\u200B/g, '').replace(/(<br\s*\/?>)+\s*$/i, '');
   for (let k = 0; k < 4 && /<(span|font|b|i|u|s|sup|sub)[^>]*><\/\1>/.test(t); k++) t = t.replace(/<(span|font|b|i|u|s|sup|sub)[^>]*><\/\1>/g, '');
@@ -3740,10 +3939,6 @@ blocksEl.addEventListener('click', e => {
 
 /* « I. », « A. », « 1. », « a. » en début de ligne → titre ; « - », « * » → puce ; « [] » → case à cocher ; « > » → citation */
 const AUTO_RULES = [
-  [/^([IVX]{1,6})[\.\)]\s/, { type: 'h', level: 1 }],
-  [/^([A-H])[\.\)]\s/, { type: 'h', level: 2 }],
-  [/^(\d{1,2})[\.\)]\s/, { type: 'h', level: 3 }],
-  [/^([a-h])[\.\)]\s/, { type: 'h', level: 4 }],
   [/^\[[ x]?\]\s/, { type: 'li', lt: 'cl' }],
   [/^[-•*]\s/, { type: 'li', lt: 'ul' }],
   [/^>\s/, { type: 'quote' }],
@@ -3757,6 +3952,24 @@ function stripTextPrefix(html, n) {
   while (n > 0 && (node = w.nextNode())) { const k = Math.min(n, node.length); node.deleteData(0, k); n -= k; }
   return t.innerHTML;
 }
+/* marqueurs de titre tapés en début de ligne : [motif, style de numéro du plan, niveau de repli (ancien plan fixe)].
+   Le niveau est celui du plan qui utilise ce style ; sans un tel niveau, l'ancien niveau fixe (0 : jamais). */
+const AUTO_NUM = [
+  [/^([IVX]{1,6})[.)]\s/, 'I', 1], [/^([A-H])[.)]\s/, 'A', 2], [/^(\d{1,2})[.)]\s/, '1', 3], [/^([a-h])[.)]\s/, 'a', 4],
+  [/^([ivx]{1,6})[.)]\s/, 'i', 0], [/^§\s?\d{1,3}\s*[.):]?\s/, '§', 0]
+];
+/* { m, patch, keep } si la ligne commence par un numéro de titre ou un mot déclencheur du plan (1.24) */
+function autoHeadingMatch(t) {
+  const lv = planLevels();
+  for (const [re, st, legacy] of AUTO_NUM) {
+    const m = t.match(re); if (!m) continue;
+    let L = lv.findIndex(l => l.num === st) + 1;
+    if (!L) { if (!legacy) continue; L = Math.min(legacy, lv.length); }
+    return { m, patch: { type: 'h', level: L } };
+  }
+  for (const r of planPrefixRules()) if (r.re.test(t)) return { m: [''], patch: { type: 'h', level: r.level }, keep: true };   // le mot reste dans le titre
+  return null;
+}
 /* { type, level?, text } si la ligne commence par un marqueur de plan, sinon { text } */
 function patternFromLine(html, prevBlock) {
   const t = stripTags(html).replace(/^\u200B+/, '');
@@ -3765,6 +3978,8 @@ function patternFromLine(html, prevBlock) {
     const m = t.match(/^\d{1,2}[.)]\s/);
     if (m) return { type: 'li', lt: 'ol', ind: prevBlock.ind || 0, text: stripTextPrefix(html, m[0].length), cut: m[0].length };
   }
+  const h = autoHeadingMatch(t);
+  if (h) return Object.assign({ text: h.keep ? html : stripTextPrefix(html, h.m[0].length), cut: h.keep ? 0 : h.m[0].length }, h.patch);
   for (const [re, patch] of AUTO_RULES) {
     const m = t.match(re);
     if (m) return Object.assign({ text: stripTextPrefix(html, m[0].length), cut: m[0].length }, patch);
@@ -3784,7 +3999,7 @@ function detectAutoPattern(b, el) {
   resetBlock(b, patch);
   touch();
   renderBlocks(b.id, typeof off === 'number' ? Math.max(0, off - (p.cut || 0)) : 'start');
-  if (p.type === 'h') toast(`Niveau de plan ${['I.', 'A.', '1.', 'a.'][p.level - 1]} — Tab / Maj+Tab pour changer, Retour arrière pour revenir au texte`);
+  if (p.type === 'h') toast(`${planName(p.level)} (niveau ${planSample(p.level)}) — Tab / Maj+Tab pour changer, Retour arrière pour revenir au texte`);
   return true;
 }
 
@@ -4234,7 +4449,7 @@ blocksEl.addEventListener('keydown', e => {
   }
   if (e.key === 'Tab') {
     e.preventDefault();
-    if (b.type === 'h') { b.level = e.shiftKey ? Math.max(1, b.level - 1) : Math.min(4, b.level + 1); touch(); renderBlocks(b.id, caretOffsetIn(el)); return; }
+    if (b.type === 'h') { b.level = e.shiftKey ? Math.max(1, b.level - 1) : Math.min(planDepth(), b.level + 1); touch(); renderBlocks(b.id, caretOffsetIn(el)); return; }
     if (b.type === 'li') { indentList(b, e.shiftKey ? -1 : 1, caretOffsetIn(el)); return; }
     if (!e.shiftKey && b.type === 'p' && caretAtStart(el)) { document.execCommand('insertText', false, '    '); }
     return;
@@ -5582,10 +5797,8 @@ const SLASH_ITEMS = [
   { id: 'n-quote', icon: 'quote', name: 'Citation ici', sub: 'Citation imbriquée', kw: 'citation imbrique dans ici', nest: true },
   ...Object.entries(CALLOUTS).map(([k, c]) => ({ id: 'n-c-' + k, icon: c.ico, name: `Encadré ${c.name} ici`, kw: 'encadre imbrique dans ici ' + k, nest: true, spec: c.spec })),
   { sect: 'Structure' },
-  { id: 'h1', ico: 'I.', name: 'Partie (niveau I.)', sub: 'Titre de premier niveau', kw: 'titre partie un' },
-  { id: 'h2', ico: 'A.', name: 'Section (niveau A.)', sub: 'Deuxième niveau', kw: 'titre section' },
-  { id: 'h3', ico: '1.', name: 'Sous-section (niveau 1.)', sub: 'Troisième niveau', kw: 'titre' },
-  { id: 'h4', ico: 'a.', name: 'Paragraphe (niveau a.)', sub: 'Quatrième niveau', kw: 'titre' },
+  /* niveaux du plan (1.24 : libellés, numéros et nombre de niveaux suivent Paramètres › Écriture › Plan du cours) */
+  ...[1, 2, 3, 4, 5, 6].map(L => ({ id: 'h' + L, plan: L, ico: '', name: '', sub: ['Titre de premier niveau', 'Deuxième niveau', 'Troisième niveau', 'Quatrième niveau', 'Cinquième niveau', 'Sixième niveau'][L - 1], kw: 'titre plan niveau ' + ['partie un', 'section', '', '', '', ''][L - 1] })),
   { id: 'li', icon: 'list', name: 'Liste à puces', sub: 'Tab pour décaler d’un niveau', kw: 'liste puce' },
   { id: 'ol', ico: '1.', name: 'Liste numérotée', sub: '1. 2. 3. — Tab pour a. b. c.', kw: 'liste numerotee numeros' },
   { id: 'cl', icon: 'check', name: 'Cases à cocher', sub: 'À faire / fait', kw: 'liste case cocher checklist tache' },
@@ -5715,7 +5928,9 @@ function noteSlashUse(id) {
 function renderSlash() {
   const q = norm(slashCtx.query);
   const nest = slashCtx.nest;   // 'box' (encadré, citation) | 'cell' (case de tableau : blocs imbriqués et symboles seulement) | null
+  for (const it of SLASH_ITEMS) if (it.plan) { it.name = `${planName(it.plan)} (niveau ${planSample(it.plan)})`; it.ico = planSample(it.plan); }
   const items = SLASH_ITEMS.filter(it => {
+    if (it.plan && it.plan > planDepth()) return false;
     if (it.nest && !nest) return false;
     if (nest === 'cell' && !it.nest && it.spec !== 'sym') return false;
     return it.sect ? slashSpecOk(it, q) : (slashSpecOk(it, q) && (!q || norm(it.name + ' ' + (it.kw || '')).includes(q)));
@@ -7214,17 +7429,15 @@ $('#toolbar').addEventListener('click', e => {
   if (act === 'text') { insertSpecial({ type: 'p', text: '' }); }
   if (act === 'heading') {
     showPopover(`<h4>Niveau de plan</h4><div class="po-list">
-        <button data-l="1"><b style="color:var(--tint)">I.</b>&nbsp; Partie</button>
-        <button data-l="2"><b style="color:var(--tint)">A.</b>&nbsp; Section</button>
-        <button data-l="3"><b style="color:var(--tint)">1.</b>&nbsp; Sous-section</button>
-        <button data-l="4"><b style="color:var(--tint)">a.</b>&nbsp; Paragraphe</button></div>`,
-      above, pop => pop.querySelector('.po-list').addEventListener('click', ev => {
+        ${planLevels().map((l, i) => `<button data-l="${i + 1}"><b style="color:var(--tint)">${esc(NUM_STYLES[l.num][0])}</b>&nbsp; ${esc(l.name)}</button>`).join('')}</div>
+        <div class="po-hint" style="margin:6px 0 0"><a href="#" id="po-planset">Modifier le plan…</a></div>`,
+      above, pop => { pop.querySelector('#po-planset').addEventListener('click', ev => { ev.preventDefault(); hidePopover(); openSettings('ecriture'); setTimeout(() => { const el = $('#set-plan'); if (el) el.scrollIntoView({ block: 'center' }); }, 80); }); pop.querySelector('.po-list').addEventListener('click', ev => {
         const l = ev.target.closest('[data-l]'); if (!l) return;
         hidePopover();
         const b = getBlock(bid);
         if (b && ['p', 'h', 'li', 'quote'].includes(b.type)) { const off = caretSnapshot(); resetBlock(b, { type: 'h', level: +l.dataset.l, text: b.text || '' }); touch(); renderBlocks(b.id, off ? off.off : 'end'); }
         else insertAfter(bid, { id: uid(), type: 'h', level: +l.dataset.l, text: '' });
-      }));
+      }); });
   }
   if (act === 'callout') {
     showPopover(`<h4>Encadré typé</h4><div class="po-list">
@@ -7959,6 +8172,15 @@ function doSearch(q) {
       if (results.length > 30) break;
       continue;
     }
+    if (isQuizDoc(d)) {
+      /* quiz : questions, propositions et réponses acceptées (js/quiz.js) */
+      if (window.AlixoQuiz) for (const hit of AlixoQuiz.search(d, q, 8)) {
+        results.push({ d, f, blockId: null, snippet: hit.text, item: hit.itemId });
+        if (results.length > 30) break;
+      }
+      if (results.length > 30) break;
+      continue;
+    }
     for (const b of allPageBlocks(d, false)) {
       const txt = blockPlain(b);
       const i = norm(txt).indexOf(nq);
@@ -8010,7 +8232,7 @@ $('#search-results').addEventListener('click', e => {
   if (it.dataset.file) { if (window.AlixoFiles) AlixoFiles.open(it.dataset.file); return; }
   openDoc(it.dataset.doc);
   if (it.dataset.cell) { setTimeout(() => { if (window.AlixoSheets) AlixoSheets.reveal(it.dataset.sheet, it.dataset.cell); }, 120); return; }
-  if (it.dataset.item) { setTimeout(() => { if (window.AlixoBoard) AlixoBoard.reveal(it.dataset.item); }, 120); return; }
+  if (it.dataset.item) { setTimeout(() => { if (document.body.classList.contains('mode-quiz')) { if (window.AlixoQuiz) AlixoQuiz.reveal(it.dataset.item); } else if (window.AlixoBoard) AlixoBoard.reveal(it.dataset.item); }, 120); return; }
   const bid = it.dataset.block;
   if (bid && it.dataset.page && doc() && doc().page !== it.dataset.page) { switchPage(it.dataset.page, bid); return; }
   if (bid) setTimeout(() => {
@@ -8232,6 +8454,7 @@ async function exportPDF() {
   if (isSlidesDoc(d)) { if (window.AlixoSlides) AlixoSlides.exportPDF(); return; }
   if (isSheetDoc(d)) { if (window.AlixoSheets) AlixoSheets.exportPDF(); return; }
   if (isBoardDoc(d)) { if (window.AlixoBoard) AlixoBoard.exportPDF(); return; }
+  if (isQuizDoc(d)) { if (window.AlixoQuiz) AlixoQuiz.exportPDF(); return; }
   const numMap = computeNumbers(d.blocks);
   const hs = d.blocks.filter(b => b.type === 'h');
   // sommaire uniquement pour les cours longs (sinon il ajoutait une page inutile)
@@ -8245,7 +8468,8 @@ async function exportPDF() {
   const desk = window.alixoDesktop;
   if (!desk || !desk.printToPDF || !desk.saveFile) {
     const restore = prepareForPrint();
-    try { print(); } finally { restore(); }
+    exportWatermark(true);
+    try { print(); } finally { restore(); exportWatermark(false); }
     document.title = 'Alixo — Cockpit d’amphi';
     return;
   }
@@ -8253,6 +8477,7 @@ async function exportPDF() {
   toast('Préparation du PDF…', { duration: 4000 });
   document.body.classList.add('printing');
   const restore = prepareForPrint();
+  exportWatermark(true);
   let pdf = null, err = null;
   try {
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));   // laisse le thème clair s'appliquer
@@ -8260,6 +8485,7 @@ async function exportPDF() {
     pdf = await desk.printToPDF({ title, footer: `${title}` });
   } catch (e) { err = e; }
   restore();
+  exportWatermark(false);
   document.body.classList.remove('printing');
   document.title = 'Alixo — Cockpit d’amphi';
   pdfBusy = false;
@@ -8320,6 +8546,7 @@ document.addEventListener('keydown', e => {
   if (document.body.classList.contains('mode-slides')) return;   // présentation : raccourcis dans js/slides.js
   if (document.body.classList.contains('mode-sheet')) return;    // tableur : raccourcis dans js/sheets.js
   if (document.body.classList.contains('mode-board')) return;    // planche : raccourcis dans js/board.js
+  if (document.body.classList.contains('mode-quiz')) return;     // quiz : raccourcis dans js/quiz.js
   if (!document.body.classList.contains('mode-editor')) {
     if (mod && e.shiftKey && e.key.toLowerCase() === 'a' && $('#authov') && $('#authov').hidden !== false) { e.preventDefault(); if (libMode === 'agenda') { libMode = 'docs'; renderLibrary(); } else openAgendaHome(); }
     if (mod && e.shiftKey && e.code === 'KeyK' && $('#authov') && $('#authov').hidden !== false) { e.preventDefault(); if (libMode === 'todo') { libMode = 'docs'; renderLibrary(); } else openTodoHome(); }
@@ -8351,7 +8578,7 @@ document.addEventListener('keydown', e => {
     return;
   }
   if (mod && e.key.toLowerCase() === 'g') { e.preventDefault(); if (specAllowed('economie')) openGraphChooser(currentBlockId()); else toast('Graphiques économiques : réservés aux spécialités Économie / gestion / commerce (Paramètres › Modifier mon profil)'); return; }
-  if (mod && e.altKey && ['0', '1', '2', '3', '4'].includes(e.key)) {
+  if (mod && e.altKey && /^[0-6]$/.test(e.key) && +e.key <= planDepth()) {
     e.preventDefault();
     const b = getBlock(currentBlockId());
     if (b && ['p', 'h', 'li', 'quote'].includes(b.type)) { const off = caretSnapshot(); resetBlock(b, e.key === '0' ? { type: 'p', text: b.text || '' } : { type: 'h', level: +e.key, text: b.text || '' }); touch(); renderBlocks(b.id, off ? off.off : 'end'); }
@@ -9304,8 +9531,8 @@ window.AlixoApp = {
   get state() { return state; },
   maybeOnboard,
   /* utilisés par le menu Édition / Fichier de la version PC (main.js) */
-  undo: () => (currentDocId ? (isSlidesDoc(doc()) ? (window.AlixoSlides && AlixoSlides.undo()) : isSheetDoc(doc()) ? (window.AlixoSheets && AlixoSheets.undo()) : isBoardDoc(doc()) ? (window.AlixoBoard && AlixoBoard.undo()) : undoEdit()) : false),
-  redo: () => (currentDocId ? (isSlidesDoc(doc()) ? (window.AlixoSlides && AlixoSlides.redo()) : isSheetDoc(doc()) ? (window.AlixoSheets && AlixoSheets.redo()) : isBoardDoc(doc()) ? (window.AlixoBoard && AlixoBoard.redo()) : redoEdit()) : false),
+  undo: () => (currentDocId ? (isSlidesDoc(doc()) ? (window.AlixoSlides && AlixoSlides.undo()) : isSheetDoc(doc()) ? (window.AlixoSheets && AlixoSheets.undo()) : isBoardDoc(doc()) ? (window.AlixoBoard && AlixoBoard.undo()) : isQuizDoc(doc()) ? (window.AlixoQuiz && AlixoQuiz.undo()) : undoEdit()) : false),
+  redo: () => (currentDocId ? (isSlidesDoc(doc()) ? (window.AlixoSlides && AlixoSlides.redo()) : isSheetDoc(doc()) ? (window.AlixoSheets && AlixoSheets.redo()) : isBoardDoc(doc()) ? (window.AlixoBoard && AlixoBoard.redo()) : isQuizDoc(doc()) ? (window.AlixoQuiz && AlixoQuiz.redo()) : redoEdit()) : false),
   exportPDF: () => { if (!currentDocId) return false; exportPDF(); return true; },
   version: ALIXO_VERSION,
   openTodoHome, openSharedHome, openDoc, openSettings,
@@ -9392,7 +9619,7 @@ setTimeout(() => {
     const prev = state.settings.lastVersion;
     if (prev !== ALIXO_VERSION) {
       state.settings.lastVersion = ALIXO_VERSION; save();
-      if (prev && window.AlixoNotify) AlixoNotify.push({ id: 'ver_' + ALIXO_VERSION, kind: 'update', title: `Alixo ${ALIXO_VERSION} installé`, text: 'Nouveautés : séances découpées en pages A4 identiques au PDF (bloc « Saut de page »), nouveau document « Planche » (tableau blanc : post-it, flèches, images, blocs de cours épinglés), version Mac qui s’ouvre après « Ouvrir quand même »…', action: { type: 'url', url: ALIXO_VERSIONS_URL } });
+      if (prev && window.AlixoNotify) AlixoNotify.push({ id: 'ver_' + ALIXO_VERSION, kind: 'update', title: `Alixo ${ALIXO_VERSION} installé`, text: 'Nouveautés : nouveau document « Quiz » (questions à choix, vrai / faux, curseur, ordre… à tester ou à présenter en direct : code et QR code à l’écran, réponses sur téléphone via alixoapp.com/quiz), plan du cours modifiable (niveaux à glisser, mots déclencheurs comme « Chapitre »), barre d’outils des tableaux flottante, filigrane sur les exports sans Alixo+…', action: { type: 'url', url: ALIXO_VERSIONS_URL } });
     }
   } catch { /* stockage indisponible */ }
   if (window.AlixoStats) AlixoStats.maybeOpen();

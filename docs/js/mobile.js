@@ -21,7 +21,7 @@
   document.querySelector('.tb-left').prepend(menu);
   body.appendChild(back);
   const open = v => { body.classList.toggle('drawer-open', v); back.hidden = !v; };
-  menu.addEventListener('click', () => { if (body.classList.contains('mode-editor') || body.classList.contains('mode-slides')) { showLibrary(); } else open(!body.classList.contains('drawer-open')); });
+  menu.addEventListener('click', () => { if (body.classList.contains('mode-editor') || body.classList.contains('mode-slides') || body.classList.contains('mode-quiz')) { showLibrary(); } else open(!body.classList.contains('drawer-open')); });
   back.addEventListener('click', () => open(false));
   const nav = document.getElementById('libnav');
   nav.addEventListener('click', e => { if (e.target.closest('[data-doc], [data-open], [data-shrow], #ln-agenda, #ln-shared, #ln-todo')) setTimeout(() => open(false), 60); });
@@ -36,6 +36,7 @@
   fab.innerHTML = `<div class="mob-sheet" hidden>
       <button type="button" data-do="btn-new-doc">＋ Nouvelle séance</button>
       <button type="button" data-do="btn-new-slides">＋ Présentation</button>
+      <button type="button" data-do="btn-new-quiz">＋ Quiz</button>
       <button type="button" data-do="btn-new-folder">＋ Dossier</button>
       <button type="button" data-do="btn-import-files">＋ Fichier</button>
     </div><button type="button" class="mob-fabbtn" title="Créer">＋</button>`;
@@ -50,11 +51,12 @@
     const ed = body.classList.contains('mode-editor');
     const ve = document.getElementById('view-editor');
     if (ed && ve && ve.classList.contains('plan-open')) { const c = document.getElementById('pp-collapse'); if (c) c.click(); }
-    fab.hidden = ed || body.classList.contains('mode-slides');
-    if (ed || body.classList.contains('mode-slides')) open(false);
+    const special = body.classList.contains('mode-slides') || body.classList.contains('mode-sheet') || body.classList.contains('mode-board') || body.classList.contains('mode-quiz');
+    fab.hidden = ed || special;
+    if (ed || special) open(false);
   });
   mo.observe(body, { attributes: true, attributeFilter: ['class'] });
-  fab.hidden = body.classList.contains('mode-editor') || body.classList.contains('mode-slides');
+  fab.hidden = body.classList.contains('mode-editor') || body.classList.contains('mode-slides') || body.classList.contains('mode-quiz');
 
   /* ---- galaxie : rendu 2D par défaut sur téléphone (plus léger) ---- */
   try { if (window.state && state.settings && state.settings.galaxy3d === undefined) state.settings.galaxy3d = false; } catch { /* */ }

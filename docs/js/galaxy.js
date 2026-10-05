@@ -74,8 +74,8 @@ window.AlixoGalaxy = (() => {
         walk(f.id, n, depth + 1);
       }
       for (const d of ds) {
-        const slides = d.kind === 'slides', sheet = d.kind === 'sheet', board = d.kind === 'board';
-        const n = add({ id: 'd:' + d.id, kind: slides ? 'slides' : sheet ? 'sheet' : board ? 'board' : 'doc', label: d.titre || 'Sans titre', color: parent.color, r: slides ? 5.5 : sheet || board ? 5 : 4.6, depth: depth + 1, did: d.id, d, pinned: !!d.pinned, phase: Math.random() * 6.28, x: NaN, y: NaN, vx: 0, vy: 0 });
+        const slides = d.kind === 'slides', sheet = d.kind === 'sheet', board = d.kind === 'board', quiz = d.kind === 'quiz';
+        const n = add({ id: 'd:' + d.id, kind: slides ? 'slides' : sheet ? 'sheet' : board ? 'board' : quiz ? 'quiz' : 'doc', label: d.titre || 'Sans titre', color: parent.color, r: slides ? 5.5 : sheet || board ? 5 : 4.6, depth: depth + 1, did: d.id, d, pinned: !!d.pinned, phase: Math.random() * 6.28, x: NaN, y: NaN, vx: 0, vy: 0 });
         links.push({ a: parent, b: n, kind: 'doc', p: Math.random() });
       }
       for (const f of fl) {
@@ -252,6 +252,7 @@ window.AlixoGalaxy = (() => {
         if (a.kind === 'slides') { ctx.beginPath(); ctx.moveTo(x, y - r * 1.25); ctx.lineTo(x + r * 1.25, y); ctx.lineTo(x, y + r * 1.25); ctx.lineTo(x - r * 1.25, y); ctx.closePath(); ctx.fill(); }
         else if (a.kind === 'sheet') { const w = r * 1.05; ctx.fillRect(x - w, y - w, w * 2, w * 2); }
         else if (a.kind === 'board') { const w = r * 1.3, h = r * 0.9; ctx.fillRect(x - w, y - h, w * 2, h * 2); }   // planche : petit rectangle couché
+        else if (a.kind === 'quiz') { ctx.beginPath(); ctx.moveTo(x, y - r * 1.25); ctx.lineTo(x + r * 1.25, y); ctx.lineTo(x, y + r * 1.25); ctx.lineTo(x - r * 1.25, y); ctx.closePath(); ctx.fill(); }   // quiz : losange
         else if (a.kind === 'file') { roundRect(x - r * 0.9, y - r * 0.9, r * 1.8, r * 1.8, 1.5); ctx.fill(); }
         else { ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill(); }
         if (a.pinned) { ctx.strokeStyle = `rgba(${rgb},0.9)`; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x, y, r + 3, 0, 6.2832); ctx.stroke(); }
@@ -356,14 +357,14 @@ window.AlixoGalaxy = (() => {
   /* action sur un astre (clic simple ou double) — partagée avec le rendu 3D */
   function activate(n, dbl) {
     if (!n) return;
-    if (n.kind === 'doc' || n.kind === 'slides' || n.kind === 'sheet' || n.kind === 'board') { openDoc(n.did); return; }
+    if (n.kind === 'doc' || n.kind === 'slides' || n.kind === 'sheet' || n.kind === 'board' || n.kind === 'quiz') { openDoc(n.did); return; }
     if (n.kind === 'file') { if (window.AlixoFiles) AlixoFiles.open(n.fileId); return; }
     if (n.kind === 'folder') { gotoFolder(n.fid); return; }
     if (n.kind === 'root' && dbl && currentFolderId) { const f = folder(currentFolderId); gotoFolder(f ? f.parentId : null); }
   }
   function contextFor(n, x, y) {
     if (!n) { openCreateMenu(x, y); return; }
-    if (n.kind === 'doc' || n.kind === 'slides' || n.kind === 'sheet' || n.kind === 'board') openDocCtxMenu(x, y, n.did);
+    if (n.kind === 'doc' || n.kind === 'slides' || n.kind === 'sheet' || n.kind === 'board' || n.kind === 'quiz') openDocCtxMenu(x, y, n.did);
     else if (n.kind === 'folder') openFolderCtxMenu(x, y, n.fid);
     else if (n.kind === 'file' && window.AlixoFiles && AlixoFiles.openMenu) AlixoFiles.openMenu(x, y, n.fileId);
     else openCreateMenu(x, y);

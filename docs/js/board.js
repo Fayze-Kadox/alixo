@@ -632,7 +632,7 @@ window.AlixoBoard = (() => {
   /* ---------------- choix d'un bloc à épingler ---------------- */
   function openBlockPicker() {
     if (readOnly) return;
-    const docs = (state.docs || []).filter(x => x.kind !== 'slides' && x.kind !== 'sheet' && x.kind !== 'board').slice()
+    const docs = (state.docs || []).filter(x => x.kind !== 'slides' && x.kind !== 'sheet' && x.kind !== 'board' && x.kind !== 'quiz').slice()
       .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
     const pathOf = x => (typeof folderPath === 'function' ? folderPath(x.folderId).map(f => f.nom).join(' › ') : '') || 'Mes cours';
     const groups = new Map();
@@ -964,14 +964,16 @@ window.AlixoBoard = (() => {
     document.title = title + ' — Alixo';
     document.body.classList.add('printing-board');
     const desk = window.alixoDesktop;
-    const done = () => { document.body.classList.remove('printing-board'); box.innerHTML = ''; document.title = 'Alixo — Cockpit d’amphi'; };
-    if (!desk || !desk.printToPDF || !desk.saveFile) { try { print(); } finally { done(); } return; }
+    const done = () => { document.body.classList.remove('printing-board'); if (typeof exportWatermark === 'function') exportWatermark(false); box.innerHTML = ''; document.title = 'Alixo — Cockpit d’amphi'; };
+    if (!desk || !desk.printToPDF || !desk.saveFile) { if (typeof exportWatermark === 'function') exportWatermark(true); try { print(); } finally { done(); if (typeof exportWatermark === 'function') exportWatermark(false); } return; }
     pdfBusy = true;
     toast('Préparation du PDF…', { duration: 4000 });
     let pdf = null, err = null;
     try {
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      if (typeof exportWatermark === 'function') exportWatermark(true);
       pdf = await desk.printToPDF({ sheet: true, title });
+      if (typeof exportWatermark === 'function') exportWatermark(false);
     } catch (e) { err = e; }
     done(); pdfBusy = false;
     if (!pdf || err) { console.error(err); toast('Export PDF impossible' + (err && err.message ? ' : ' + err.message : '')); return; }

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Alixo — Cockpit d'amphi</title>
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="quiz.css">
 <link id="app-favicon" rel="icon" type="image/png" href="logo.png">
 <link id="app-touchicon" rel="apple-touch-icon" href="logo.png">
 <meta name="theme-color" content="#33658a">
@@ -80,6 +81,7 @@
         <button id="btn-new-slides" class="cta ghost" title="Nouvelle présentation : diapositives composées par glisser-déposer, style Alixo">＋ Présentation</button>
         <button id="btn-new-sheet" class="cta ghost" title="Nouveau tableur : grille de calcul, formules, graphiques">＋ Tableur</button>
         <button id="btn-new-board" class="cta ghost" title="Nouvelle planche : tableau blanc libre — post-it, flèches, images, blocs de cours épinglés">＋ Planche</button>
+        <button id="btn-new-quiz" class="cta ghost" title="Nouveau quiz : questions à choix, vrai / faux, curseur, ordre… à tester, partager ou présenter en direct (code et QR code, réponses sur téléphone)">＋ Quiz</button>
         <button id="btn-new-doc" class="cta">＋ Nouvelle séance</button>
       </div>
     </div>
@@ -236,6 +238,18 @@
 </section>
 <div id="bd-print"></div>
 
+<!-- ===== Vue Quiz (js/quiz.js) : éditeur ; #qz-play = écran de jeu (test local, présentation en direct) ===== -->
+<section id="view-quiz" hidden>
+  <div id="qz-bar" class="bd-bar qz-bar"></div>
+  <div class="qz-main">
+    <aside id="qz-list" class="qz-list"></aside>
+    <div id="qz-edit" class="qz-edit"></div>
+    <aside id="qz-palette" class="qz-palette"></aside>
+  </div>
+</section>
+<div id="qz-play" class="qz-play" hidden></div>
+<div id="qz-print"></div>
+
 <!-- ===== Barre d'outils de l'éditeur ===== -->
 <div id="toolbar" class="only-editor" hidden>
   <div class="fsize" title="Taille du texte">
@@ -345,6 +359,8 @@
 <script src="js/slides.js"></script>
 <script src="js/sheets.js"></script>
 <script src="js/board.js"></script>
+<script src="js/quizcore.js"></script>
+<script src="js/quiz.js"></script>
 <script src="js/nest.js"></script>
 <script src="js/files.js"></script>
 <script src="js/draw.js"></script>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr" class="qp-html">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b1f3a">
+<meta name="robots" content="noindex">
+<title>Alixo — Quiz</title>
+<link rel="icon" href="logo.png">
+<link rel="apple-touch-icon" href="logo.png">
+<link rel="stylesheet" href="quiz.css">
+<!-- Page des participants d'un quiz en direct (1.24) : aucun compte, aucune autre partie de l'application.
+     Adresse : alixoapp.com/quiz (redirige ici, le code est passé dans ?code=). Voir js/quizplay.js. -->
+</head>
+<body class="qp-page">
+  <div class="qp-top">
+    <a class="qp-brand" href="https://alixoapp.com" rel="noopener"><img src="logo.png" alt="">Alixo</a>
+    <span class="qp-me" id="qp-me"></span>
+  </div>
+  <main class="qp-main" id="qp-main"></main>
+  <div class="qp-foot" id="qp-foot">Quiz en direct · <a href="https://alixoapp.com" rel="noopener">alixoapp.com</a></div>
+  <script src="firebase-config.js"></script>
+  <script src="js/vendor/firebase-app-compat.js"></script>
+  <script src="js/vendor/firebase-firestore-compat.js"></script>
+  <script src="js/quizcore.js"></script>
+  <script src="js/quizplay.js"></script>
+</body>
+</html>
