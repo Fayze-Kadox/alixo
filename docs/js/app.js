@@ -16,7 +16,7 @@ const fmtDate = ts => new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric',
 
 const DEFAULT_TINT = '#33658a';
 /* version de l'application (tenue à jour avec package.json) — sert aux notifications « nouvelle version installée » */
-const ALIXO_VERSION = '1.23.0';
+const ALIXO_VERSION = '1.23.1';
 /* version web d'Alixo (GitHub Pages) et téléchargement de la version PC */
 const ALIXO_WEB_URL = 'https://alixoapp.com/docs/';
 /* 1.23 : tout passe par le site (pages de téléchargement et de versions) — jamais de lien direct vers l'hébergement des fichiers */
@@ -2836,13 +2836,13 @@ function renderBlocks(focusId, caretPos, caretKey) {
   patchImages();
   scheduleNoteFade();
   applyCorrMarks();
+  if (pagesActive()) paginate(true);   // 1.23 : vue par pages — sauts recalculés AVANT de replacer le curseur (sinon le défilement se cale sur une feuille sans pages)
   if (focusId && focusId !== '__none') focusBlock(focusId, caretPos, caretKey);
   else if (restore && restore.id) focusBlock(restore.id, restore.off, restore.key);
   markCurrent();
   if (window.AlixoDraw) AlixoDraw.afterRender();
   if (readOnly) blocksEl.querySelectorAll('[contenteditable="true"], input, select, textarea').forEach(el => { if (el.getAttribute('contenteditable') === 'true') el.setAttribute('contenteditable', 'false'); else el.disabled = true; });
   renderPeers();
-  if (pagesActive()) schedulePaginate(true);   // 1.23 : vue par pages — les sauts sont recalculés après chaque rendu
 }
 /* bandeau « séance partagée » au-dessus du cours */
 function renderReadOnlyBanner(info) {
@@ -8177,6 +8177,10 @@ function paginate(force) {
   const sig = s + '|' + head.offsetHeight + '|' + kids.map((el, i) => el.dataset.id + ':' + Math.round(heights[i]) + (el.classList.contains('pb') ? '!' : '')).join(',');
   if (!force && sig === pgSig) return;    // les hauteurs n'ont pas bougé : les sauts restent valables
   pgSig = sig;
+  // bloc sous le curseur : mesuré AVANT la remise à plat, pour qu'il reste au même endroit de l'écran après le recalcul
+  const selNode = getSelection().rangeCount ? getSelection().anchorNode : null;
+  const caretEl = selNode && blocksEl.contains(selNode) ? (selNode.nodeType === 1 ? selNode : selNode.parentElement).closest('#blocks > .block') : null;
+  const caretTop = caretEl ? caretEl.getBoundingClientRect().top : null;
   for (const el of kids) if (el.classList.contains('pg-first')) { el.classList.remove('pg-first'); el.style.removeProperty('--pg-mt'); }
   blocksEl.style.paddingBottom = '';
   const cs = getComputedStyle(docEl);
@@ -8184,28 +8188,36 @@ function paginate(force) {
   const top0 = docEl.getBoundingClientRect().top + padTop;      // haut de la zone utile de la page 1
   const H = PG_H - PG_SAFE, GAPT = padBottom + PG_BAND + padTop;  // hauteur utile ; espace entre deux zones utiles
   const rects = kids.map(el => { const r = el.getBoundingClientRect(); return { el, top: r.top - top0, bottom: r.bottom - top0, pb: el.classList.contains('pb') }; });
-  let shift = 0, pageBase = 0, forced = false;
-  const ends = [];   // fin de chaque page terminée (coordonnées finales, depuis top0)
+  let shift = 0, pageBase = 0, forced = false, pages = 1;
+  const ends = [];   // fin de chaque page terminée par une bande grise (coordonnées finales, depuis top0) et son numéro
   rects.forEach((r, i) => {
     const ft = r.top + shift, fb = r.bottom + shift;
-    const brk = i > 0 && !r.pb && (forced || (fb - pageBase > H && ft > pageBase + 1));
+    // le bloc précédent dépasse la page (plus haut qu'une page, ou presque) : il continue sur la page suivante,
+    // comme dans le PDF où le texte se coupe tout seul — pas de page blanche, on avance simplement de page
+    while (ft > pageBase + H) { pageBase += H; pages++; }
+    // un bloc plus haut qu'une page entière ne gagne rien à changer de page (il déborderait de toute façon) :
+    // il reste à sa place et se coupe comme dans le PDF, au lieu de laisser une page presque vide derrière lui
+    const brk = i > 0 && !r.pb && (forced || (fb - pageBase > H && ft > pageBase + 1 && fb - ft <= H));
     forced = r.pb;
     if (!brk) return;
-    let pageEnd = pageBase + H;
-    if (ft > pageEnd) pageEnd = pageBase + H * Math.ceil((ft - pageBase) / H);   // le bloc précédent dépasse une page
+    const pageEnd = pageBase + H;
     const extra = pageEnd + GAPT - ft;
     r.el.classList.add('pg-first');
     r.el.style.setProperty('--pg-mt', ((r.top - rects[i - 1].bottom + extra) / s) + 'px');
-    ends.push(pageEnd);
+    ends.push({ y: pageEnd, k: pages });
     shift += extra;
-    pageBase = pageEnd + GAPT;
+    pageBase = pageEnd + GAPT; pages++;
   });
   const lastBottom = rects.length ? rects[rects.length - 1].bottom + shift : 0;
   const lastEnd = pageBase + H * Math.max(1, Math.ceil((lastBottom - pageBase) / H));
-  if (rects.length) blocksEl.style.paddingBottom = Math.max(0, (lastEnd - (rects[rects.length - 1].bottom + shift)) / s) + 'px';
-  const n = ends.length + 1;
+  const n = pages + Math.max(0, Math.ceil((lastBottom - pageBase) / H) - 1);
+  if (rects.length) blocksEl.style.paddingBottom = Math.max(0, (lastEnd - lastBottom) / s) + 'px';
   const num = (y, k) => `<div class="pg-num" style="top:${((padTop + y + padBottom / 2) / s - 7).toFixed(1)}px">${k} / ${n}</div>`;
-  layer.innerHTML = ends.map((y, i) => `<div class="pg-gap" style="top:${((padTop + y + padBottom) / s).toFixed(1)}px;height:${(PG_BAND / s).toFixed(1)}px"></div>` + num(y, i + 1)).join('') + num(lastEnd, n);
+  layer.innerHTML = ends.map(e => `<div class="pg-gap" style="top:${((padTop + e.y + padBottom) / s).toFixed(1)}px;height:${(PG_BAND / s).toFixed(1)}px"></div>` + num(e.y, e.k)).join('') + num(lastEnd, n);
+  if (caretEl) {   // le bloc du curseur a bougé (une page s'est ouverte ou fermée au-dessus) : on suit
+    const dy = caretEl.getBoundingClientRect().top - caretTop;
+    if (Math.abs(dy) > 1) { const w = $('#docwrap'); if (w) w.scrollTo({ top: w.scrollTop + dy, behavior: 'instant' }); }
+  }
 }
 
 let pdfBusy = false;

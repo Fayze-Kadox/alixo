@@ -3242,6 +3242,8 @@ body.pages-mode .block.pb { margin: 0; padding: 2px 0; opacity: .75; }
 @media print {
   body.pages-mode #doc { width: auto; padding: 0; }
   body.pages-mode .block.pg-first { break-before: page; page-break-before: always; margin-top: 0 !important; }
+  /* un bloc plus haut qu'une page se coupe comme à l'écran (sans « page-break-inside: avoid », qui le renverrait entier à la page suivante) */
+  body.pages-mode #blocks > .block { break-inside: auto; page-break-inside: auto; }
   body.pages-mode #pg-layer, body.pages-mode #print-head, body.pages-mode #blocks > .print-pgtitle:first-child { display: none !important; }
   body.pages-mode #blocks { padding-bottom: 0 !important; }
   body.pages-mode #pg-head { border-bottom-color: #c9ccd1; }
