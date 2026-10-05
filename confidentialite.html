@@ -57,7 +57,7 @@
   <div style="position:relative">
     <div class="eyebrow">Politique de confidentialité</div>
     <h1>Vos cours sont <em>à vous.</em></h1>
-    <p>Ce que l’application et le site enregistrent, pourquoi, où, et comment en garder le contrôle. Dernière mise à jour : 3 octobre 2026.</p>
+    <p>Ce que l’application et le site enregistrent, pourquoi, où, et comment en garder le contrôle. Dernière mise à jour : 5 octobre 2026.</p>
   </div>
 </section>
 
@@ -66,15 +66,15 @@
     <section id="resume">
       <h2>En bref</h2>
       <ul>
-        <li>Sans compte, <strong>rien ne quitte votre appareil</strong> : les cours sont enregistrés dans le navigateur ou dans le dossier de l’application.</li>
-        <li>Avec un compte, vos cours, dossiers et fichiers sont <strong>synchronisés dans votre espace privé</strong> (Firebase, Google Cloud), lisibles par vous seul — et par les personnes que vous invitez sur un partage.</li>
+        <li>Sans compte, <strong>vos cours ne quittent pas votre appareil</strong> : ils sont enregistrés dans le navigateur ou dans le dossier de l’application. L’application PC contacte seulement GitHub (vérification de mise à jour à chaque démarrage) et, au premier lancement, Google (dictionnaires du correcteur orthographique de Chromium).</li>
+        <li>Avec un compte, vos cours, dossiers et fichiers sont <strong>synchronisés dans votre espace privé</strong> (Firebase, Google Cloud), lisibles par vous seul — et par les personnes que vous invitez sur un partage. <strong>Ni l’éditeur ni les administrateurs ne peuvent en lire le contenu</strong> : les règles de la base le leur interdisent.</li>
         <li>La correction par IA n’envoie à Google <strong>que le texte analysé</strong>, avec votre propre clé ou celle fournie par l’administrateur ; jamais vos fichiers, jamais votre bibliothèque entière.</li>
         <li>Aucune publicité, aucune revente de données, aucun traqueur sur le site.</li>
       </ul>
     </section>
     <section id="responsable">
       <h2>Qui est responsable</h2>
-      <p>Alixo est un projet indépendant. Le responsable du traitement est l’éditeur d’Alixo, désigné dans les <a href="/mentions-legales.html">mentions légales</a>. Pour toute question sur vos données : <a href="https://github.com/Fayze-Kadox/alixo/issues" target="_blank" rel="noopener">page de contact</a>.</p>
+      <p>Alixo est un projet indépendant. Le responsable du traitement est l’éditeur d’Alixo, désigné dans les <a href="/mentions-legales.html">mentions légales</a>. Pour toute question sur vos données : <a href="mailto:contact@alixoapp.com">contact@alixoapp.com</a>.</p>
     </section>
     <section id="donnees">
       <h2>Ce qui est enregistré</h2>
@@ -82,14 +82,18 @@
       <p>Les cours, dossiers, présentations, tableurs, fichiers importés, réglages et la clé IA éventuelle sont enregistrés localement (stockage du navigateur ou profil de l’application PC). La clé IA n’est jamais synchronisée.</p>
       <h3>Avec un compte</h3>
       <ul>
-        <li><strong>Identité</strong> : adresse e-mail, prénom ou pseudo, fournisseur de connexion (e-mail et mot de passe, Google ou Apple). Le mot de passe est géré par Firebase Authentication ; Alixo ne le voit jamais.</li>
+        <li><strong>Identité</strong> : adresse e-mail, prénom ou pseudo, fournisseur de connexion (e-mail et mot de passe, Google ou Apple). Le mot de passe est géré par Firebase Authentication ; Alixo ne le voit jamais. Si vous choisissez un pseudo, il est inscrit dans un annuaire avec votre prénom et votre e-mail, consultable uniquement par une personne qui connaît ce pseudo exactement, afin de vous inviter à un partage ; retirer le pseudo efface cette entrée.</li>
         <li><strong>Contenu</strong> : cours, dossiers, agenda, tâches, images et fichiers importés, dans votre espace privé (<code>users/{votre identifiant}</code>). Ils servent uniquement à vous les restituer sur vos autres appareils.</li>
-        <li><strong>Profil</strong> : niveau d’études et spécialités choisis au questionnaire de bienvenue (modifiables dans Paramètres › Compte) ; ils adaptent les blocs proposés.</li>
-        <li><strong>Activité</strong> : version utilisée, dernière connexion, présence (« en ligne », « rédige une séance ») envoyée toutes les 60 secondes pendant l’utilisation, nombre de séances. Aucun contenu de cours n’est transmis par ce canal. Ces informations sont visibles de l’administrateur pour le support.</li>
-        <li><strong>Alixo+</strong> : état de l’abonnement et code d’activation utilisé.</li>
+        <li><strong>Profil</strong> : niveau d’études et spécialités choisis au questionnaire de bienvenue (modifiables dans Paramètres › Compte) ; ils adaptent les blocs proposés. <strong>Date de naissance</strong>, demandée pour vérifier votre âge : elle reste dans les réglages de votre compte, lisibles par vous seul ; seule votre tranche d’âge (moins de 15 ans, 15-17 ans, majeur) est visible de l’administrateur. Pour un mineur de moins de 15 ans : adresse e-mail du parent ou tuteur et date de son accord.</li>
+        <li><strong>Activité</strong> : version utilisée, dernière connexion, présence (« en ligne », « rédige une séance ») envoyée toutes les 60 secondes pendant l’utilisation, nombre de séances, tailles de votre espace (cours, images, fichiers — sans leur contenu). Ces informations sont visibles de l’administrateur pour le support, et d’aucun autre utilisateur.</li>
+        <li><strong>Alixo+</strong> : état de l’abonnement, code d’activation utilisé et, avant un paiement, la trace de votre acceptation des conditions générales de vente et de votre renonciation au droit de rétractation (date, prix affiché).</li>
         <li><strong>Partages (Alixo Share)</strong> : les séances, dossiers ou événements que vous partagez sont copiés dans un espace de partage lisible par les invités, avec un journal des modifications et la présence des participants. Une invitation par e-mail transmet votre prénom ou pseudo et le titre du partage.</li>
         <li><strong>Notifications et messages</strong> : annonces et messages de l’administrateur, avec leur état lu / non lu.</li>
       </ul>
+      <h3>Ce que voient les administrateurs</h3>
+      <p>Les administrateurs d’Alixo voient les informations de compte ci-dessus (identité, profil, activité, abonnement, messages) et les métadonnées des partages (titre, membres, journal des modifications). Ils <strong>ne peuvent pas lire le contenu de vos cours, images ou fichiers</strong>, ni celui des partages : les règles de sécurité de la base le leur interdisent. Chaque action d’administration (suspension, activation d’Alixo+, attribution d’une clé, message, export, consultation de la base) est inscrite dans un journal qui ne peut être ni modifié ni effacé.</p>
+      <h3>Quiz en direct (participants sans compte)</h3>
+      <p>Pour rejoindre un quiz, un participant saisit un pseudo ; ses réponses, leurs horodatages et un identifiant aléatoire gardé dans son navigateur sont enregistrés le temps de la partie, visibles du présentateur seulement, puis effacés par le présentateur à la fin de la partie.</p>
       <h3>Correction par IA</h3>
       <p>Si vous activez la correction (fonction Alixo+), le texte à analyser — phrase par phrase, uniquement les phrases nouvelles ou modifiées — est envoyé à l’API Gemini de Google avec la clé enregistrée sur votre appareil ou attribuée par l’administrateur. Les fautes de frappe courantes sont corrigées sur l’appareil sans rien envoyer. Le traitement par Google est soumis aux <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener">conditions de l’API Gemini</a>.</p>
       <h3>Sur le site alixoapp.com</h3>
@@ -119,15 +123,15 @@
     </section>
     <section id="droits">
       <h2>Vos droits</h2>
-      <p>Vous pouvez à tout moment accéder à vos données, les corriger, les exporter (export PDF, Word, page web, archive .zip d’un dossier) et les effacer : supprimez vos séances et dossiers dans l’application, puis demandez la suppression du compte via la <a href="https://github.com/Fayze-Kadox/alixo/issues" target="_blank" rel="noopener">page de contact</a>. Vous disposez aussi des droits de limitation, d’opposition et de portabilité prévus par le RGPD, et du droit d’introduire une réclamation auprès de la CNIL (<a href="https://www.cnil.fr" target="_blank" rel="noopener">cnil.fr</a>).</p>
+      <p>Vous pouvez à tout moment accéder à vos données, les corriger, les exporter (export PDF, Word, page web, archive .zip d’un dossier) et les effacer : supprimez vos séances et dossiers dans l’application, puis demandez la suppression du compte à <a href="mailto:contact@alixoapp.com">contact@alixoapp.com</a> (réponse sous un mois ; le compte, le profil, l’abonnement et les messages sont effacés, et vos contributions aux partages sont anonymisées). Vous disposez aussi des droits de limitation, d’opposition et de portabilité prévus par le RGPD, et du droit d’introduire une réclamation auprès de la CNIL (<a href="https://www.cnil.fr" target="_blank" rel="noopener">cnil.fr</a>).</p>
     </section>
     <section id="securite">
       <h2>Sécurité</h2>
-      <p>L’accès à la base est protégé par des règles de sécurité : chaque compte ne lit et n’écrit que son propre espace ; un partage n’est lisible que par ses invités ; les administrateurs sont désignés explicitement. Les échanges sont chiffrés (HTTPS). Choisissez un mot de passe solide et ne le réutilisez pas ailleurs.</p>
+      <p>L’accès à la base est protégé par des règles de sécurité : chaque compte ne lit et n’écrit que son propre espace ; votre profil n’est lisible que par vous et par les administrateurs ; un partage n’est lisible que par ses invités ; les administrateurs sont désignés explicitement, n’accèdent pas au contenu des cours et leurs actions sont journalisées. Les échanges sont chiffrés (HTTPS). Choisissez un mot de passe solide et ne le réutilisez pas ailleurs.</p>
     </section>
     <section id="mineurs">
       <h2>Mineurs</h2>
-      <p>Alixo s’adresse aux étudiants et aux lycéens. Un mineur de moins de 15 ans ne doit créer un compte qu’avec l’accord d’un parent ou d’un tuteur.</p>
+      <p>Alixo s’adresse aux étudiants et aux lycéens. La création d’un compte demande la date de naissance. En dessous de 15 ans (article 45 de la loi Informatique et Libertés), le compte n’est créé qu’avec l’accord d’un parent ou d’un tuteur : l’application demande son adresse e-mail et la confirmation de son accord, et Alixo peut le contacter pour le vérifier. Le parent ou tuteur peut à tout moment demander la suppression du compte et des données à <a href="mailto:contact@alixoapp.com">contact@alixoapp.com</a>. Un mineur ne souscrit pas Alixo+ lui-même.</p>
     </section>
     <section id="modifications">
       <h2>Modifications</h2>
@@ -150,6 +154,7 @@
       <a href="/versions/">Versions</a>
       <a href="/confidentialite.html">Confidentialité</a>
       <a href="/conditions.html">Conditions</a>
+      <a href="/cgv.html">CGV</a>
       <a href="/mentions-legales.html">Mentions légales</a>
     </nav>
     <div class="foot-copy">© 2026 Alixo · Windows, macOS, web et mobile.</div>
