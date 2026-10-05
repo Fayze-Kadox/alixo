@@ -96,7 +96,11 @@ window.AlixoNotify = (() => {
       if (info.state === 'download') push({ id: 'upd_mac_' + info.version, kind: 'update', title: `Alixo ${info.version} est disponible`, text: 'Sur Mac, la mise à jour se télécharge à la main : cliquez pour récupérer le nouveau .dmg, puis glissez Alixo dans Applications (vos cours sont conservés).', action: { type: 'url', url: info.url || 'https://alixoapp.com/telecharger/mac/' } });
       else if (info.state === 'available') push({ id: 'upd_av_' + info.version, kind: 'update', title: `Alixo ${info.version} est disponible`, text: 'Téléchargement en arrière-plan… Vous serez prévenu quand elle sera prête à installer.', silent: true });
       else if (info.state === 'downloaded') push({ id: 'upd_dl_' + info.version, kind: 'update', title: `Alixo ${info.version} est prêt à être installé`, text: 'Cliquez pour redémarrer et appliquer la mise à jour (vos cours sont conservés). Sinon elle s’installera à la fermeture.', action: { type: 'update-install' } });
-      else if (info.state === 'error' && info.manual) push({ kind: 'update', title: 'Vérification des mises à jour impossible', text: 'Impossible de contacter le serveur (hors ligne ?).', silent: true });
+      else if (info.state === 'error' && info.manual) {
+        const net = /ENOTFOUND|ECONN|ETIMEDOUT|EAI_AGAIN|net::|socket|network|offline|HttpError: 5\d\d/i.test(info.message || '');
+        if (info.downloading) push({ id: 'upd_err_' + Date.now(), kind: 'update', title: 'Téléchargement de la mise à jour impossible', text: `${net ? 'Le serveur de téléchargement est injoignable depuis ce réseau (proxy, pare-feu, antivirus ?)' : 'Erreur : ' + (info.message || 'inconnue')}. Cliquez pour télécharger la nouvelle version depuis le site et l’installer par-dessus (vos cours sont conservés). Détail : %APPDATA%\\Alixo\\updater.log`, action: { type: 'url', url: info.url || 'https://alixoapp.com/telecharger/windows/' } });
+        else push({ kind: 'update', title: 'Vérification des mises à jour impossible', text: (net || !info.message ? 'Impossible de contacter le serveur (hors ligne ?).' : 'Erreur : ' + info.message) + ' Détail : %APPDATA%\\Alixo\\updater.log', silent: true });
+      }
       else if (info.state === 'none' && info.manual) push({ kind: 'update', title: 'Vous êtes à jour', text: `Alixo ${info.version || AlixoApp.version} est la dernière version.` });
     });
   }

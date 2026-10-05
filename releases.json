@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-10-05T07:59:28.267Z",
+ "generatedAt": "2026-10-05T08:08:12.000Z",
  "version": "1.23.1",
  "date": "2026-10-05T07:59:12Z",
  "notes": "Nouveautés 1.23.1 — vue par pages : plus de trous ni de saut du défilement\n\n\n- **Vue par pages** : le défilement ne « remonte » plus de deux pages quand on passe à la ligne (les sauts de page sont recalculés avant de replacer le curseur, et le bloc sous le curseur reste au même endroit de l'écran quand une page s'ouvre ou se ferme au-dessus). **Plus de pages presque vides** : un bloc plus haut qu'une page (long tableau, grande image) ne part plus entier à la page suivante, il se coupe à l'écran comme dans le PDF ; un bloc qui déborde légèrement n'ouvre plus une page blanche derrière lui. Les numéros de pages tiennent compte des blocs qui s'étalent sur plusieurs pages ; le PDF reste identique à l'écran.",
