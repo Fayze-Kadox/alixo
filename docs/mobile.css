@@ -35,7 +35,7 @@ body.mobile #lib-main { padding: 12px 12px 0; border-radius: 10px; }
 body.mobile .lib-head { flex-direction: column; align-items: stretch; gap: 8px; padding-bottom: 10px; }
 body.mobile #lib-title { font-size: 20px; }
 body.mobile .lib-actions { justify-content: flex-start; }
-body.mobile #btn-import-files, body.mobile #btn-new-folder, body.mobile #btn-new-slides, body.mobile #btn-new-doc { display: none; }
+body.mobile #btn-import-files, body.mobile #btn-new-folder, body.mobile #btn-new-slides, body.mobile #btn-new-doc, body.mobile #btn-new-more, body.mobile .lib-actsep { display: none; }
 body.mobile #doc-grid { grid-template-columns: 1fr; gap: 10px; padding-bottom: 90px; }
 body.mobile .doc-card { min-height: 0; }
 body.mobile .doc-card .pin-btn, body.mobile .doc-card .del-btn, body.mobile .folder-card .fc-act { opacity: 1; }

@@ -36,9 +36,11 @@
   fab.innerHTML = `<div class="mob-sheet" hidden>
       <button type="button" data-do="btn-new-doc">＋ Nouvelle séance</button>
       <button type="button" data-do="btn-new-slides">＋ Présentation</button>
+      <button type="button" data-do="btn-new-sheet">＋ Tableur</button>
+      <button type="button" data-do="btn-new-board">＋ Planche</button>
       <button type="button" data-do="btn-new-quiz">＋ Quiz</button>
       <button type="button" data-do="btn-new-folder">＋ Dossier</button>
-      <button type="button" data-do="btn-import-files">＋ Fichier</button>
+      <button type="button" data-do="btn-import-files">＋ Importer</button>
     </div><button type="button" class="mob-fabbtn" title="Créer">＋</button>`;
   body.appendChild(fab);
   const sheet = fab.querySelector('.mob-sheet');

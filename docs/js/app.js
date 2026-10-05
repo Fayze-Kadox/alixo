@@ -16,7 +16,7 @@ const fmtDate = ts => new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric',
 
 const DEFAULT_TINT = '#33658a';
 /* version de l'application (tenue à jour avec package.json) — sert aux notifications « nouvelle version installée » */
-const ALIXO_VERSION = '1.24.0';
+const ALIXO_VERSION = '1.25.0';
 /* version web d'Alixo (GitHub Pages) et téléchargement de la version PC */
 const ALIXO_WEB_URL = 'https://alixoapp.com/docs/';
 /* 1.23 : tout passe par le site (pages de téléchargement et de versions) — jamais de lien direct vers l'hébergement des fichiers */
@@ -1452,6 +1452,27 @@ $('#btn-new-slides').addEventListener('click', () => createSlidesIn(currentFolde
 $('#btn-new-sheet').addEventListener('click', () => createSheetIn(currentFolderId));
 $('#btn-new-board').addEventListener('click', () => createBoardIn(currentFolderId));
 $('#btn-new-quiz').addEventListener('click', () => createQuizIn(currentFolderId));
+/* 1.25 — menu « Autres » de la barre de création : dossier, planche, quiz, import (les trois types principaux restent en boutons) */
+const IMPORT_ICON = '<svg viewBox="0 0 24 24"><path d="M12 16V4"/><path d="m7.5 8.5 4.5-4.5 4.5 4.5"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>';
+function openCreateMenu(btn) {
+  const menu = $('#ctxmenu');
+  if (!menu.hidden && menu.classList.contains('cm-create')) { closeCtxMenu(); return; }
+  menu.innerHTML = `
+    <div class="cm-title">Créer dans « ${esc(currentFolderId ? (folder(currentFolderId) || {}).nom || 'ce dossier' : 'Mes cours')} »</div>
+    <button data-cm="cnewfolder">${CM_ICO.folder}<span class="cm-lbl">Dossier<small>Un cours, une matière, un semestre</small></span></button>
+    <button data-cm="cnewboard">${BOARD_ICON}<span class="cm-lbl">Planche<small>Tableau blanc libre : post-it, formes, schémas, cartes mentales</small></span></button>
+    <button data-cm="cnewquiz">${QUIZ_ICON}<span class="cm-lbl">Quiz<small>Questions à tester ou à présenter en direct</small></span></button>
+    <div class="cm-sep"></div>
+    <button data-cm="cimport">${IMPORT_ICON}<span class="cm-lbl">Importer des fichiers…<small>PDF, Word, PowerPoint, Excel, images, audio</small></span></button>`;
+  menu.className = 'cm-create';
+  menu.dataset.fid = ''; menu.dataset.did = ''; menu.dataset.tbl = ''; menu.dataset.img = '';
+  const r = btn.getBoundingClientRect();
+  placeCtxMenu(menu, r.right - 250, r.bottom + 6);
+  btn.classList.add('open');
+  const off = () => { btn.classList.remove('open'); menu.classList.remove('cm-create'); document.removeEventListener('click', off, true); };
+  setTimeout(() => document.addEventListener('click', off, true), 0);
+}
+$('#btn-new-more').addEventListener('click', e => { e.stopPropagation(); openCreateMenu(e.currentTarget); });
 /* nouvelle présentation (diapositives) : même fiche qu'une séance, avec kind: 'slides' — voir js/slides.js */
 function createSlidesIn(fid) {
   if (!window.AlixoSlides) { toast('Module de présentation indisponible'); return; }

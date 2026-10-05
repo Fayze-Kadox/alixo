@@ -76,13 +76,16 @@
           <button data-view="tree" title="Arbre"><svg viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="6" rx="1.5"/><rect x="15" y="3" width="6" height="5" rx="1.5"/><rect x="15" y="10" width="6" height="5" rx="1.5"/><rect x="15" y="17" width="6" height="4" rx="1.5"/><path d="M9 12h3M12 5.5v13.5M12 5.5h3M12 12.5h3M12 19h3"/></svg></button>
           <button data-view="galaxy" title="Galaxie : dossiers et séances qui flottent, liens animés"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3a9 9 0 0 1 9 9c0 2.5-1.5 3.5-3 3.5S15 14 15 12"/><path d="M12 21a9 9 0 0 1-9-9c0-2.5 1.5-3.5 3-3.5S9 10 9 12"/><circle cx="5" cy="5" r=".8" fill="currentColor"/><circle cx="19.5" cy="18.5" r=".8" fill="currentColor"/><circle cx="18" cy="4.5" r=".6" fill="currentColor"/></svg></button>
         </div>
-        <button id="btn-import-files" class="cta ghost" title="Ajouter des fichiers dans ce dossier : PDF, Word, PowerPoint, Excel, images, audio… (ou glissez-les ici)">＋ Fichier</button>
-        <button id="btn-new-folder" class="cta ghost">＋ Dossier</button>
-        <button id="btn-new-slides" class="cta ghost" title="Nouvelle présentation : diapositives composées par glisser-déposer, style Alixo">＋ Présentation</button>
-        <button id="btn-new-sheet" class="cta ghost" title="Nouveau tableur : grille de calcul, formules, graphiques">＋ Tableur</button>
-        <button id="btn-new-board" class="cta ghost" title="Nouvelle planche : tableau blanc libre — post-it, flèches, images, blocs de cours épinglés">＋ Planche</button>
-        <button id="btn-new-quiz" class="cta ghost" title="Nouveau quiz : questions à choix, vrai / faux, curseur, ordre… à tester, partager ou présenter en direct (code et QR code, réponses sur téléphone)">＋ Quiz</button>
-        <button id="btn-new-doc" class="cta">＋ Nouvelle séance</button>
+        <button id="btn-import-files" class="cta ghost" title="Importer des fichiers dans ce dossier : PDF, Word, PowerPoint, Excel, images, audio… (ou glissez-les ici)"><svg viewBox="0 0 24 24"><path d="M12 16V4"/><path d="m7.5 8.5 4.5-4.5 4.5 4.5"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>Importer</button>
+        <span class="lib-actsep"></span>
+        <button id="btn-new-slides" class="cta ghost" title="Nouvelle présentation : diapositives composées par glisser-déposer, style Alixo"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M12 16v4M8 20h8M7 9h6M7 12h4"/></svg>Présentation</button>
+        <button id="btn-new-sheet" class="cta ghost" title="Nouveau tableur : grille de calcul, formules, graphiques"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14.5h18M9 4v16M15 4v16"/></svg>Tableur</button>
+        <button id="btn-new-more" class="cta ghost lib-more" title="Autres documents : dossier, planche, quiz" aria-haspopup="menu"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><path d="M17 14v6M14 17h6"/></svg>Autres<svg class="chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+        <button id="btn-new-doc" class="cta" title="Nouvelle séance : prise de notes, plan du cours, blocs (Ctrl+N)"><svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6Z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></svg>Nouvelle séance</button>
+        <!-- déclencheurs conservés (menu « Autres », bouton « + » de la version mobile, raccourcis) -->
+        <button id="btn-new-folder" hidden>＋ Dossier</button>
+        <button id="btn-new-board" hidden>＋ Planche</button>
+        <button id="btn-new-quiz" hidden>＋ Quiz</button>
       </div>
     </div>
     <div id="doc-grid"></div>
@@ -232,6 +235,8 @@
     <div id="bd-rubber" class="bd-rubber" hidden></div>
     <div id="bd-selbar" class="bd-selbar" hidden></div>
     <div id="bd-hint" class="bd-hint" hidden></div>
+    <div id="bd-minimap" class="bd-minimap" title="Mini-carte : cliquez pour vous déplacer" hidden></div>
+    <button id="bd-present-exit" class="bd-present-exit" type="button" title="Quitter la présentation (Échap)">Quitter</button>
   </div>
   <div id="bd-status" class="bd-status"></div>
   <input id="bd-img-file" type="file" accept="image/*" multiple hidden>
@@ -360,6 +365,7 @@
 <script src="js/sheets.js"></script>
 <script src="js/board.js"></script>
 <script src="js/quizcore.js"></script>
+<script src="js/quizfx.js"></script>
 <script src="js/quiz.js"></script>
 <script src="js/nest.js"></script>
 <script src="js/files.js"></script>
