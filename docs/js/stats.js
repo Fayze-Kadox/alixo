@@ -111,7 +111,7 @@ window.AlixoStats = (() => {
     if (shownThisRun) return;
     delete state.settings.noWeekly;   // ancien réglage (≤ 1.12) : le bilan est désormais toujours actif
     const authov = $('#authov'); if (authov && !authov.hidden) { setTimeout(maybeOpen, 2500); return; }
-    if ($('#obov') || $('#suspov')) { setTimeout(maybeOpen, 4000); return; }
+    if ($('#obov') || $('#suspov') || $('#wnov')) { setTimeout(maybeOpen, 4000); return; }
     if (!state.docs.length) return;
     shownThisRun = true;
     open(false);

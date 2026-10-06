@@ -14,6 +14,28 @@ window.AlixoAuth = (() => {
   const CONFIG = window.ALIXO_FIREBASE_CONFIG || null;
   const GOOGLE_DESKTOP = window.ALIXO_GOOGLE_DESKTOP_CLIENT || null;
   const isDesktop = !!window.alixoDesktop;
+  /* connexion Apple (1.27.1) */
+  const APPLE_RELAY_URL = 'https://alixoapp.com/docs/apple.html';
+  const REDIRECT_KEY = 'alixo.authRedirect';
+  const POPUP_FALLBACK = new Set(['auth/popup-blocked', 'auth/operation-not-supported-in-this-environment', 'auth/web-storage-unsupported']);
+  const standalone = !!(navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches));
+  const appleProvider = () => { const p = new firebase.auth.OAuthProvider('apple.com'); p.addScope('email'); p.addScope('name'); p.setCustomParameters({ locale: 'fr_FR' }); return p; };
+  /* clé de connexion renvoyée par la page relais (OAuthCredential.toJSON) → objet credential du SDK (le SDK « compat »
+     n'expose pas OAuthCredential.fromJSON ; OAuthProvider.credential garde le pendingToken, qui suffit au serveur) */
+  function credFromJSON(json) {
+    const j = typeof json === 'string' ? JSON.parse(json) : (json || {});
+    if (!j.providerId || !(j.idToken || j.accessToken)) throw new Error('Réponse d’Apple illisible.');
+    return new firebase.auth.OAuthProvider(j.providerId).credential({ idToken: j.idToken, accessToken: j.accessToken, rawNonce: j.nonce, pendingToken: j.pendingToken });
+  }
+  /* Apple ne transmet le nom qu'à la toute première connexion : on le garde dans le profil s'il manque */
+  async function appleName(cred) {
+    try {
+      const u = cred && cred.user; if (!u || u.displayName) return;
+      const p = (cred.additionalUserInfo && cred.additionalUserInfo.profile) || {};
+      const n = p.name && typeof p.name === 'object' ? [p.name.firstName, p.name.lastName].filter(Boolean).join(' ') : (typeof p.name === 'string' ? p.name : '');
+      if (n) await u.updateProfile({ displayName: n });
+    } catch { /* facultatif */ }
+  }
 
   let cached = null;
   try { cached = JSON.parse(localStorage.getItem(SESSION_KEY)); } catch { cached = null; }
@@ -70,9 +92,18 @@ window.AlixoAuth = (() => {
     'auth/too-many-requests': 'Trop de tentatives — réessayez dans quelques minutes.',
     'auth/network-request-failed': 'Pas de connexion internet. Vos cours restent disponibles hors ligne.',
     'auth/popup-closed-by-user': 'Fenêtre de connexion fermée.',
+    'auth/cancelled-popup-request': 'Connexion annulée.',
+    'auth/user-cancelled': 'Connexion annulée.',
+    'auth/popup-blocked': 'Le navigateur a bloqué la fenêtre de connexion : autorisez les pop-ups pour alixoapp.com, puis réessayez.',
+    'auth/operation-not-allowed': 'Ce mode de connexion n’est pas activé sur le serveur d’Alixo (console Firebase › Authentication › Sign-in method).',
+    'auth/unauthorized-domain': 'Ce site n’est pas autorisé pour la connexion (console Firebase › Authentication › Settings › Authorized domains).',
+    'auth/account-exists-with-different-credential': 'Un compte existe déjà avec cet e-mail par un autre mode de connexion (Google ou e-mail) : connectez-vous avec celui-ci.',
+    'auth/missing-or-invalid-nonce': 'La réponse d’Apple n’a pas pu être vérifiée : réessayez.',
+    'auth/internal-error': 'Le service de connexion n’a pas répondu (réseau, pare-feu ou bloqueur) : réessayez dans un instant.',
     'auth/missing-password': 'Saisissez un mot de passe.'
   };
-  const frError = e => ERRORS[e && e.code] || (e && e.message) || 'Une erreur est survenue.';
+  /* les erreurs venues de main.js (connexion Google / Apple de la version PC) arrivent préfixées par Electron : on garde le message utile */
+  const frError = e => ERRORS[e && e.code] || (e && e.message && e.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '')) || 'Une erreur est survenue.';
 
   /* ============================================================
      Écran de connexion (overlay plein écran, style « Liquid Glass »)
@@ -200,18 +231,32 @@ window.AlixoAuth = (() => {
       busy(false);
     });
 
+    /* 1.27.1 : connexion Apple. Le fournisseur est réglé côté Firebase (Authentication › Sign-in method › Apple), rien
+       côté client : plus de drapeau ALIXO_APPLE_CONFIG. Navigateur : fenêtre pop-up, et redirection si elle est bloquée
+       (Safari iOS, application « sur l'écran d'accueil »). Version PC : le navigateur système ouvre apple.html sur
+       alixoapp.com (domaine autorisé), qui renvoie la clé de connexion à l'application par la boucle locale (main.js). */
     $a('#auth-apple').addEventListener('click', async () => {
       err('');
-      if (!window.ALIXO_APPLE_CONFIG) {
-        err('La connexion Apple nécessite l’Apple Developer Program (payant). Utilisez Google ou votre e-mail en attendant.');
-        return;
-      }
-      if (isDesktop) { err('La connexion Apple n’est disponible que dans la version web pour l’instant.'); return; }
+      if (!auth) { err('Service en ligne non configuré (voir SETUP-COMPTES.md).'); return; }
       busy(true);
       try {
-        const provider = new firebase.auth.OAuthProvider('apple.com');
-        provider.addScope('email'); provider.addScope('name');
-        const cred = await auth.signInWithPopup(provider);
+        let cred;
+        if (isDesktop) {
+          if (!window.alixoDesktop.appleOAuth) { err('Mettez Alixo à jour pour vous connecter avec Apple sur PC.'); busy(false); return; }
+          const json = await window.alixoDesktop.appleOAuth(APPLE_RELAY_URL);
+          cred = await auth.signInWithCredential(credFromJSON(json));
+        } else {
+          try {
+            cred = await auth.signInWithPopup(appleProvider());
+          } catch (ex) {
+            if (!POPUP_FALLBACK.has(ex && ex.code) && !standalone) throw ex;
+            // pop-up impossible : on passe par une redirection, la connexion se termine au retour (finishRedirect)
+            sessionStorage.setItem(REDIRECT_KEY, '1');
+            await auth.signInWithRedirect(appleProvider());
+            return;
+          }
+        }
+        await appleName(cred);
         if (cred && cred.additionalUserInfo && cred.additionalUserInfo.isNewUser) markNewAccount(cred.user);
         await done(cred.user);
       } catch (ex) { err(frError(ex)); }
@@ -232,11 +277,32 @@ window.AlixoAuth = (() => {
   /* ============================================================
      Session : vérification en arrière-plan + API publique
      ============================================================ */
+  /* retour d'une connexion par redirection (Apple sans pop-up) : on termine ici, avant que l'état de session ne recharge la page */
+  let redirectPending = false;
+  try { redirectPending = !!auth && sessionStorage.getItem(REDIRECT_KEY) === '1'; } catch { redirectPending = false; }
+  async function finishRedirect() {
+    try { sessionStorage.removeItem(REDIRECT_KEY); } catch { /* */ }
+    try {
+      const cred = await auth.getRedirectResult();
+      if (cred && cred.user) {
+        await appleName(cred);
+        if (cred.additionalUserInfo && cred.additionalUserInfo.isNewUser) markNewAccount(cred.user);
+        setSession(cred.user); location.reload(); return;
+      }
+    } catch (ex) {
+      const show = () => { showOverlay(); const e = document.querySelector('#auth-error'); if (e) { e.textContent = frError(ex); e.hidden = false; } };
+      if (document.body) show(); else document.addEventListener('DOMContentLoaded', show);
+    }
+    redirectPending = false;
+  }
+  if (redirectPending) finishRedirect();
+
   if (auth) {
     let first = true;
     auth.onAuthStateChanged(user => {
       if (!first) return;
       first = false;
+      if (redirectPending) return;   // finishRedirect s'en charge (nom Apple, nouveau compte)
       if (user && (!cached || cached.uid !== user.uid)) { setSession(user); location.reload(); return; }
       if (!user && cached) {
         // session expirée ou déconnectée ailleurs

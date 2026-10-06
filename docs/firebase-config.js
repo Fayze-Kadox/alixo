@@ -18,7 +18,8 @@ window.ALIXO_FIREBASE_CONFIG = {
    Pour une app de bureau, ce « secret » n'est pas confidentiel (flux PKCE). */
 window.ALIXO_GOOGLE_DESKTOP_CLIENT = null;
 
-/* Connexion Apple : nécessite l'Apple Developer Program (payant) + un Service ID. */
+/* Connexion Apple : tout se règle dans la console Firebase (Authentication › Sign-in method › Apple : Service ID,
+   Team ID, Key ID, clé privée — voir SETUP-COMPTES.md § 2). Rien à renseigner ici depuis la 1.27.1. */
 window.ALIXO_APPLE_CONFIG = null;
 
 /* E-mails d'invitation d'Alixo Share (facultatif — voir SETUP-COMPTES.md § 3 ter).

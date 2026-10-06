@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Connexion Apple — Alixo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<!-- Page relais de la connexion Apple pour la version PC d'Alixo (1.27.1).
+     Apple n'accepte que des adresses de retour https enregistrées : l'application de bureau ouvre donc cette page
+     (domaine autorisé Firebase) dans le navigateur système avec ?port=NNNN&state=…, la connexion se fait ici
+     (pop-up, ou redirection si la pop-up est bloquée), puis la clé de connexion Firebase (jeton à usage unique)
+     est renvoyée à l'application sur http://127.0.0.1:NNNN/?state=…&cred=… — jamais ailleurs. -->
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" type="image/png" href="logo.png">
+<style>
+  body.ap { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); color: var(--ink); font-family: var(--font-ui); padding: 24px; box-sizing: border-box; }
+  body.ap > :not(.ap-card) { display: none !important; }
+  .ap-card { width: min(420px, 100%); background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px 28px 24px; box-shadow: 0 20px 60px rgba(0, 0, 0, .12); text-align: center; }
+  .ap-card img { width: 56px; height: 56px; border-radius: 14px; }
+  .ap-card h1 { font-size: 20px; margin: 14px 0 6px; }
+  .ap-card p { font-size: 13.5px; color: var(--ink-2); line-height: 1.5; margin: 0 0 18px; }
+  .ap-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 44px; border-radius: 10px; border: 1px solid var(--ink); background: var(--ink); color: var(--surface); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .ap-btn[disabled] { opacity: .6; cursor: default; }
+  .ap-btn svg { width: 18px; height: 18px; }
+  .ap-err { margin-top: 14px; font-size: 13px; color: var(--danger); white-space: pre-line; }
+  .ap-ok { color: var(--ok); }
+  .ap-foot { margin-top: 18px; font-size: 12px; color: var(--ink-3); }
+</style>
+</head>
+<body class="ap">
+<div class="ap-card">
+  <img src="logo.png" alt="">
+  <h1>Connexion avec Apple</h1>
+  <p id="ap-sub">Pour la version PC d’Alixo. Connectez-vous ici, puis revenez dans l’application : elle s’ouvrira sur vos cours.</p>
+  <button class="ap-btn" id="ap-go" type="button">
+    <svg viewBox="0 0 24 24"><path fill="currentColor" d="M16.7 12.9c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.8 0-1.9-.9-3.2-.86-1.6.02-3.1 1-4 2.4-1.7 3-.4 7.3 1.2 9.7.8 1.2 1.8 2.5 3 2.4 1.2 0 1.7-.8 3.2-.8s1.9.8 3.2.8c1.3 0 2.2-1.2 3-2.4.9-1.4 1.3-2.7 1.3-2.8 0 0-2.5-1-2.6-3.8ZM14.3 5.4c.7-.8 1.1-2 1-3.1-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.4Z"/></svg>
+    Continuer avec Apple
+  </button>
+  <div class="ap-err" id="ap-err" hidden></div>
+  <div class="ap-foot">Alixo ne voit que votre e-mail (ou l’adresse relais d’Apple) et votre prénom.</div>
+</div>
+<script src="firebase-config.js"></script>
+<script src="js/vendor/firebase-app-compat.js"></script>
+<script src="js/vendor/firebase-auth-compat.js"></script>
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const KEY = 'alixo.appleRelay';
+  const btn = $('#ap-go'), errBox = $('#ap-err'), sub = $('#ap-sub');
+  const err = m => { errBox.textContent = m; errBox.hidden = !m; errBox.classList.remove('ap-ok'); };
+  const ok = m => { errBox.textContent = m; errBox.hidden = false; errBox.classList.add('ap-ok'); };
+  const ERRORS = {
+    'auth/popup-closed-by-user': 'Fenêtre de connexion fermée.', 'auth/cancelled-popup-request': 'Connexion annulée.', 'auth/user-cancelled': 'Connexion annulée.',
+    'auth/operation-not-allowed': 'La connexion Apple n’est pas activée sur le serveur d’Alixo (console Firebase › Authentication › Sign-in method › Apple).',
+    'auth/unauthorized-domain': 'Ce site n’est pas autorisé pour la connexion (console Firebase › Authentication › Settings › Authorized domains).',
+    'auth/account-exists-with-different-credential': 'Un compte existe déjà avec cet e-mail par un autre mode de connexion (Google ou e-mail) : connectez-vous avec celui-ci dans Alixo.',
+    'auth/network-request-failed': 'Pas de connexion internet.',
+    'auth/internal-error': 'Le service de connexion n’a pas répondu (réseau, pare-feu ou bloqueur) : réessayez dans un instant.'
+  };
+  const fr = e => ERRORS[e && e.code] || (e && e.message) || 'Une erreur est survenue.';
+
+  // port et état de l'application : dans l'adresse (premier passage) ou gardés pour le retour de redirection
+  const p = new URLSearchParams(location.search);
+  let port = p.get('port'), state = p.get('state');
+  if (port && state) { try { sessionStorage.setItem(KEY, JSON.stringify({ port, state })); } catch { /* */ } }
+  else { try { const s = JSON.parse(sessionStorage.getItem(KEY) || 'null'); if (s) { port = s.port; state = s.state; } } catch { /* */ } }
+  const portOk = /^\d{4,5}$/.test(port || '') && +port >= 1024 && +port <= 65535;
+  const back = params => {
+    try { sessionStorage.removeItem(KEY); } catch { /* */ }
+    location.href = `http://127.0.0.1:${port}/?` + new URLSearchParams(Object.assign({ state }, params)).toString();
+  };
+
+  if (!window.ALIXO_FIREBASE_CONFIG || !window.firebase) { btn.disabled = true; err('Service en ligne non configuré.'); return; }
+  if (!portOk || !state) { btn.disabled = true; sub.textContent = 'Cette page est ouverte par l’application Alixo pour PC (bouton « Continuer avec Apple » de l’écran de connexion).'; return; }
+  firebase.initializeApp(window.ALIXO_FIREBASE_CONFIG);
+  const auth = firebase.auth(); auth.languageCode = 'fr';
+  const provider = () => { const pr = new firebase.auth.OAuthProvider('apple.com'); pr.addScope('email'); pr.addScope('name'); pr.setCustomParameters({ locale: 'fr_FR' }); return pr; };
+
+  async function finish(cred) {
+    const c = cred && cred.credential;
+    if (!c || !c.toJSON) throw new Error('Réponse d’Apple illisible.');
+    // Apple ne donne le nom qu'à la première connexion : on le garde dans le profil s'il manque
+    try {
+      const u = cred.user, pr = (cred.additionalUserInfo && cred.additionalUserInfo.profile) || {};
+      const n = pr.name && typeof pr.name === 'object' ? [pr.name.firstName, pr.name.lastName].filter(Boolean).join(' ') : '';
+      if (u && !u.displayName && n) await u.updateProfile({ displayName: n });
+    } catch { /* facultatif */ }
+    const json = JSON.stringify(c.toJSON());
+    const b64 = btoa(unescape(encodeURIComponent(json))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    // cette page ne garde pas de session : c'est l'application qui se connecte avec la clé
+    try { await auth.signOut(); } catch { /* */ }
+    ok('Connexion réussie ! Retour dans Alixo…');
+    btn.disabled = true;
+    back({ cred: b64 });
+  }
+
+  // retour d'une redirection (pop-up bloquée au passage précédent)
+  auth.getRedirectResult().then(cred => { if (cred && cred.user) return finish(cred); }).catch(e => err(fr(e)));
+
+  btn.addEventListener('click', async () => {
+    err(''); btn.disabled = true;
+    try {
+      let cred;
+      try { cred = await auth.signInWithPopup(provider()); }
+      catch (e) {
+        if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment')) { await auth.signInWithRedirect(provider()); return; }
+        throw e;
+      }
+      await finish(cred);
+    } catch (e) {
+      err(fr(e)); btn.disabled = false;
+      if (e && (e.code === 'auth/user-cancelled' || e.code === 'auth/popup-closed-by-user')) { /* l'utilisateur peut réessayer ici */ }
+    }
+  });
+})();
+</script>
+</body>
+</html>

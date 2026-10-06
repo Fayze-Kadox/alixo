@@ -16,7 +16,7 @@ const fmtDate = ts => new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric',
 
 const DEFAULT_TINT = '#33658a';
 /* version de l'application (tenue à jour avec package.json) — sert aux notifications « nouvelle version installée » */
-const ALIXO_VERSION = '1.27.0';
+const ALIXO_VERSION = '1.27.1';
 /* version web d'Alixo (GitHub Pages) et téléchargement de la version PC */
 const ALIXO_WEB_URL = 'https://alixoapp.com/docs/';
 /* 1.23 : tout passe par le site (pages de téléchargement et de versions) — jamais de lien direct vers l'hébergement des fichiers */
@@ -2449,7 +2449,7 @@ function settingsSectionHTML(k) {
       <div class="po-hint" style="margin:0">Une séance s’exporte en A4 (bouton ⤓ ou Ctrl+P), avec sommaire au-delà de six titres ; une présentation s’exporte en pages 16:9, une diapositive par page.</div></div>`;
   if (k === 'apropos') return `<div class="set-sect"><div class="set-about"><span class="logo-mark"><img class="app-logo-img" src="${appLogoSrc()}" alt=""></span><div><div class="set-abname">Alixo${hasPlusPlan() ? '+' : ''} <span>${ALIXO_VERSION}</span></div><div class="po-hint" style="margin:0">Cockpit d’amphi : Droit, Économie, Commerce, Médecine et santé, STAPS.${desk && desk.versions ? ` Version PC · Electron ${esc(desk.versions.electron)} · Chromium ${esc(desk.versions.chrome)}` : ' Version web (navigateur).'}</div></div></div>
       <div class="po-row" style="gap:8px; margin-top:12px; flex-wrap:wrap">
-        <button id="set-news" class="cta ghost small" type="button">Nouveautés de cette version</button>
+        <button id="set-news" class="cta ghost small" type="button">Nouveautés de cette version</button>${window.AlixoWhatsNew && AlixoWhatsNew.has(ALIXO_VERSION) ? '<button id="set-wn" class="cta ghost small" type="button">▶ Revoir la présentation</button>' : ''}
         ${desk && desk.checkUpdates ? '<button id="set-upd" class="cta ghost small" type="button">Rechercher les mises à jour</button>' : ''}
         <button id="set-other" class="cta ghost small" type="button">${IS_DESKTOP ? 'Ouvrir la version web' : (IS_MAC_BROWSER ? 'Télécharger pour Mac' : 'Télécharger pour Windows')}</button>
         ${IS_DESKTOP ? '' : `<button id="set-other2" class="cta ghost small" type="button">${IS_MAC_BROWSER ? 'Télécharger pour Windows' : 'Télécharger pour Mac'}</button>`}
@@ -2555,6 +2555,8 @@ function bindSettingsSection(k, root) {
   if (k === 'apropos') {
     const news = root.querySelector('#set-news');
     if (news) news.addEventListener('click', () => { const url = ALIXO_VERSIONS_URL; if (window.alixoDesktop && alixoDesktop.openExternal) alixoDesktop.openExternal(url); else window.open(url, '_blank'); });
+    const wn = root.querySelector('#set-wn');
+    if (wn) wn.addEventListener('click', () => AlixoWhatsNew.open(ALIXO_VERSION));
     const upd = root.querySelector('#set-upd');
     if (upd) upd.addEventListener('click', () => { alixoDesktop.checkUpdates(); toast('Recherche des mises à jour…'); });
     const other = root.querySelector('#set-other');
@@ -9680,6 +9682,7 @@ window.AlixoApp = {
   redo: () => (currentDocId ? (isSlidesDoc(doc()) ? (window.AlixoSlides && AlixoSlides.redo()) : isSheetDoc(doc()) ? (window.AlixoSheets && AlixoSheets.redo()) : isBoardDoc(doc()) ? (window.AlixoBoard && AlixoBoard.redo()) : isQuizDoc(doc()) ? (window.AlixoQuiz && AlixoQuiz.redo()) : redoEdit()) : false),
   exportPDF: () => { if (!currentDocId) return false; exportPDF(); return true; },
   version: ALIXO_VERSION,
+  showWhatsNew,
   openTodoHome, openSharedHome, openDoc, openSettings,
   /* Alixo+ (1.16) et fenêtres centrales : utilisés par js/cloudconfig.js, js/share.js, js/files.js, js/todo.js */
   isPlus, setPlan, setPlusOffer, openPlusDialog, requirePlus, storageAllows, openDialog, closeDialog,
@@ -9759,13 +9762,28 @@ refreshPlusUi();
 /* premier passage : si la synchro est inactive (hors ligne, mode local avec compte),
    c'est ici qu'on propose le questionnaire ; sinon js/sync.js le fait après la fusion */
 setTimeout(() => { if (!window.AlixoSync || !window.AlixoSync.enabled) maybeOnboard(); }, 800);
-/* au démarrage : notification « nouvelle version installée », puis bilan de la semaine (à chaque ouverture) */
+/* 1.26 : présentation animée des nouveautés (js/whatsnew.js + js/whatsnew-scenes.js), jouée une fois au premier
+   lancement après une mise à jour — jamais par-dessus la connexion, le questionnaire de bienvenue ou un compte suspendu.
+   Aperçu à tout moment : index.html?nouveautes=1 (version courante) ou ?nouveautes=1.25.0. */
+function showWhatsNew(version, tries) {
+  if (!window.AlixoWhatsNew || !AlixoWhatsNew.has(version)) return false;
+  const authov = $('#authov');
+  if ((authov && !authov.hidden) || $('#obov') || $('#suspov') || $('#updov')) {
+    if ((tries || 0) < 40) setTimeout(() => showWhatsNew(version, (tries || 0) + 1), 3000);
+    return false;
+  }
+  return AlixoWhatsNew.open(version);
+}
+/* au démarrage : présentation animée + notification « nouvelle version installée », puis bilan de la semaine (à chaque ouverture) */
 setTimeout(() => {
   try {
+    const wn = new URLSearchParams(location.search).get('nouveautes');
+    if (wn) showWhatsNew(wn === '1' ? ALIXO_VERSION : wn);
     const prev = state.settings.lastVersion;
     if (prev !== ALIXO_VERSION) {
       state.settings.lastVersion = ALIXO_VERSION; save();
-      if (prev && window.AlixoNotify) AlixoNotify.push({ id: 'ver_' + ALIXO_VERSION, kind: 'update', title: `Alixo ${ALIXO_VERSION} installé`, text: 'Nouveautés : nouveau document « Quiz » (questions à choix, vrai / faux, curseur, ordre… à tester ou à présenter en direct : code et QR code à l’écran, réponses sur téléphone via alixoapp.com/quiz), plan du cours modifiable (niveaux à glisser, mots déclencheurs comme « Chapitre »), barre d’outils des tableaux flottante, filigrane sur les exports sans Alixo+…', action: { type: 'url', url: ALIXO_VERSIONS_URL } });
+      if (prev && !wn) showWhatsNew(ALIXO_VERSION);
+      if (prev && window.AlixoNotify) AlixoNotify.push({ id: 'ver_' + ALIXO_VERSION, kind: 'update', title: `Alixo ${ALIXO_VERSION} installé`, text: 'Nouveautés : la connexion avec Apple est prête — dans le navigateur (fenêtre ou redirection sur iPhone) comme dans la version PC (le navigateur système s’ouvre puis revient dans Alixo), active dès l’ouverture du service Apple d’Alixo ; messages de connexion plus clairs ; présentation animée des nouveautés après chaque mise à jour.', action: (window.AlixoWhatsNew && AlixoWhatsNew.has(ALIXO_VERSION)) ? { type: 'whatsnew', version: ALIXO_VERSION } : { type: 'url', url: ALIXO_VERSIONS_URL } });
     }
   } catch { /* stockage indisponible */ }
   if (window.AlixoStats) AlixoStats.maybeOpen();

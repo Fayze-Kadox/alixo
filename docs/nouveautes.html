@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Nouveautés d’Alixo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<!-- Page autonome : joue la présentation animée des nouveautés d'une version (js/whatsnew-scenes.js).
+     Adresse : nouveautes.html?v=1.25.0 (sans v : la version la plus récente enregistrée)
+       &theme=dark   thème sombre (sinon clair)
+       &video=1      mode rendu vidéo : sans boutons, lecture automatique, puis <body data-done="1">
+                     (scripts/whatsnew-video.js enregistre la fenêtre avec Playwright et produit un .mp4)
+       &loop=1       recommence à la fin (écran d'exposition, site)
+     Sert aussi sur le site : https://alixoapp.com/docs/nouveautes.html?v=x.y.z -->
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="whatsnew.css">
+<link rel="icon" type="image/png" href="logo.png">
+<style>
+  /* feuille d'Alixo chargée pour ses variables de thème seulement : on neutralise sa mise en page */
+  body.wn-page > :not(#wnov) { display: none !important; }
+  #wn-empty { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--ink-2); font-family: var(--font-ui); }
+</style>
+</head>
+<body class="wn-page">
+<script src="js/whatsnew.js"></script>
+<script src="js/whatsnew-scenes.js"></script>
+<script>
+(() => {
+  const p = new URLSearchParams(location.search);
+  if (p.get('theme') === 'dark') document.documentElement.dataset.theme = 'dark';
+  const video = p.get('video') === '1';
+  if (video) document.body.classList.add('wn-video');
+  const all = AlixoWhatsNew.versions();
+  const v = p.get('v') || all[0];
+  if (!AlixoWhatsNew.has(v)) {
+    document.body.insertAdjacentHTML('beforeend', `<div id="wn-empty">Aucune présentation pour la version ${v ? v.replace(/[<>&]/g, '') : '(inconnue)'} — versions disponibles : ${all.join(', ') || 'aucune'}.</div>`);
+    document.body.dataset.done = '1';
+    return;
+  }
+  document.title = `Nouveautés d’Alixo ${v}`;
+  document.body.dataset.version = v;
+  document.body.dataset.duration = String(AlixoWhatsNew.duration(v));
+  const start = () => AlixoWhatsNew.open(v, { loop: p.get('loop') === '1', onClose: () => { document.body.dataset.done = '1'; } });
+  document.addEventListener('wn-closed', () => { document.body.dataset.done = '1'; });
+  // en mode vidéo : un court temps pour que les polices et le thème soient prêts avant la première image
+  setTimeout(start, video ? 400 : 0);
+})();
+</script>
+</body>
+</html>
