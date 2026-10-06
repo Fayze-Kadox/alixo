@@ -16,7 +16,7 @@ const fmtDate = ts => new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric',
 
 const DEFAULT_TINT = '#33658a';
 /* version de l'application (tenue à jour avec package.json) — sert aux notifications « nouvelle version installée » */
-const ALIXO_VERSION = '1.26.0';
+const ALIXO_VERSION = '1.27.0';
 /* version web d'Alixo (GitHub Pages) et téléchargement de la version PC */
 const ALIXO_WEB_URL = 'https://alixoapp.com/docs/';
 /* 1.23 : tout passe par le site (pages de téléchargement et de versions) — jamais de lien direct vers l'hébergement des fichiers */
@@ -7541,21 +7541,23 @@ function insertDrawing() {
 }
 
 /* ============================================================
-   Correction orthographe / grammaire par IA (API Gemini — Google AI Studio)
-   La clé API est saisie par l'utilisateur (gratuite) et reste sur
-   l'appareil (localStorage, jamais synchronisée).
+   Correction orthographe / grammaire par IA (API Grok — xAI)
+   1.27 : Grok (xAI) remplace Gemini (Google) pour sa politique de confidentialité (pas d'entraînement
+   sur les données de l'API). La clé API est saisie par l'utilisateur (ou attribuée par l'administrateur)
+   et reste sur l'appareil (localStorage, jamais synchronisée). Nouvelle clé de stockage : les anciennes
+   clés Google (alixo.geminiKey) ne sont plus lues — elles ne fonctionneraient pas chez xAI.
    ============================================================ */
-const AI_KEY_LS = 'alixo.geminiKey';
-const AI_PROVIDER = 'Google AI Studio';
+const AI_KEY_LS = 'alixo.grokKey';
+const AI_PROVIDER = 'xAI';
 function aiKey() { try { return localStorage.getItem(AI_KEY_LS) || ''; } catch { return ''; } }
-/* 1.22 : les appels à Gemini passent par le moteur js/corr.js (AlixoCorr.call) — une seule implémentation,
+/* 1.22 : les appels à l'IA passent par le moteur js/corr.js (AlixoCorr.call) — une seule implémentation,
    réponse JSON, « réflexion » désactivée quand le modèle l'accepte (moins de jetons, plus rapide) */
 let aiState = null;   // { items: [{ n, id, avant, apres, regle, done }], label }
 
 function aiCorrectable(b) { return TEXT_TYPES.includes(b.type) || isFiche(b) || b.type === 'table' || b.type === 'cards'; }
 
 /* ---------------- configuration guidée de la clé API ---------------- */
-const AI_KEYS_URL = 'https://aistudio.google.com/app/apikey';
+const AI_KEYS_URL = 'https://console.x.ai/';
 const maskKey = k => k ? `${k.slice(0, 4)}…${k.slice(-4)}` : '';
 /* mode 'panel' (panneau IA, parcours complet) ou 'settings' (bloc compact dans les Paramètres) */
 function aiSetupHTML(mode) {
@@ -7565,13 +7567,13 @@ function aiSetupHTML(mode) {
     : `<div class="ai-keystate"><span class="ai-dot"></span>Aucune clé pour l’instant — la correction par IA est désactivée.</div>`;
   const steps = mode === 'panel' || !key ? `
     <ol class="ai-steps">
-      <li>Ouvrir <a href="${AI_KEYS_URL}" target="_blank" rel="noopener">aistudio.google.com/app/apikey</a> avec un compte Google (gratuit, sans carte bancaire).</li>
-      <li>Cliquer <b>Créer une clé API</b> et copier la clé complète.</li>
+      <li>Ouvrir <a href="${AI_KEYS_URL}" target="_blank" rel="noopener">console.x.ai</a> et créer un compte xAI (facturation à l’usage : quelques centimes pour un cours entier).</li>
+      <li>Dans <b>API Keys</b>, cliquer <b>Create API key</b> et copier la clé complète (elle commence par <code>xai-</code>).</li>
       <li>La coller ci-dessous et cliquer <b>Tester et enregistrer</b>.</li>
     </ol>` : '';
   return `${status}${steps}
     <div class="po-row ai-keyrow">
-      <input class="ai-keyinput" type="password" placeholder="Collez votre clé API…" value="${esc(key)}" autocomplete="off" spellcheck="false" aria-label="Clé API Gemini">
+      <input class="ai-keyinput" type="password" placeholder="Collez votre clé API…" value="${esc(key)}" autocomplete="off" spellcheck="false" aria-label="Clé API Grok (xAI)">
       <button class="ai-keyeye" type="button" title="Afficher / masquer">👁</button>
     </div>
     <div class="po-row ai-keybtns">
@@ -7580,7 +7582,7 @@ function aiSetupHTML(mode) {
     </div>
     <div class="ai-keymsg" aria-live="polite"></div>
     ${key && mode === 'panel' ? `<label class="ai-toggle"><input type="checkbox" class="ai-styletoggle" ${aiStyleOn() ? 'checked' : ''}> Analyse automatique pendant la frappe : les fautes d’orthographe / grammaire et la mise en forme (définitions, titres, encadrés…) sont proposées sous le paragraphe, sans rien demander — <b>Tab</b> pour accepter</label>` : ''}
-    <div class="po-hint">Gemini Flash (Google) : gratuit, très bon en français. Alixo économise le palier gratuit : les fautes de frappe courantes sont corrigées sur l’appareil, chaque phrase n’est envoyée qu’une fois (les phrases déjà relues restent en mémoire) et les phrases nouvelles sont groupées en une seule requête. La clé reste sur cet ordinateur (jamais envoyée ailleurs qu’à Google, jamais synchronisée avec vos cours) ; seul le texte analysé est transmis. Le bouton « Corriger » (✨ ou F7) devient actif dès qu’une clé valide est enregistrée.</div>`;
+    <div class="po-hint">Grok (xAI) : très bon en français, et xAI s’engage à ne pas entraîner ses modèles sur les données envoyées par l’API. Alixo limite les appels : les fautes de frappe courantes sont corrigées sur l’appareil, chaque phrase n’est envoyée qu’une fois (les phrases déjà relues restent en mémoire) et les phrases nouvelles sont groupées en une seule requête. La clé reste sur cet ordinateur (jamais envoyée ailleurs qu’à xAI, jamais synchronisée avec vos cours) ; seul le texte analysé est transmis. Le bouton « Corriger » (✨ ou F7) devient actif dès qu’une clé valide est enregistrée.</div>`;
 }
 function bindAiSetup(root, mode) {
   if (!root) return;
@@ -7593,7 +7595,7 @@ function bindAiSetup(root, mode) {
     const k = input.value.trim();
     if (!k) { setMsg('Collez d’abord votre clé.', 'err'); input.focus(); return; }
     if (/\s/.test(k) || k.length < 20) { setMsg('La clé semble incomplète (au moins 20 caractères, sans espace). Vérifiez que vous avez copié la clé entière.', 'err'); return; }
-    setMsg('Vérification auprès de Google…', '');
+    setMsg('Vérification auprès de xAI…', '');
     root.querySelector('.ai-keytest').disabled = true;
     const r = await aiTestKey(k);
     root.querySelector('.ai-keytest').disabled = false;
@@ -7619,7 +7621,7 @@ async function aiTestKey(key) {
 function showAiSetup() {
   const body = $('#ai-body');
   body.innerHTML = `<div class="ai-setup"><div class="ai-setuptitle">Activer la correction par IA</div>
-    <div class="ai-empty" style="padding-top:2px">La correction d’orthographe et de grammaire s’appuie sur Gemini Flash (Google, gratuit). Il faut une clé API personnelle, en trois étapes :</div>
+    <div class="ai-empty" style="padding-top:2px">La correction d’orthographe et de grammaire s’appuie sur Grok (xAI), choisi pour sa politique de confidentialité. Il faut une clé API personnelle, en trois étapes :</div>
     ${aiSetupHTML('panel')}</div>`;
   bindAiSetup(body.querySelector('.ai-setup'), 'panel');
   setTimeout(() => { const i = body.querySelector('.ai-keyinput'); if (i) i.focus(); }, 60);

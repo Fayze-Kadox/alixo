@@ -1,7 +1,7 @@
 /* ============================================================
    Alixo — liaison avec le panneau d'administration (Firestore)
    - config/public        → annonces, dernière version (lu par tout compte connecté)
-   - keys/{uid}           → clé API Google (Gemini) attribuée par l'administrateur
+   - keys/{uid}           → clé API xAI (Grok) attribuée par l'administrateur (champ `grok` ; 1.27, avant : `gemini`)
    - profiles/{uid}       → `disabled` : compte suspendu (posé par l'administrateur) ;
                             présence (`online`, `activity`, `lastSeen`) écrite ici (1.12) ;
                             1.26 : `storage` (tailles), `ageGroup`, `plusConsent` — lisible par le titulaire et les admins seulement
@@ -19,8 +19,8 @@ window.AlixoCloud = (() => {
   if (!acc || !window.firebase || !firebase.firestore) return { enabled: false, adminKey: () => '' };
   const uid = acc.uid;
   const db = firebase.firestore();
-  const ADMIN_KEY_LS = 'alixo.geminiKey.admin' + A.storageSuffix();
-  const ADMIN_KEY_AT_LS = 'alixo.geminiKey.adminAt' + A.storageSuffix();   // horodatage de la dernière attribution notifiée
+  const ADMIN_KEY_LS = 'alixo.grokKey.admin' + A.storageSuffix();
+  const ADMIN_KEY_AT_LS = 'alixo.grokKey.adminAt' + A.storageSuffix();   // horodatage de la dernière attribution notifiée
   const adminKey = () => { try { return localStorage.getItem(ADMIN_KEY_LS) || ''; } catch { return ''; } };
   const lsGet = k => { try { return localStorage.getItem(k) || ''; } catch { return ''; } };
   const lsSet = (k, v) => { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch { /* stockage indisponible */ } };
@@ -34,17 +34,17 @@ window.AlixoCloud = (() => {
      qu'auparavant — avant 1.12 une clé réattribuée passait sans notification. */
   db.collection('keys').doc(uid).onSnapshot(snap => {
     const d = snap.exists ? snap.data() : null;
-    const key = d && typeof d.gemini === 'string' ? d.gemini.trim() : '';
+    const key = d && typeof d.grok === 'string' ? d.grok.trim() : '';   // 1.27 : une ancienne attribution `gemini` (clé Google) est ignorée
     const prev = adminKey();
     const at = d && +d.assignedAt ? String(+d.assignedAt) : (key ? 'k' + key.slice(-6) : '');
     const notifiedAt = lsGet(ADMIN_KEY_AT_LS);
     lsSet(ADMIN_KEY_LS, key);
-    const own = lsGet('alixo.geminiKey');
-    const source = lsGet('alixo.geminiKey.source');
+    const own = lsGet('alixo.grokKey');
+    const source = lsGet('alixo.grokKey.source');
     if (key) {
       const fresh = at !== notifiedAt;               // nouvelle attribution (ou première lecture sur cet appareil)
       const adopt = !own || d.force || own === prev || source === 'admin';
-      if (adopt && own !== key) { lsSet('alixo.geminiKey', key); lsSet('alixo.geminiKey.source', 'admin'); }
+      if (adopt && own !== key) { lsSet('alixo.grokKey', key); lsSet('alixo.grokKey.source', 'admin'); }
       if (fresh) {
         lsSet(ADMIN_KEY_AT_LS, at);
         if (adopt) notify({ id: 'key_' + at, kind: 'key', title: 'Une clé d’intelligence artificielle vous a été attribuée', text: (d.note ? d.note + ' — ' : '') + 'La correction et la mise en forme par IA sont actives, sans rien configurer.', action: { type: 'settings' } });
@@ -52,7 +52,7 @@ window.AlixoCloud = (() => {
       }
     } else if (prev) {
       lsSet(ADMIN_KEY_AT_LS, '');
-      if (own === prev) { lsSet('alixo.geminiKey', ''); lsSet('alixo.geminiKey.source', ''); notify({ kind: 'key', title: 'La clé IA attribuée a été retirée', text: 'Vous pouvez saisir votre propre clé gratuite dans Paramètres › Correction par IA.', action: { type: 'settings' } }); }
+      if (own === prev) { lsSet('alixo.grokKey', ''); lsSet('alixo.grokKey.source', ''); notify({ kind: 'key', title: 'La clé IA attribuée a été retirée', text: 'Vous pouvez saisir votre propre clé xAI dans Paramètres › Correction par IA.', action: { type: 'settings' } }); }
     }
   }, err => { if (!permErr(err)) console.error('Cloud (clé) :', err); });
 

@@ -9,7 +9,7 @@
                                 l'administrateur qui agit, jamais modifié ni effacé ; le contenu des cours (users/{uid}/**) n'est
                                 plus lisible depuis le panneau
    - config/aikeys           → { keys: [{ id, key, label, enabled, addedAt }] }  (réservoir, admins seulement)
-   - keys/{uid}              → { gemini, keyId, note, force, assignedAt }  (lisible par l'utilisateur seul)
+   - keys/{uid}              → { grok, keyId, note, force, assignedAt }  (lisible par l'utilisateur seul ; 1.27 : `grok` remplace `gemini`)
    - config/public           → { announcements: [{ id, title, text, url, audience, ts, until, silent }],
                                  latestVersion, latestNote, downloadUrl, minVersion (1.18 : en dessous, l'application se bloque
                                  jusqu'à la mise à jour) }  (lisible par tout compte connecté)
@@ -122,6 +122,8 @@
   let tickTm = null;
   function renderAll() { renderDash(); renderUsers(); renderKeys(); }
   const keyById = id => state.keysDoc.keys.find(k => k.id === id) || null;
+  /* 1.27 : une attribution ne compte que si elle porte une clé xAI (`grok`) ; un ancien document `gemini` (clé Google) vaut « sans clé » */
+  const hasKey = uid => { const a = state.assigned.get(uid); return !!(a && typeof a.grok === 'string' && a.grok); };
   const keyLabel = k => k ? (k.label || ('Clé …' + String(k.key || '').slice(-4))) : '';
   const mask = k => k ? k.slice(0, 6) + '…' + k.slice(-4) : '';
 
@@ -134,7 +136,7 @@
     const sante = P.filter(p => (p.specialites || []).some(k => HEALTH.includes(k))).length, droit = P.filter(p => (p.specialites || []).includes('droit')).length, eco = P.filter(p => (p.specialites || []).includes('economie')).length;
     const anns = (state.pub.announcements || []).filter(a => !a.until || a.until > now).length;
     const online = P.filter(p => presence(p).on).length;
-    $('#dash-tiles').innerHTML = [[online, 'connectés maintenant'], [P.length, 'comptes'], [act7, 'actifs sur 7 jours'], [act30, 'actifs sur 30 jours'], [docs, 'séances (déclarées)'], [state.assigned.size, 'clés IA attribuées'], [P.filter(p => planActive(planOf(p.uid))).length, 'abonnés Alixo+'], [state.keysDoc.keys.filter(k => k.enabled !== false).length, 'clés actives au réservoir'], [P.filter(p => p.disabled).length, 'comptes suspendus'], [anns, 'annonces en cours']].map(([v, l]) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`).join('') +
+    $('#dash-tiles').innerHTML = [[online, 'connectés maintenant'], [P.length, 'comptes'], [act7, 'actifs sur 7 jours'], [act30, 'actifs sur 30 jours'], [docs, 'séances (déclarées)'], [[...state.assigned.keys()].filter(hasKey).length, 'clés IA attribuées'], [P.filter(p => planActive(planOf(p.uid))).length, 'abonnés Alixo+'], [state.keysDoc.keys.filter(k => k.enabled !== false).length, 'clés actives au réservoir'], [P.filter(p => p.disabled).length, 'comptes suspendus'], [anns, 'annonces en cours']].map(([v, l]) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`).join('') +
       `<div class="tile"><b style="font-size:16px; margin-top:6px">${droit} · ${eco} · ${sante}</b><span>Droit · Économie · Santé</span></div>`;
     const recent = P.filter(p => p.lastSeen).sort((a, b) => b.lastSeen - a.lastSeen).slice(0, 8);
     $('#dash-recent').innerHTML = recent.length ? recent.map(p => { const pr = presence(p); return `<div class="recent-row"><span><span class="pres ${pr.cls}" title="${esc(pr.label)}"></span>${esc(p.name || p.pseudo || p.email || p.uid)} <span class="muted small">${esc(p.email || '')}</span></span><span>${pr.on ? esc(pr.label) : ago(p.lastSeen)} · ${esc(p.version || '?')}</span></div>`; }).join('') : '<div class="empty">Aucune activité remontée pour l’instant (les applications 1.11+ signalent leur dernière ouverture).</div>';
@@ -151,8 +153,8 @@
       if (q && ![p.email, p.pseudo, p.name, p.uid].some(v => String(v || '').toLowerCase().includes(q))) return false;
       if (f === 'online') return presence(p).on;
       if (f === 'active') return p.lastSeen && now - p.lastSeen < 7 * 86400000;
-      if (f === 'key') return state.assigned.has(p.uid);
-      if (f === 'nokey') return !state.assigned.has(p.uid);
+      if (f === 'key') return hasKey(p.uid);
+      if (f === 'nokey') return !hasKey(p.uid);
       if (f === 'disabled') return !!p.disabled;
       if (f === 'plus') return planActive(planOf(p.uid));
       if (f === 'free') return !planActive(planOf(p.uid));
@@ -174,7 +176,7 @@
         <td title="${esc(when(p.lastSeen))}">${ago(p.lastSeen)}</td>
         <td>${p.version ? `<span class="chip dim">${esc(p.version)}</span>` : '—'} ${p.platform ? `<span class="muted small">${p.platform === 'desktop' ? 'PC' : 'web'}</span>` : ''}</td>
         <td>${p.nDocs ?? '—'}</td>
-        <td>${a ? `<span class="chip ok" title="${esc(mask(a.gemini))}">${esc(k ? keyLabel(k) : 'clé hors réservoir')}${a.force ? ' · imposée' : ''}</span>` : '<span class="chip dim">aucune</span>'}</td>
+        <td>${a && a.grok ? `<span class="chip ok" title="${esc(mask(a.grok))}">${esc(k ? keyLabel(k) : 'clé hors réservoir')}${a.force ? ' · imposée' : ''}</span>` : a ? '<span class="chip bad" title="Attribution antérieure à 1.27 (clé Google) : l’application l’ignore — attribuer une clé xAI">ancienne clé Google</span>' : '<span class="chip dim">aucune</span>'}</td>
         <td>${plusOn ? `<span class="chip ok" title="${esc(pl.note || '')}${pl.by ? ' · par ' + esc(pl.by) : ''}">Alixo+ · ${esc(planLabel(pl))}</span>` : (pl && pl.plus ? '<span class="chip bad" title="Abonnement arrivé à échéance">expiré</span>' : '<span class="chip dim">gratuit</span>')}</td>
         <td>${p.disabled ? `<span class="chip bad" title="${esc(p.disabledReason || '')}">suspendu</span>` : '<span class="chip ok">actif</span>'}</td>
         <td><div class="acts"><button data-ua="msg" title="Envoyer un message direct à cet utilisateur">Message…</button><button data-ua="key" title="Attribuer / retirer une clé IA">Clé…</button><button data-ua="plan" title="Activer, prolonger ou retirer Alixo+">Alixo+…</button><button data-ua="storage" title="Espace utilisé dans la base">Stockage</button><button data-ua="${p.disabled ? 'enable' : 'disable'}" class="${p.disabled ? '' : 'danger'}">${p.disabled ? 'Réactiver' : 'Suspendre'}</button></div></td></tr>`;
@@ -240,15 +242,15 @@
   async function saveKeys() { await db.collection('config').doc('aikeys').set({ keys: state.keysDoc.keys, updatedAt: Date.now() }); }
   async function testKey(key) {
     try {
-      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=1', { headers: { 'x-goog-api-key': key } });
+      const r = await fetch('https://api.x.ai/v1/models', { headers: { 'Authorization': 'Bearer ' + key } });
       if (r.ok) return { ok: true };
       const j = await r.json().catch(() => ({}));
-      return { ok: false, msg: (j.error && j.error.message) || ('HTTP ' + r.status) };
+      return { ok: false, msg: (typeof j.error === 'string' ? j.error : j.error && j.error.message) || ('HTTP ' + r.status) };
     } catch (e) { return { ok: false, msg: e.message }; }
   }
   $('#key-add').addEventListener('click', () => {
-    modal(`<h3>Ajouter une clé API Google (Gemini)</h3><p class="muted small">Clé gratuite sur <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">aistudio.google.com/app/apikey</a>. Chaque clé a ses propres quotas : plusieurs clés = plus d’utilisateurs servis.</p>
-      <label class="field">Libellé<input id="k-label" placeholder="Ex. Compte Google n° 2"></label><label class="field">Clé<input id="k-key" placeholder="AIza…" autocomplete="off" spellcheck="false"></label>
+    modal(`<h3>Ajouter une clé API xAI (Grok)</h3><p class="muted small">Clé créée sur <a href="https://console.x.ai/" target="_blank" rel="noopener">console.x.ai</a> (API Keys › Create API key, elle commence par <code>xai-</code>). La consommation est facturée au compte xAI qui a créé la clé : plusieurs clés = répartition de la dépense et des limites de débit.</p>
+      <label class="field">Libellé<input id="k-label" placeholder="Ex. Compte xAI n° 2"></label><label class="field">Clé<input id="k-key" placeholder="xai-…" autocomplete="off" spellcheck="false"></label>
       <p id="k-msg" class="muted small"></p><div class="modal-foot"><button class="btn ghost" data-close>Annuler</button><button class="btn ghost" id="k-test">Tester</button><button class="btn" id="k-ok">Ajouter</button></div>`, (c, close) => {
       const msg = c.querySelector('#k-msg');
       c.querySelector('#k-test').onclick = async () => { msg.textContent = 'Test…'; const r = await testKey(c.querySelector('#k-key').value.trim()); msg.textContent = r.ok ? '✓ Clé valide' : '✕ ' + r.msg; };
@@ -288,7 +290,7 @@
     const K = state.keysDoc.keys.filter(k => k.enabled !== false);
     modal(`<h3>Clé IA de ${esc(p.email || p.uid)}</h3>
       <label class="field">Clé du réservoir<select id="as-key"><option value="">— Aucune (retirer l’attribution) —</option>${K.map(k => `<option value="${k.id}" ${cur && cur.keyId === k.id ? 'selected' : ''}>${esc(keyLabel(k))} (${esc(mask(k.key))})</option>`).join('')}<option value="__custom" ${cur && !keyById(cur.keyId) ? 'selected' : ''}>Clé spécifique à cet utilisateur…</option></select></label>
-      <label class="field" id="as-custom-w" hidden>Clé spécifique<input id="as-custom" placeholder="AIza…" value="${esc(cur && !keyById(cur.keyId) ? cur.gemini : '')}"></label>
+      <label class="field" id="as-custom-w" hidden>Clé spécifique<input id="as-custom" placeholder="xai-…" value="${esc(cur && !keyById(cur.keyId) ? cur.grok || '' : '')}"></label>
       <label class="field">Note (montrée dans la notification)<input id="as-note" placeholder="Ex. Offerte par l’association — merci de ne pas la partager" value="${esc(cur ? cur.note || '' : '')}"></label>
       <label class="chk"><input type="checkbox" id="as-force" ${cur && cur.force ? 'checked' : ''}> Imposer (remplace aussi une clé personnelle)</label>
       <div class="modal-foot"><button class="btn ghost" data-close>Annuler</button><button class="btn" id="as-ok">Enregistrer</button></div>`, (c, close) => {
@@ -299,7 +301,7 @@
         if (!v) { await db.collection('keys').doc(p.uid).delete(); audit('key.remove', p.uid); close(); toast('Attribution retirée'); return; }
         const key = v === '__custom' ? c.querySelector('#as-custom').value.trim() : keyById(v).key;
         if (!key || key.length < 20) { toast('Clé invalide'); return; }
-        await db.collection('keys').doc(p.uid).set({ gemini: key, keyId: v === '__custom' ? 'custom' : v, note: c.querySelector('#as-note').value.trim(), force: c.querySelector('#as-force').checked, assignedAt: Date.now(), assignedBy: me.email || me.uid });
+        await db.collection('keys').doc(p.uid).set({ grok: key, keyId: v === '__custom' ? 'custom' : v, note: c.querySelector('#as-note').value.trim(), force: c.querySelector('#as-force').checked, assignedAt: Date.now(), assignedBy: me.email || me.uid });
         audit('key.assign', p.uid, { keyId: v === '__custom' ? 'custom' : v, force: c.querySelector('#as-force').checked });
         close(); toast('Clé attribuée');
       };
@@ -321,15 +323,15 @@
     const K = state.keysDoc.keys.filter(k => k.enabled !== false);
     if (!K.length) { log('Aucune clé active dans le réservoir.'); return; }
     const load = Object.fromEntries(K.map(k => [k.id, 0]));
-    if (onlyMissing) for (const a of state.assigned.values()) if (a.keyId in load) load[a.keyId]++;
-    const targets = state.profiles.filter(p => !p.disabled && (!onlyMissing || !state.assigned.has(p.uid)));
+    if (onlyMissing) for (const a of state.assigned.values()) if (a.grok && a.keyId in load) load[a.keyId]++;
+    const targets = state.profiles.filter(p => !p.disabled && (!onlyMissing || !hasKey(p.uid)));
     if (!targets.length) { log('Personne à servir.'); return; }
     if (!await confirmBox(onlyMissing ? 'Attribuer une clé' : 'Rééquilibrer', `${targets.length} utilisateur(s) recevront une clé parmi ${K.length} clé(s) active(s)${force ? ', imposée même s’ils ont une clé personnelle' : ''}.`, 'Continuer')) return;
     let batch = db.batch(), n = 0;
     for (const p of targets) {
       const k = K.reduce((a, b) => (load[b.id] < load[a.id] ? b : a));
       load[k.id]++;
-      batch.set(db.collection('keys').doc(p.uid), { gemini: k.key, keyId: k.id, note: '', force, assignedAt: Date.now(), assignedBy: me.email || me.uid });
+      batch.set(db.collection('keys').doc(p.uid), { grok: k.key, keyId: k.id, note: '', force, assignedAt: Date.now(), assignedBy: me.email || me.uid });
       log(`${p.email || p.uid} ← ${keyLabel(k)}`);
       if (++n % 400 === 0) { await batch.commit(); batch = db.batch(); }
     }

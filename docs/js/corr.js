@@ -4,8 +4,9 @@
    1. local, instantané, sans Internet : fautes de frappe reconnues à l'espace (liste fermée, mots appris,
       lexique de 24 000 mots : lettres inversées, lettre doublée, accent oublié) ;
    2. mémoire : chaque phrase déjà analysée (même texte, même niveau) ne repart jamais vers l'API ;
-   3. API Gemini : seulement les phrases nouvelles ou modifiées, groupées en une requête compacte
+   3. API Grok (xAI) : seulement les phrases nouvelles ou modifiées, groupées en une requête compacte
       (consigne courte, réponse JSON minimale, jetons de sortie bornés), au plus une requête toutes les 3 s.
+   1.27 : passage de Gemini (Google) à Grok (xAI) — API compatible OpenAI (chat/completions), clé « xai-… ».
    Chargé avant app.js (ne dépend que de window.ALIXO_LEXIQUE, js/lexique.js). app.js fournit l'accès aux
    blocs et à l'écran via AlixoCorr.init({...}) et branche les événements de frappe.
    ============================================================ */
@@ -13,10 +14,10 @@
 
 window.AlixoCorr = (() => {
   /* ---------------- réglages ---------------- */
-  const API = 'https://generativelanguage.googleapis.com/v1beta/models/';
-  const MODELS_FULL = ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-flash-lite-latest'];   // relecture à la demande (F7) : qualité d'abord
-  const MODELS_LIVE = ['gemini-3.5-flash-lite', 'gemini-flash-lite-latest', 'gemini-3.6-flash', 'gemini-3.7-flash'];   // pendant la frappe : rapides et peu coûteux d'abord
-  const MIN_GAP = 3000;            // ms entre deux requêtes « en direct » (palier gratuit : ~15 / min, on reste bien en dessous)
+  const API = 'https://api.x.ai/v1/chat/completions';
+  const MODELS_FULL = ['grok-4-1-fast-reasoning', 'grok-4-1-fast-non-reasoning', 'grok-4-fast-non-reasoning'];   // relecture à la demande (F7) : qualité d'abord
+  const MODELS_LIVE = ['grok-4-1-fast-non-reasoning', 'grok-4-fast-non-reasoning', 'grok-4-1-fast-reasoning'];   // pendant la frappe : rapides et peu coûteux d'abord
+  const MIN_GAP = 3000;            // ms entre deux requêtes « en direct » (facturation à l'usage : on limite le nombre d'appels)
   const PAUSE_MS = 2500;           // pause de frappe avant d'envoyer les phrases en cours
   const SENTENCE_MS = 700;         // délai après une fin de phrase (. ! ? Entrée)
   const LEAVE_MS = 250;            // délai après la sortie d'un bloc
@@ -214,52 +215,67 @@ Mise en forme : les lignes « § <lettre> : <numéros> » désignent des paragra
     return p;
   }
 
-  /* ---------------- appel Gemini ---------------- */
-  let thinkingOff = true;     // on demande d'abord « sans réflexion » (moins cher, plus rapide) ; si le modèle refuse le paramètre, on n'insiste plus
+  /* ---------------- appel Grok (xAI) ----------------
+     API compatible OpenAI : POST /v1/chat/completions, en-tête Authorization: Bearer <clé>, réponse JSON forcée
+     (response_format json_object). Les modèles « reasoning » reçoivent reasoning_effort: 'low' (moins de jetons,
+     plus rapide) ; si le modèle refuse le paramètre, on n'insiste plus. */
+  let lowEffort = true;
   const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const errText = j => {
+    if (!j) return '';
+    if (typeof j.error === 'string') return j.error;
+    if (j.error && typeof j.error.message === 'string') return j.error.message;
+    if (typeof j.message === 'string') return j.message;
+    return '';
+  };
   async function call(key, { system, user, maxTokens, models, timeoutMs = 25000, temperature = 0 }) {
     let last = null;
     for (let attempt = 0; attempt < 2; attempt++) for (const model of models) {
       if (attempt && model === models[0]) await sleep(1500);
       const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), timeoutMs);
-      const gen = { temperature, maxOutputTokens: maxTokens, responseMimeType: 'application/json' };
-      if (thinkingOff) gen.thinkingConfig = { thinkingBudget: 0 };
+      const body = {
+        model, temperature, max_tokens: maxTokens, stream: false,
+        response_format: { type: 'json_object' },
+        messages: [{ role: 'system', content: system }, { role: 'user', content: user }]
+      };
+      if (lowEffort && /reasoning$/.test(model) && !/non-reasoning$/.test(model)) body.reasoning_effort = 'low';
       let res;
       try {
-        res = await fetch(`${API}${model}:generateContent`, {
+        res = await fetch(API, {
           method: 'POST', signal: ctl.signal,
-          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-          body: JSON.stringify({ system_instruction: { parts: [{ text: system }] }, contents: [{ role: 'user', parts: [{ text: user }] }], generationConfig: gen })
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+          body: JSON.stringify(body)
         });
       } catch (err) {
         clearTimeout(tm);
-        if (err && err.name === 'AbortError') { last = { ok: false, status: 0, error: 'Google ne répond pas (délai dépassé) — réessayez dans un instant.' }; continue; }
-        return { ok: false, status: 0, error: 'Impossible de joindre Google — vérifiez la connexion internet.' };
+        if (err && err.name === 'AbortError') { last = { ok: false, status: 0, error: 'xAI ne répond pas (délai dépassé) — réessayez dans un instant.' }; continue; }
+        return { ok: false, status: 0, error: 'Impossible de joindre xAI — vérifiez la connexion internet.' };
       }
       clearTimeout(tm);
       let j = null; try { j = await res.json(); } catch { j = null; }
       if (res.ok) {
-        const cand = j && j.candidates && j.candidates[0];
-        if (!cand || !cand.content) {
-          const why = (j && j.promptFeedback && j.promptFeedback.blockReason) || (cand && cand.finishReason) || '';
+        const choice = j && Array.isArray(j.choices) && j.choices[0];
+        const msg = choice && choice.message;
+        const content = msg ? (typeof msg.content === 'string' ? msg.content : Array.isArray(msg.content) ? msg.content.map(p => (p && p.text) || '').join('') : '') : '';
+        if (!msg || (!content && choice.finish_reason !== 'stop')) {
+          const why = (choice && choice.finish_reason) || '';
           return { ok: false, status: res.status, error: 'Le modèle n’a pas renvoyé de réponse' + (why ? ` (${why})` : '') + '.' };
         }
-        const usage = j.usageMetadata || {};
-        return { ok: true, text: (cand.content.parts || []).map(p => p.text || '').join(''), model, tokIn: usage.promptTokenCount || 0, tokOut: usage.candidatesTokenCount || 0 };
+        const usage = j.usage || {};
+        return { ok: true, text: content, model, tokIn: usage.prompt_tokens || 0, tokOut: usage.completion_tokens || 0 };
       }
-      const detail = (j && j.error && j.error.message) || '';
-      const st = (j && j.error && j.error.status) || '';
-      if (res.status === 400 && thinkingOff && /thinking/i.test(detail)) { thinkingOff = false; return call(key, { system, user, maxTokens, models, timeoutMs, temperature }); }
-      if (res.status === 404 || /not found|not supported/i.test(detail)) { last = { ok: false, status: 404, error: `Modèle ${model} indisponible.` }; continue; }
-      if (res.status === 400 && /api key/i.test(detail)) return { ok: false, status: 400, error: 'Clé refusée par Google : elle est incomplète, révoquée ou mal copiée.' };
-      if (res.status === 403) return { ok: false, status: 403, error: 'Clé reconnue mais sans accès (' + (detail || st) + '). Vérifiez que l’API Gemini est activée pour cette clé dans AI Studio.' };
-      if (res.status === 503 || res.status === 500 || res.status === 429 || /high demand|overloaded|resource exhausted/i.test(detail)) {
-        last = { ok: false, status: res.status, error: res.status === 429 ? 'Limite du palier gratuit atteinte pour l’instant — réessayez dans une minute.' : 'Google est saturé pour l’instant (' + res.status + ') — réessayez dans un instant.' };
+      const detail = errText(j);
+      if (res.status === 400 && lowEffort && /reasoning_effort/i.test(detail)) { lowEffort = false; return call(key, { system, user, maxTokens, models, timeoutMs, temperature }); }
+      if (res.status === 404 || /not found|does not exist|not supported|unknown model/i.test(detail)) { last = { ok: false, status: 404, error: `Modèle ${model} indisponible.` }; continue; }
+      if (res.status === 401 || (res.status === 400 && /api key/i.test(detail))) return { ok: false, status: 401, error: 'Clé refusée par xAI : elle est incomplète, révoquée ou mal copiée.' };
+      if (res.status === 403) return { ok: false, status: 403, error: 'Clé reconnue mais sans accès (' + (detail || 'HTTP 403') + '). Vérifiez les droits de la clé et le crédit du compte sur console.x.ai.' };
+      if (res.status === 503 || res.status === 502 || res.status === 500 || res.status === 429 || /overloaded|capacity|rate limit|too many/i.test(detail)) {
+        last = { ok: false, status: res.status, error: res.status === 429 ? 'Limite de requêtes atteinte pour l’instant (ou crédit épuisé sur console.x.ai) — réessayez dans une minute.' : 'xAI est saturé pour l’instant (' + res.status + ') — réessayez dans un instant.' };
         continue;
       }
-      return { ok: false, status: res.status, error: `Erreur ${res.status} de Google${detail ? ' : ' + detail : ''}.` };
+      return { ok: false, status: res.status, error: `Erreur ${res.status} de xAI${detail ? ' : ' + detail : ''}.` };
     }
-    return last || { ok: false, status: 404, error: 'Aucun modèle Gemini disponible.' };
+    return last || { ok: false, status: 404, error: 'Aucun modèle Grok disponible.' };
   }
   const parseJson = text => { const m = (text || '').match(/\{[\s\S]*\}/); if (!m) return null; try { return JSON.parse(m[0]); } catch { return null; } };
   const KINDS = { f: 'frappe', o: 'orthographe', g: 'grammaire', t: 'typographie', r: 'reformulation' };
