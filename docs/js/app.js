@@ -16,7 +16,7 @@ const fmtDate = ts => new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric',
 
 const DEFAULT_TINT = '#33658a';
 /* version de l'application (tenue à jour avec package.json) — sert aux notifications « nouvelle version installée » */
-const ALIXO_VERSION = '1.27.1';
+const ALIXO_VERSION = '1.28.0';
 /* version web d'Alixo (GitHub Pages) et téléchargement de la version PC */
 const ALIXO_WEB_URL = 'https://alixoapp.com/docs/';
 /* 1.23 : tout passe par le site (pages de téléchargement et de versions) — jamais de lien direct vers l'hébergement des fichiers */
@@ -2419,12 +2419,12 @@ function settingsSectionHTML(k) {
       <button id="po-snipadd" class="cta ghost small">＋ Ajouter un raccourci</button></div>
     <div class="set-sect"><div class="po-label">Remplacements automatiques</div>
       <div class="po-hint" style="margin:0">Les symboles « >= », « +/- », « -> » sont mis en forme pour tout le monde. Avec une spécialité Santé dans le profil, la notation médicale (Na+ → Na⁺, HCO3- → HCO₃⁻, umol/L → µmol/L), les abréviations et les blocs Santé du menu « / » sont activés automatiquement${healthMode() ? ' <b>(actif)</b>' : ''}. Les blocs proposés dépendent des spécialités choisies : Compte › Modifier mon profil.</div></div>`;
-  if (k === 'ia' && !isPlus()) return `<div class="set-sect"><div class="plus-lock">${PLUS_ICO.ia}<div><b>La correction et la mise en forme par IA font partie d’Alixo+</b><span>Fautes d’orthographe et de grammaire, propositions d’encadrés et de titres, reformulations : pendant la frappe ou à la demande (✨ ou F7), avec une clé Google gratuite ou la clé fournie par l’administrateur.</span></div></div>${plusCtaHTML()}<div id="plus-more" class="po-row" style="margin-top:12px"><button class="cta ghost small" id="set-plusmore" type="button">Voir tout ce que comprend Alixo+</button></div></div>`;
+  if (k === 'ia' && !isPlus()) return `<div class="set-sect"><div class="plus-lock">${PLUS_ICO.ia}<div><b>La correction et la mise en forme par IA font partie d’Alixo+</b><span>Fautes d’orthographe et de grammaire, propositions d’encadrés et de titres, reformulations : pendant la frappe ou à la demande (✨ ou F7), avec le modèle ouvert Qwen3.8-27B : sur votre ordinateur (Ollama), chez un hébergeur de votre choix ou avec la clé fournie par l’administrateur.</span></div></div>${plusCtaHTML()}<div id="plus-more" class="po-row" style="margin-top:12px"><button class="cta ghost small" id="set-plusmore" type="button">Voir tout ce que comprend Alixo+</button></div></div>`;
   if (k === 'plus') return `<div class="set-sect">${plusCtaHTML()}</div>
     ${activationHTML()}
     <div class="set-sect"><div class="po-label">Ce que change Alixo+</div>${plusTableHTML('')}
       <div class="po-hint">Le compte gratuit garde tout l’essentiel : cours, présentations, dossiers, fichiers jusqu’à 3 Go, agenda, partage, dictionnaire, export PDF, synchronisation. Alixo+ suit le compte : une seule fois pour le PC, le Mac, le web et le téléphone.</div></div>`;
-  if (k === 'ia') { const o = aiOpt(); return `<div class="set-sect"><div class="po-label">Clé et activation</div><div id="po-aisetup">${aiSetupHTML('settings')}</div></div>
+  if (k === 'ia') { const o = aiOpt(); return `<div class="set-sect"><div class="po-label">Serveur, clé et activation</div><div id="po-aisetup">${aiSetupHTML('settings')}</div></div>
     <div class="set-sect"><div class="po-label">Ce que l’IA propose</div>
       <div class="set-checks" id="set-ai">
         <label><input type="checkbox" data-ai="auto" ${o.auto ? 'checked' : ''}><span><b>Analyse automatique pendant la frappe</b><small>À chaque fin de phrase (point, Entrée), après une pause de frappe ou en quittant le paragraphe, les phrases nouvelles partent en une seule requête ; les propositions apparaissent sous le paragraphe, Tab pour accepter, Échap pour ignorer. Sinon, seulement à la demande (✨ ou F7).</small></span></label>
@@ -7543,97 +7543,138 @@ function insertDrawing() {
 }
 
 /* ============================================================
-   Correction orthographe / grammaire par IA (API Grok — xAI)
-   1.27 : Grok (xAI) remplace Gemini (Google) pour sa politique de confidentialité (pas d'entraînement
-   sur les données de l'API). La clé API est saisie par l'utilisateur (ou attribuée par l'administrateur)
-   et reste sur l'appareil (localStorage, jamais synchronisée). Nouvelle clé de stockage : les anciennes
-   clés Google (alixo.geminiKey) ne sont plus lues — elles ne fonctionneraient pas chez xAI.
+   Correction orthographe / grammaire par IA — modèle ouvert Qwen3.8-27B (1.28)
+   1.28 : Qwen3.8-27B (Alibaba, poids ouverts, licence Apache 2.0) remplace Grok (xAI). Le modèle n'appartient à
+   aucun fournisseur : l'utilisateur choisit où il tourne (OpenRouter, Alibaba Cloud Model Studio, Ollama sur son
+   propre ordinateur, ou tout serveur compatible OpenAI). La configuration { provider, endpoint, model, key } est
+   gérée par js/corr.js (AlixoCorr.getConfig / setConfig, localStorage alixo.ai.config), reste sur l'appareil et
+   n'est jamais synchronisée. Les anciennes clés xAI (alixo.grokKey) et Google (alixo.geminiKey) ne sont plus lues.
    ============================================================ */
-const AI_KEY_LS = 'alixo.grokKey';
-const AI_PROVIDER = 'xAI';
-function aiKey() { try { return localStorage.getItem(AI_KEY_LS) || ''; } catch { return ''; } }
+const AI_CFG_SOURCE_LS = 'alixo.ai.source';   // 'admin' si la configuration vient du panneau d'administration
+function aiCfg() { return AlixoCorr.getConfig(); }
+/* un serveur utilisable est configuré (clé présente, ou serveur local qui n'en demande pas) */
+function aiReady() { return AlixoCorr.configured(); }
 /* 1.22 : les appels à l'IA passent par le moteur js/corr.js (AlixoCorr.call) — une seule implémentation,
-   réponse JSON, « réflexion » désactivée quand le modèle l'accepte (moins de jetons, plus rapide) */
+   réponse JSON, « réflexion » du modèle désactivée (moins de jetons, plus rapide) */
 let aiState = null;   // { items: [{ n, id, avant, apres, regle, done }], label }
 
 function aiCorrectable(b) { return TEXT_TYPES.includes(b.type) || isFiche(b) || b.type === 'table' || b.type === 'cards'; }
 
-/* ---------------- configuration guidée de la clé API ---------------- */
-const AI_KEYS_URL = 'https://console.x.ai/';
+/* ---------------- configuration guidée du serveur et de la clé ---------------- */
 const maskKey = k => k ? `${k.slice(0, 4)}…${k.slice(-4)}` : '';
+const aiProviderLabel = p => (AlixoCorr.PROVIDERS[p] || AlixoCorr.PROVIDERS.custom).label.replace(/ [—(].*$/, '');
 /* mode 'panel' (panneau IA, parcours complet) ou 'settings' (bloc compact dans les Paramètres) */
-function aiSetupHTML(mode) {
-  const key = aiKey();
-  const status = key
-    ? `<div class="ai-keystate ok"><span class="ai-dot"></span>Clé enregistrée sur cet appareil (${esc(maskKey(key))})</div>`
-    : `<div class="ai-keystate"><span class="ai-dot"></span>Aucune clé pour l’instant — la correction par IA est désactivée.</div>`;
-  const steps = mode === 'panel' || !key ? `
+function aiSetupHTML(mode, draft) {
+  const saved = aiCfg(); const ready = aiReady();
+  const c = draft || saved;
+  const P = AlixoCorr.PROVIDERS; const prov = P[c.provider] || P.custom;
+  const adv = c.provider === 'custom' || c.endpoint !== prov.endpoint || c.model !== prov.model;
+  const status = ready
+    ? `<div class="ai-keystate ok"><span class="ai-dot"></span>${esc(aiProviderLabel(saved.provider))} · modèle <code>${esc(saved.model)}</code>${saved.key ? ` · clé ${esc(maskKey(saved.key))}` : ' · sans clé'}${saved.provider === 'ollama' || AlixoCorr.isLocalUrl(saved.endpoint) ? ' · sur cet ordinateur, rien ne quitte l’appareil' : ''}</div>`
+    : `<div class="ai-keystate"><span class="ai-dot"></span>Aucun serveur configuré pour l’instant — la correction par IA est désactivée.</div>`;
+  const steps = (mode === 'panel' || !ready) ? (prov.needsKey ? `
     <ol class="ai-steps">
-      <li>Ouvrir <a href="${AI_KEYS_URL}" target="_blank" rel="noopener">console.x.ai</a> et créer un compte xAI (facturation à l’usage : quelques centimes pour un cours entier).</li>
-      <li>Dans <b>API Keys</b>, cliquer <b>Create API key</b> et copier la clé complète (elle commence par <code>xai-</code>).</li>
+      <li>Ouvrir <a href="${esc(prov.keysUrl)}" target="_blank" rel="noopener">${esc(prov.keysUrl.replace(/^https?:\/\//, '').replace(/\/$/, ''))}</a> et créer un compte (facturation à l’usage : quelques centimes pour un cours entier).</li>
+      <li>Créer une clé API et la copier en entier${prov.keyPrefix ? ` (elle commence par <code>${esc(prov.keyPrefix)}</code>)` : ''}.</li>
       <li>La coller ci-dessous et cliquer <b>Tester et enregistrer</b>.</li>
-    </ol>` : '';
-  return `${status}${steps}
+    </ol>` : c.provider === 'ollama' ? `
+    <ol class="ai-steps">
+      <li>Installer <a href="${esc(prov.keysUrl)}" target="_blank" rel="noopener">Ollama</a> (gratuit, Windows / macOS / Linux).</li>
+      <li>Dans un terminal : <code>ollama pull ${esc(prov.model)}</code> (≈ 17 Go, une seule fois ; carte graphique ou Mac avec 24 Go de mémoire conseillés).</li>
+      <li>Ollama lancé, cliquer <b>Tester et enregistrer</b>. Aucune clé, aucun compte : le texte ne quitte pas l’ordinateur.</li>
+    </ol>` : `
+    <ol class="ai-steps">
+      <li>Indiquer la base de l’API du serveur (se termine en général par <code>/v1</code>) et l’identifiant du modèle Qwen3.8-27B tel que ce serveur le nomme.</li>
+      <li>Coller la clé si le serveur en demande une, puis <b>Tester et enregistrer</b>.</li>
+    </ol>`) : '';
+  return `${status}
+    <div class="po-row ai-provrow"><label class="set-inline" style="flex:1">Où tourne le modèle <select class="ai-provider" aria-label="Serveur du modèle">${Object.keys(P).map(k => `<option value="${k}" ${c.provider === k ? 'selected' : ''}>${esc(P[k].label)}</option>`).join('')}</select></label></div>
+    ${steps}
+    <div class="ai-adv" ${adv ? '' : 'hidden'}>
+      <div class="po-row ai-keyrow"><input class="ai-keyinput ai-endpoint" type="url" placeholder="Base de l’API, ex. http://localhost:11434/v1" value="${esc(c.endpoint)}" autocomplete="off" spellcheck="false" aria-label="Adresse du serveur"></div>
+      <div class="po-row ai-keyrow"><input class="ai-keyinput ai-model" type="text" placeholder="Identifiant du modèle, ex. ${esc(prov.model)}" value="${esc(c.model)}" autocomplete="off" spellcheck="false" aria-label="Identifiant du modèle"></div>
+    </div>
     <div class="po-row ai-keyrow">
-      <input class="ai-keyinput" type="password" placeholder="Collez votre clé API…" value="${esc(key)}" autocomplete="off" spellcheck="false" aria-label="Clé API Grok (xAI)">
+      <input class="ai-keyinput" type="password" placeholder="${prov.needsKey ? 'Collez votre clé API…' : 'Clé API (facultative pour un serveur local)'}" value="${esc(c.key)}" autocomplete="off" spellcheck="false" aria-label="Clé API">
       <button class="ai-keyeye" type="button" title="Afficher / masquer">👁</button>
     </div>
     <div class="po-row ai-keybtns">
       <button class="pobtn ai-keytest" type="button">Tester et enregistrer</button>
-      ${key ? `<button class="cta ghost small ai-keyremove" type="button">Retirer la clé</button>` : ''}
+      <button class="cta ghost small ai-advtoggle" type="button">${adv ? 'Masquer' : 'Adresse et modèle…'}</button>
+      ${ready ? `<button class="cta ghost small ai-keyremove" type="button">Retirer</button>` : ''}
     </div>
     <div class="ai-keymsg" aria-live="polite"></div>
-    ${key && mode === 'panel' ? `<label class="ai-toggle"><input type="checkbox" class="ai-styletoggle" ${aiStyleOn() ? 'checked' : ''}> Analyse automatique pendant la frappe : les fautes d’orthographe / grammaire et la mise en forme (définitions, titres, encadrés…) sont proposées sous le paragraphe, sans rien demander — <b>Tab</b> pour accepter</label>` : ''}
-    <div class="po-hint">Grok (xAI) : très bon en français, et xAI s’engage à ne pas entraîner ses modèles sur les données envoyées par l’API. Alixo limite les appels : les fautes de frappe courantes sont corrigées sur l’appareil, chaque phrase n’est envoyée qu’une fois (les phrases déjà relues restent en mémoire) et les phrases nouvelles sont groupées en une seule requête. La clé reste sur cet ordinateur (jamais envoyée ailleurs qu’à xAI, jamais synchronisée avec vos cours) ; seul le texte analysé est transmis. Le bouton « Corriger » (✨ ou F7) devient actif dès qu’une clé valide est enregistrée.</div>`;
+    ${ready && mode === 'panel' ? `<label class="ai-toggle"><input type="checkbox" class="ai-styletoggle" ${aiStyleOn() ? 'checked' : ''}> Analyse automatique pendant la frappe : les fautes d’orthographe / grammaire et la mise en forme (définitions, titres, encadrés…) sont proposées sous le paragraphe, sans rien demander — <b>Tab</b> pour accepter</label>` : ''}
+    <div class="po-hint">${esc(prov.hint)}</div>
+    <div class="po-hint">Qwen3.8-27B est un modèle ouvert (poids publiés par Alibaba sous licence Apache 2.0, très bon en français) : Alixo ne dépend d’aucun fournisseur, vous choisissez où il tourne et pouvez en changer à tout moment. Alixo limite les appels : les fautes de frappe courantes sont corrigées sur l’appareil, chaque phrase n’est envoyée qu’une fois (les phrases déjà relues restent en mémoire) et les phrases nouvelles sont groupées en une seule requête. Serveur, modèle et clé restent sur cet ordinateur (jamais synchronisés avec vos cours) ; seul le texte analysé est transmis au serveur choisi. Le bouton « Corriger » (✨ ou F7) devient actif dès qu’un serveur est enregistré.</div>`;
 }
 function bindAiSetup(root, mode) {
   if (!root) return;
-  const input = root.querySelector('.ai-keyinput');
+  const input = root.querySelector('.ai-keyinput:not(.ai-endpoint):not(.ai-model)');
+  const endpointIn = root.querySelector('.ai-endpoint'), modelIn = root.querySelector('.ai-model'), provSel = root.querySelector('.ai-provider');
   const msg = root.querySelector('.ai-keymsg');
   const setMsg = (t, cls) => { msg.textContent = t; msg.className = 'ai-keymsg ' + (cls || ''); };
+  const draft = () => ({ provider: provSel.value, endpoint: endpointIn.value.trim(), model: modelIn.value.trim(), key: input.value.trim() });
+  const rerender = d => { root.innerHTML = aiSetupHTML(mode, d); bindAiSetup(root, mode); };
   root.querySelector('.ai-keyeye').addEventListener('click', () => { input.type = input.type === 'password' ? 'text' : 'password'; input.focus(); });
-  const rerender = () => { root.innerHTML = aiSetupHTML(mode); bindAiSetup(root, mode); };
+  provSel.addEventListener('change', () => {
+    const P = AlixoCorr.PROVIDERS[provSel.value] || AlixoCorr.PROVIDERS.custom;
+    const saved = aiCfg();
+    rerender({ provider: provSel.value, endpoint: P.endpoint, model: P.model, key: saved.provider === provSel.value ? saved.key : '' });
+    const i = root.querySelector(provSel.value === 'custom' ? '.ai-endpoint' : '.ai-keyinput:not(.ai-endpoint):not(.ai-model)'); if (i) i.focus();
+  });
+  root.querySelector('.ai-advtoggle').addEventListener('click', e => { const a = root.querySelector('.ai-adv'); a.hidden = !a.hidden; e.target.textContent = a.hidden ? 'Adresse et modèle…' : 'Masquer'; });
   const test = async () => {
-    const k = input.value.trim();
-    if (!k) { setMsg('Collez d’abord votre clé.', 'err'); input.focus(); return; }
-    if (/\s/.test(k) || k.length < 20) { setMsg('La clé semble incomplète (au moins 20 caractères, sans espace). Vérifiez que vous avez copié la clé entière.', 'err'); return; }
-    setMsg('Vérification auprès de xAI…', '');
+    const d = draft(); const P = AlixoCorr.PROVIDERS[d.provider] || AlixoCorr.PROVIDERS.custom;
+    if (!d.endpoint || !/^https?:\/\//i.test(d.endpoint)) { setMsg('Indiquez l’adresse du serveur (elle commence par http:// ou https://).', 'err'); root.querySelector('.ai-adv').hidden = false; endpointIn.focus(); return; }
+    if (!d.model) { setMsg('Indiquez l’identifiant du modèle.', 'err'); root.querySelector('.ai-adv').hidden = false; modelIn.focus(); return; }
+    if (P.needsKey && !d.key) { setMsg('Collez d’abord votre clé.', 'err'); input.focus(); return; }
+    if (d.key && (/\s/.test(d.key) || d.key.length < 12)) { setMsg('La clé semble incomplète (sans espace, au moins 12 caractères). Vérifiez que vous avez copié la clé entière.', 'err'); return; }
+    if (!IS_DESKTOP && AlixoCorr.isLocalUrl(d.endpoint) && location.protocol === 'https:') setMsg('Version web : le serveur local doit accepter l’origine du site (Ollama : variable OLLAMA_ORIGINS=' + location.origin + ').', '');
+    else setMsg('Vérification auprès du serveur…', '');
     root.querySelector('.ai-keytest').disabled = true;
-    const r = await aiTestKey(k);
+    const r = await aiTestConfig(d);
     root.querySelector('.ai-keytest').disabled = false;
     if (r.ok) {
-      try { localStorage.setItem(AI_KEY_LS, k); } catch { /* stockage indisponible */ }
-      setMsg('Clé valide et enregistrée ✓ Vous pouvez utiliser « Corriger » (✨ ou F7).', 'ok');
-      toast('Clé API enregistrée — correction par IA activée');
-      setTimeout(rerender, 900);
+      AlixoCorr.setConfig(d);
+      try { localStorage.setItem(AI_CFG_SOURCE_LS, 'user'); } catch { /* stockage indisponible */ }
+      setMsg('Serveur joignable, configuration enregistrée ✓ Vous pouvez utiliser « Corriger » (✨ ou F7).', 'ok');
+      toast('IA configurée — correction par IA activée');
+      setTimeout(() => rerender(), 900);
     } else setMsg(r.error, 'err');
   };
   root.querySelector('.ai-keytest').addEventListener('click', test);
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); test(); } });
+  for (const el of [input, endpointIn, modelIn]) el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); test(); } });
   const rm = root.querySelector('.ai-keyremove');
-  if (rm) rm.addEventListener('click', () => { try { localStorage.removeItem(AI_KEY_LS); } catch { } toast('Clé API retirée'); rerender(); });
+  if (rm) rm.addEventListener('click', () => { AlixoCorr.setConfig(null); try { localStorage.removeItem(AI_CFG_SOURCE_LS); } catch { } toast('Configuration IA retirée'); rerender(); });
   const st = root.querySelector('.ai-styletoggle');
   if (st) st.addEventListener('change', e => { aiOpt(); state.settings.ai.auto = e.target.checked; save(); if (!e.target.checked) dismissSug(); toast(e.target.checked ? 'Analyse automatique activée' : 'Analyse automatique désactivée'); });
 }
-/* appel minimal pour vérifier qu'une clé fonctionne (quelques jetons) */
-async function aiTestKey(key) {
-  const r = await AlixoCorr.call(key, { system: 'Réponds uniquement avec le JSON {"ok":true}.', user: 'Test', maxTokens: 16, models: AlixoCorr.MODELS_LIVE, timeoutMs: 15000 });
-  return r.ok ? { ok: true } : { ok: false, error: r.error };
+/* appel minimal pour vérifier qu'une configuration fonctionne (quelques jetons) ; si le modèle est introuvable,
+   on consulte la liste du serveur pour aider (modèle installé sous un autre nom, par exemple) */
+async function aiTestConfig(cfg) {
+  const r = await AlixoCorr.call(cfg, { system: 'Réponds uniquement avec le JSON {"ok":true}.', user: 'Test', maxTokens: 64, timeoutMs: 30000 });
+  if (r.ok) return { ok: true };
+  if (r.status === 404) {
+    const l = await AlixoCorr.listModels(cfg);
+    if (l.ok && l.models.length) { const q = l.models.filter(m => /qwen/i.test(m)); return { ok: false, error: r.error + (q.length ? ` Modèles Qwen disponibles sur ce serveur : ${q.slice(0, 6).join(', ')}.` : ` Le serveur propose : ${l.models.slice(0, 6).join(', ')}${l.models.length > 6 ? '…' : ''}.`) }; }
+  }
+  return { ok: false, error: r.error };
 }
 function showAiSetup() {
   const body = $('#ai-body');
   body.innerHTML = `<div class="ai-setup"><div class="ai-setuptitle">Activer la correction par IA</div>
-    <div class="ai-empty" style="padding-top:2px">La correction d’orthographe et de grammaire s’appuie sur Grok (xAI), choisi pour sa politique de confidentialité. Il faut une clé API personnelle, en trois étapes :</div>
+    <div class="ai-empty" style="padding-top:2px">La correction d’orthographe et de grammaire s’appuie sur <b>Qwen3.8-27B</b>, un modèle ouvert (Apache 2.0) qui ne dépend d’aucun fournisseur. Choisissez où il tourne, puis testez :</div>
     ${aiSetupHTML('panel')}</div>`;
   bindAiSetup(body.querySelector('.ai-setup'), 'panel');
-  setTimeout(() => { const i = body.querySelector('.ai-keyinput'); if (i) i.focus(); }, 60);
+  setTimeout(() => { const i = body.querySelector('.ai-keyinput:not(.ai-endpoint):not(.ai-model)'); if (i) i.focus(); }, 60);
 }
 
 async function runAiCorrection(o) {
   const d = doc(); if (!d) return;
   const second = !!(o && o.second && aiState && aiState.payload);
   if (!requirePlus('ia')) return;
-  if (!aiKey()) { openRightPanel('#aipanel'); showAiSetup(); return; }
+  if (!aiReady()) { openRightPanel('#aipanel'); showAiSetup(); return; }
   // portée : blocs sélectionnés → bloc courant (si le curseur y est) → tout le cours
   const selNative = getSelection();
   let targets = selNative.rangeCount && !selNative.isCollapsed && blocksEl.contains(selNative.anchorNode) ? selectionBlocks() : (objSel ? [getBlock(objSel)].filter(Boolean) : []);
@@ -7894,7 +7935,7 @@ function caretTouches(b, avant, at) {
    ============================================================ */
 const aiAutoType = b => !!b && (TEXT_TYPES.includes(b.type) || b.type === 'cards');
 let aiLastStatus = '';   // dernière analyse automatique (Paramètres › IA) : « ok », « aucune faute », ou l'erreur rencontrée
-const aiLiveOn = () => isPlus() && !!aiKey() && aiStyleOn();
+const aiLiveOn = () => isPlus() && !!aiReady() && aiStyleOn();
 const aiStamp = () => new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 /* texte d'un bloc pour le moteur (null : bloc non analysable ou dans une autre langue, réglage « autres langues » décoché) */
 function corrInfo(blockId) {
@@ -7978,7 +8019,6 @@ function corrMarkClean(b) {
   }
 }
 AlixoCorr.init({
-  key: aiKey,
   enabled: aiLiveOn,
   ctx: () => ({ level: aiOpt().level }),
   text: corrInfo,
@@ -8024,8 +8064,8 @@ Pour chaque paragraphe qui gagnerait clairement à être mis en forme, indique l
 ${STYLE_RULES}
 Réponds UNIQUEMENT avec un tableau JSON, sans commentaire : [{"id": "identifiant", "type": "…", "terme": "…", "raison": "pourquoi, en quelques mots"}]. Si rien ne s'impose : [].`;
   const user = blocks.map(b => `[${b.id}]\n${b.text}`).join('\n\n');
-  const r = await AlixoCorr.call(aiKey(), { system, user, maxTokens: 4000, models: AlixoCorr.MODELS_FULL, timeoutMs: 40000 });
-  if (!r.ok) throw new Error(r.status === 400 ? 'Clé API refusée — vérifiez-la (bouton « Clé API… » ou Paramètres).' : r.error);
+  const r = await AlixoCorr.call(null, { system, user, maxTokens: 4000, timeoutMs: 40000 });
+  if (!r.ok) throw new Error(r.error);
   const arr = parseJsonAnswer(r.text);
   if (!Array.isArray(arr)) return [];
   return arr.filter(x => x && x.id && STYLE_LABELS[x.type]).map(x => ({ id: String(x.id), type: x.type, terme: String(x.terme || '').trim(), raison: String(x.raison || '').trim() }));
@@ -8161,7 +8201,7 @@ blocksEl.addEventListener('mousedown', e => { if (e.target.closest('.ai-sug')) e
 async function runAiStyle() {
   const d = doc(); if (!d) return;
   if (!requirePlus('ia')) return;
-  if (!aiKey()) { openRightPanel('#aipanel'); showAiSetup(); return; }
+  if (!aiReady()) { openRightPanel('#aipanel'); showAiSetup(); return; }
   const payload = d.blocks.filter(b => b.type === 'p').map(b => ({ id: b.id, text: blockPlain(b).trim() })).filter(x => x.text.length >= 12).slice(0, 80);
   if (!payload.length) { toast('Aucun paragraphe à analyser'); return; }
   openRightPanel('#aipanel');
@@ -9783,7 +9823,7 @@ setTimeout(() => {
     if (prev !== ALIXO_VERSION) {
       state.settings.lastVersion = ALIXO_VERSION; save();
       if (prev && !wn) showWhatsNew(ALIXO_VERSION);
-      if (prev && window.AlixoNotify) AlixoNotify.push({ id: 'ver_' + ALIXO_VERSION, kind: 'update', title: `Alixo ${ALIXO_VERSION} installé`, text: 'Nouveautés : la connexion avec Apple est prête — dans le navigateur (fenêtre ou redirection sur iPhone) comme dans la version PC (le navigateur système s’ouvre puis revient dans Alixo), active dès l’ouverture du service Apple d’Alixo ; messages de connexion plus clairs ; présentation animée des nouveautés après chaque mise à jour.', action: (window.AlixoWhatsNew && AlixoWhatsNew.has(ALIXO_VERSION)) ? { type: 'whatsnew', version: ALIXO_VERSION } : { type: 'url', url: ALIXO_VERSIONS_URL } });
+      if (prev && window.AlixoNotify) AlixoNotify.push({ id: 'ver_' + ALIXO_VERSION, kind: 'update', title: `Alixo ${ALIXO_VERSION} installé`, text: 'Nouveautés : la correction par IA passe à Qwen3.8-27B, un modèle ouvert qui ne dépend d’aucun fournisseur — vous choisissez où il tourne (OpenRouter, Alibaba Cloud, ou gratuitement sur votre ordinateur avec Ollama) dans Paramètres › Correction par IA ; les anciennes clés xAI ne sont plus utilisées.', action: (window.AlixoWhatsNew && AlixoWhatsNew.has(ALIXO_VERSION)) ? { type: 'whatsnew', version: ALIXO_VERSION } : { type: 'url', url: ALIXO_VERSIONS_URL } });
     }
   } catch { /* stockage indisponible */ }
   if (window.AlixoStats) AlixoStats.maybeOpen();

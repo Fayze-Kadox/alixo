@@ -11,9 +11,25 @@
      une phrase, 2 à 4 puces commençant par un <b>mot-clé</b>, une illustration `art`), une « outro » ;
    - le texte reprend la section « Nouveautés x.y.z » du README en langage d'utilisateur (jamais de
      nom de fichier ni de fonction).
-   Aperçu : index.html?nouveautes=1.25.0 (ou nouveautes.html?v=1.25.0 en page seule).
+   Aperçu : index.html?nouveautes=1.28.0 (ou nouveautes.html?v=1.28.0 en page seule).
    ============================================================ */
 'use strict';
+
+AlixoWhatsNew.register('1.28.0', {
+  scenes: [
+    { kind: 'intro', kicker: 'Mise à jour installée', title: 'L’IA d’Alixo devient <em>ouverte</em>', text: 'Un modèle libre, que vous faites tourner où vous voulez — même sur votre ordinateur.', dur: 5000 },
+    { title: 'Un modèle <em>ouvert</em> : Qwen3.8', text: 'La correction d’orthographe et de grammaire, l’analyse pendant la frappe et la mise en forme suggérée reposent sur un modèle libre.',
+      bullets: ['<b>Licence Apache 2.0</b> : poids publiés, utilisables par tous', '<b>Aucun fournisseur imposé</b> : Alixo ne dépend plus de xAI ni de Google', '<b>Excellent en français</b>, même qualité de relecture'],
+      art: { icon: '🔓' }, accent: '#2e8b6a', accent2: '#33658a', dur: 8000 },
+    { title: 'Vous choisissez <em>où</em> il tourne', text: 'Dans Paramètres › Correction par IA, un menu « Où tourne le modèle » et un bouton Tester et enregistrer.',
+      bullets: ['<b>OpenRouter</b> ou <b>Alibaba Cloud</b> : un compte, une clé, quelques centimes par cours', '<b>Sur votre ordinateur</b> avec Ollama : gratuit, hors ligne, sans clé', '<b>Un autre serveur</b> (établissement, association) : adresse et modèle libres'],
+      art: 'cards', accent: '#33658a', accent2: '#b3762a', dur: 8500 },
+    { title: 'Rien ne quitte votre <em>appareil</em>', text: 'Avec Ollama, le texte analysé ne sort pas de l’ordinateur ; ailleurs, seules les phrases relues sont envoyées au serveur choisi.',
+      bullets: ['<b>Serveur, modèle et clé</b> restent sur l’appareil, jamais synchronisés', '<b>Anciennes clés xAI</b> ignorées : l’application propose le nouveau parcours', '<b>Clé attribuée</b> par l’administrateur : tout se configure seul'],
+      art: 'list', accent: '#8a4b9c', accent2: '#2e8b6a', dur: 8000 },
+    { kind: 'outro', kicker: 'Bonne séance', title: 'C’est à vous.', text: 'Le détail est sur alixoapp.com/versions — et dans Paramètres › À propos.', dur: 5500 }
+  ]
+});
 
 AlixoWhatsNew.register('1.27.1', {
   scenes: [
@@ -29,24 +45,5 @@ AlixoWhatsNew.register('1.27.1', {
       bullets: ['<b>Rejouable</b> depuis Paramètres › À propos', '<b>Pause</b>, précédent / suivant, Échap pour fermer', '<b>Aussi sur le site</b> : alixoapp.com/versions'],
       art: 'cards', accent: '#8a4b9c', accent2: '#33658a', dur: 7000 },
     { kind: 'outro', kicker: 'Bonne séance', title: 'C’est à vous.', text: 'Le détail est sur alixoapp.com/versions — et dans Paramètres › À propos.', dur: 5000 }
-  ]
-});
-
-AlixoWhatsNew.register('1.25.0', {
-  scenes: [
-    { kind: 'intro', kicker: 'Mise à jour installée', title: 'Quiz refondu, planches enrichies,<br>une seule police d’interface', text: 'Voici ce qui change, en moins d’une minute.' },
-    { title: 'Un <em>quiz</em> qui a du style', text: 'Nouvelle apparence dans la direction artistique d’Alixo : lettres A B C D, chronomètre en anneau, fil de progression.',
-      bullets: ['<b>Thèmes</b> : Alixo, Nuit, Océan, Forêt, Sable, Ardoise, Prune, Lavande, ou personnalisé — envoyés aux participants', '<b>Musiques</b> générées par Alixo (calme, entraînante, concentration, suspense) ou votre fichier audio, et sons de jeu', '<b>Nouveaux blocs</b> : nombre, association, échelle, nuage de mots, pages sans question'],
-      art: 'quiz', accent: '#8a4b9c', accent2: '#33658a', dur: 8000 },
-    { title: 'Des <em>résultats</em> qui parlent', text: 'Après une partie en direct ou un test, un vrai bilan.',
-      bullets: ['<b>Statistiques</b> : score moyen, médiane, taux de réussite, temps moyen', '<b>Question par question</b> : la plus dure est signalée', '<b>Export CSV</b> de chaque résultat, podium animé et tuiles de chiffres'],
-      art: 'chart', accent: '#2e8b6a', accent2: '#8a4b9c', dur: 7000 },
-    { title: 'Des <em>planches</em> beaucoup plus outillées', text: 'Le tableau blanc gagne tout ce qu’il faut pour organiser une idée.',
-      bullets: ['<b>Formes, zones, liens, listes à cocher, stickers, fiches de séance</b>', '<b>Modèles</b> : carte mentale, SWOT, kanban, frise, fiche d’arrêt, plan de dissertation', '<b>Alignement</b>, répartition, verrouillage, mini-carte et mode présentation'],
-      art: 'board', accent: '#b3762a', accent2: '#2e8b6a', dur: 7500 },
-    { title: 'Une <em>barre de création</em> plus claire', text: 'Séance, Présentation et Tableur restent sous la main ; Dossier, Planche et Quiz passent dans « Autres ».',
-      bullets: ['<b>Importer</b> remplace « Fichier », avec une icône devant chaque libellé', '<b>Une seule police</b> d’interface partout : agenda, calendrier, paramètres, accueil', 'Le contenu des séances et les exports gardent leurs polices'],
-      art: 'cards', accent: '#33658a', accent2: '#b3762a', dur: 7000 },
-    { kind: 'outro', kicker: 'Bonne séance', title: 'C’est à vous.', text: 'Le détail de chaque nouveauté est sur alixoapp.com/versions — et dans Paramètres › À propos.', dur: 5000 }
   ]
 });

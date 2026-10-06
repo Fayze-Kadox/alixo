@@ -1379,6 +1379,11 @@ body.printing .cards-tools { display: none !important; }
 .ai-steps a, .ai-keymsg a { color: var(--tint); }
 .ai-steps code { font-family: var(--font-mono); font-size: 11.5px; background: var(--bg); padding: 0 4px; border-radius: 4px; }
 .ai-keyrow { display: flex; gap: 6px; }
+.ai-provrow { margin: 2px 0 8px; }
+.ai-provrow .set-inline { display: flex; }
+.ai-provrow select { flex: 1; min-width: 0; }
+.ai-adv .ai-keyrow { margin-bottom: 6px; }
+.ai-keystate code { font-family: var(--font-mono); font-size: 11.5px; }
 .ai-keyinput { flex: 1; min-width: 0; border: 1px solid var(--border); background: var(--bg); border-radius: 6px; padding: 8px 10px; outline: none; font-family: var(--font-mono); font-size: 12.5px; color: var(--ink); }
 .ai-keyinput:focus { border-color: var(--tint); }
 .ai-keyeye { width: 36px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); font-size: 14px; }

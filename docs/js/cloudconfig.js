@@ -1,7 +1,8 @@
 /* ============================================================
    Alixo — liaison avec le panneau d'administration (Firestore)
    - config/public        → annonces, dernière version (lu par tout compte connecté)
-   - keys/{uid}           → clé API xAI (Grok) attribuée par l'administrateur (champ `grok` ; 1.27, avant : `gemini`)
+   - keys/{uid}           → accès IA attribué par l'administrateur (1.28 : { ai: clé, provider, endpoint, model } ;
+                            un ancien champ `grok` (1.27) ou `gemini` est ignoré)
    - profiles/{uid}       → `disabled` : compte suspendu (posé par l'administrateur) ;
                             présence (`online`, `activity`, `lastSeen`) écrite ici (1.12) ;
                             1.26 : `storage` (tailles), `ageGroup`, `plusConsent` — lisible par le titulaire et les admins seulement
@@ -19,40 +20,49 @@ window.AlixoCloud = (() => {
   if (!acc || !window.firebase || !firebase.firestore) return { enabled: false, adminKey: () => '' };
   const uid = acc.uid;
   const db = firebase.firestore();
-  const ADMIN_KEY_LS = 'alixo.grokKey.admin' + A.storageSuffix();
-  const ADMIN_KEY_AT_LS = 'alixo.grokKey.adminAt' + A.storageSuffix();   // horodatage de la dernière attribution notifiée
-  const adminKey = () => { try { return localStorage.getItem(ADMIN_KEY_LS) || ''; } catch { return ''; } };
+  const ADMIN_CFG_LS = 'alixo.ai.admin' + A.storageSuffix();           // configuration attribuée { provider, endpoint, model, key } (1.28)
+  const ADMIN_KEY_AT_LS = 'alixo.ai.adminAt' + A.storageSuffix();      // horodatage de la dernière attribution notifiée
+  const loadAdminCfg = () => { try { const v = JSON.parse(localStorage.getItem(ADMIN_CFG_LS)); return v && typeof v === 'object' ? v : null; } catch { return null; } };
+  const saveAdminCfg = c => { try { if (c) localStorage.setItem(ADMIN_CFG_LS, JSON.stringify(c)); else localStorage.removeItem(ADMIN_CFG_LS); } catch { /* stockage indisponible */ } };
+  const adminKey = () => { const c = loadAdminCfg(); return c && c.key || ''; };
+  /* document keys/{uid} → configuration normalisée par le moteur (préréglage, adresse, modèle, clé) */
+  const normAdmin = d => { const P = AlixoCorr.PROVIDERS; const provider = P[d.provider] ? d.provider : (d.endpoint ? 'custom' : AlixoCorr.DEFAULT_PROVIDER); return { provider, endpoint: String(d.endpoint || '').trim() || P[provider].endpoint, model: String(d.model || '').trim() || P[provider].model, key: String(d.ai || '').trim() }; };
   const lsGet = k => { try { return localStorage.getItem(k) || ''; } catch { return ''; } };
   const lsSet = (k, v) => { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch { /* stockage indisponible */ } };
   const notify = n => { if (window.AlixoNotify) AlixoNotify.push(n); };
   const cmpVer = (a, b) => { const x = String(a || '').split('.').map(Number), y = String(b || '').split('.').map(Number); for (let i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); } return 0; };
   const permErr = err => /permission|insufficient/i.test(String(err && err.message));
 
-  /* ---------------- clé IA attribuée ----------------
-     Utilisée si l'utilisateur n'a pas la sienne (ou si l'administrateur l'impose).
-     Chaque attribution (nouvel `assignedAt`) est notifiée, même si c'est la même clé
-     qu'auparavant — avant 1.12 une clé réattribuée passait sans notification. */
+  /* ---------------- configuration IA attribuée (1.28) ----------------
+     keys/{uid} : { ai (clé), provider, endpoint, model, keyId, note, force, assignedAt }. Utilisée si l'utilisateur
+     n'a pas sa propre configuration (ou si l'administrateur l'impose). Un ancien document `grok` (clé xAI, 1.27)
+     ou `gemini` (clé Google) est ignoré : ces clés ne fonctionneraient pas avec Qwen3.8.
+     Chaque attribution (nouvel `assignedAt`) est notifiée, même si c'est la même clé qu'auparavant. */
+  const cfgEq = (a, b) => !!a && !!b && a.endpoint === b.endpoint && a.model === b.model && a.key === b.key;
   db.collection('keys').doc(uid).onSnapshot(snap => {
     const d = snap.exists ? snap.data() : null;
-    const key = d && typeof d.grok === 'string' ? d.grok.trim() : '';   // 1.27 : une ancienne attribution `gemini` (clé Google) est ignorée
-    const prev = adminKey();
-    const at = d && +d.assignedAt ? String(+d.assignedAt) : (key ? 'k' + key.slice(-6) : '');
+    const key = d && typeof d.ai === 'string' ? d.ai.trim() : '';
+    const prevAdmin = loadAdminCfg();
+    const cand = d && (key || d.endpoint) && window.AlixoCorr ? normAdmin(d) : null;
+    const given = cand && AlixoCorr.configured(cand) ? cand : null;   // une attribution sans clé vers un serveur qui en exige une est ignorée
+    const at = d && +d.assignedAt ? String(+d.assignedAt) : (given ? 'k' + key.slice(-6) + given.model : '');
     const notifiedAt = lsGet(ADMIN_KEY_AT_LS);
-    lsSet(ADMIN_KEY_LS, key);
-    const own = lsGet('alixo.grokKey');
-    const source = lsGet('alixo.grokKey.source');
-    if (key) {
+    saveAdminCfg(given);
+    const own = window.AlixoCorr ? AlixoCorr.getConfig() : null;
+    const ownSet = own && AlixoCorr.configured(own);
+    const source = lsGet('alixo.ai.source');
+    if (given) {
       const fresh = at !== notifiedAt;               // nouvelle attribution (ou première lecture sur cet appareil)
-      const adopt = !own || d.force || own === prev || source === 'admin';
-      if (adopt && own !== key) { lsSet('alixo.grokKey', key); lsSet('alixo.grokKey.source', 'admin'); }
+      const adopt = !ownSet || d.force || cfgEq(own, prevAdmin) || source === 'admin';
+      if (adopt && !cfgEq(own, given)) { AlixoCorr.setConfig(given); lsSet('alixo.ai.source', 'admin'); }
       if (fresh) {
         lsSet(ADMIN_KEY_AT_LS, at);
-        if (adopt) notify({ id: 'key_' + at, kind: 'key', title: 'Une clé d’intelligence artificielle vous a été attribuée', text: (d.note ? d.note + ' — ' : '') + 'La correction et la mise en forme par IA sont actives, sans rien configurer.', action: { type: 'settings' } });
-        else notify({ id: 'key_' + at, kind: 'key', title: 'Une clé d’intelligence artificielle vous a été proposée', text: (d.note ? d.note + ' — ' : '') + 'Vous utilisez déjà votre clé personnelle : elle est conservée. Pour passer sur la clé fournie, effacez la vôtre dans Paramètres › Correction par IA.', action: { type: 'settings' } });
+        if (adopt) notify({ id: 'key_' + at, kind: 'key', title: 'Un accès à l’intelligence artificielle vous a été attribué', text: (d.note ? d.note + ' — ' : '') + 'La correction et la mise en forme par IA sont actives, sans rien configurer.', action: { type: 'settings' } });
+        else notify({ id: 'key_' + at, kind: 'key', title: 'Un accès à l’intelligence artificielle vous a été proposé', text: (d.note ? d.note + ' — ' : '') + 'Vous utilisez déjà votre propre configuration : elle est conservée. Pour passer sur l’accès fourni, retirez la vôtre dans Paramètres › Correction par IA.', action: { type: 'settings' } });
       }
-    } else if (prev) {
+    } else if (prevAdmin) {
       lsSet(ADMIN_KEY_AT_LS, '');
-      if (own === prev) { lsSet('alixo.grokKey', ''); lsSet('alixo.grokKey.source', ''); notify({ kind: 'key', title: 'La clé IA attribuée a été retirée', text: 'Vous pouvez saisir votre propre clé xAI dans Paramètres › Correction par IA.', action: { type: 'settings' } }); }
+      if (cfgEq(own, prevAdmin)) { AlixoCorr.setConfig(null); lsSet('alixo.ai.source', ''); notify({ kind: 'key', title: 'L’accès IA attribué a été retiré', text: 'Vous pouvez configurer votre propre serveur (Ollama sur votre ordinateur, OpenRouter…) dans Paramètres › Correction par IA.', action: { type: 'settings' } }); }
     }
   }, err => { if (!permErr(err)) console.error('Cloud (clé) :', err); });
 

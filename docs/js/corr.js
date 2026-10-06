@@ -4,9 +4,12 @@
    1. local, instantané, sans Internet : fautes de frappe reconnues à l'espace (liste fermée, mots appris,
       lexique de 24 000 mots : lettres inversées, lettre doublée, accent oublié) ;
    2. mémoire : chaque phrase déjà analysée (même texte, même niveau) ne repart jamais vers l'API ;
-   3. API Grok (xAI) : seulement les phrases nouvelles ou modifiées, groupées en une requête compacte
+   3. modèle de langue : seulement les phrases nouvelles ou modifiées, groupées en une requête compacte
       (consigne courte, réponse JSON minimale, jetons de sortie bornés), au plus une requête toutes les 3 s.
-   1.27 : passage de Gemini (Google) à Grok (xAI) — API compatible OpenAI (chat/completions), clé « xai-… ».
+   1.28 : modèle ouvert Qwen3.8-27B (Alibaba, licence Apache 2.0) à la place de Grok (xAI). Le modèle n'est lié à
+   aucun fournisseur : Alixo parle à n'importe quel serveur « compatible OpenAI » (POST <endpoint>/chat/completions).
+   Préréglages : OpenRouter (hébergé, clé « sk-or-… »), Alibaba Cloud Model Studio (l'éditeur du modèle), Ollama sur
+   l'ordinateur de l'utilisateur (sans clé, sans Internet) ou tout autre serveur (vLLM, LM Studio, llama.cpp…).
    Chargé avant app.js (ne dépend que de window.ALIXO_LEXIQUE, js/lexique.js). app.js fournit l'accès aux
    blocs et à l'écran via AlixoCorr.init({...}) et branche les événements de frappe.
    ============================================================ */
@@ -14,9 +17,22 @@
 
 window.AlixoCorr = (() => {
   /* ---------------- réglages ---------------- */
-  const API = 'https://api.x.ai/v1/chat/completions';
-  const MODELS_FULL = ['grok-4-1-fast-reasoning', 'grok-4-1-fast-non-reasoning', 'grok-4-fast-non-reasoning'];   // relecture à la demande (F7) : qualité d'abord
-  const MODELS_LIVE = ['grok-4-1-fast-non-reasoning', 'grok-4-fast-non-reasoning', 'grok-4-1-fast-reasoning'];   // pendant la frappe : rapides et peu coûteux d'abord
+  const DEFAULT_MODEL = 'Qwen3.8-27B';      // nom affiché ; l'identifiant exact dépend du serveur (voir PROVIDERS)
+  /* préréglages de serveurs compatibles OpenAI servant Qwen3.8-27B. `endpoint` : base de l'API (sans /chat/completions).
+     `needsKey` : faux pour un serveur local. `keysUrl` / `keyPrefix` : parcours guidé. `remote` : vrai si le texte quitte
+     l'ordinateur (information de confidentialité). */
+  const PROVIDERS = {
+    openrouter: { label: 'OpenRouter (hébergé, recommandé)', endpoint: 'https://openrouter.ai/api/v1', model: 'qwen/qwen3.8-27b', keysUrl: 'https://openrouter.ai/keys', keyPrefix: 'sk-or-', needsKey: true, remote: true,
+      hint: 'Compte sur openrouter.ai, quelques centimes pour un cours entier ; l’hébergeur du modèle est choisi par OpenRouter (politique de données réglable dans son compte).' },
+    alibaba: { label: 'Alibaba Cloud Model Studio (éditeur de Qwen)', endpoint: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1', model: 'qwen3.8-27b', keysUrl: 'https://modelstudio.console.alibabacloud.com/', keyPrefix: 'sk-', needsKey: true, remote: true,
+      hint: 'Clé API créée dans la console Model Studio (région Singapour, point d’accès « compatible-mode »).' },
+    ollama: { label: 'Ollama — sur cet ordinateur (gratuit, hors ligne)', endpoint: 'http://localhost:11434/v1', model: 'qwen3.8:27b', keysUrl: 'https://ollama.com/download', keyPrefix: '', needsKey: false, remote: false,
+      hint: 'Installer Ollama puis, dans un terminal : ollama pull qwen3.8:27b (≈ 17 Go, carte graphique ou Mac avec 24 Go de mémoire conseillés). Rien ne quitte l’ordinateur.' },
+    custom: { label: 'Autre serveur compatible OpenAI', endpoint: '', model: 'qwen3.8-27b', keysUrl: '', keyPrefix: '', needsKey: false, remote: true,
+      hint: 'vLLM, SGLang, LM Studio, llama.cpp, un serveur de votre établissement… Indiquez la base de l’API (…/v1) et l’identifiant du modèle tel que le serveur le connaît.' }
+  };
+  const DEFAULT_PROVIDER = 'openrouter';
+  const CONFIG_LS = 'alixo.ai.config';     // { provider, endpoint, model, key } — reste sur l'appareil
   const MIN_GAP = 3000;            // ms entre deux requêtes « en direct » (facturation à l'usage : on limite le nombre d'appels)
   const PAUSE_MS = 2500;           // pause de frappe avant d'envoyer les phrases en cours
   const SENTENCE_MS = 700;         // délai après une fin de phrase (. ! ? Entrée)
@@ -215,67 +231,116 @@ Mise en forme : les lignes « § <lettre> : <numéros> » désignent des paragra
     return p;
   }
 
-  /* ---------------- appel Grok (xAI) ----------------
-     API compatible OpenAI : POST /v1/chat/completions, en-tête Authorization: Bearer <clé>, réponse JSON forcée
-     (response_format json_object). Les modèles « reasoning » reçoivent reasoning_effort: 'low' (moins de jetons,
-     plus rapide) ; si le modèle refuse le paramètre, on n'insiste plus. */
-  let lowEffort = true;
+  /* ---------------- configuration du serveur (1.28) ----------------
+     { provider, endpoint, model, key } : lu dans localStorage (alixo.ai.config), jamais synchronisé.
+     `provider` est un préréglage de PROVIDERS ; endpoint et model peuvent être modifiés par l'utilisateur. */
+  const normEndpoint = u => String(u || '').trim().replace(/\/+$/, '').replace(/\/chat\/completions$/i, '');
+  function normConfig(c) {
+    const o = c && typeof c === 'object' ? c : {};
+    const provider = PROVIDERS[o.provider] ? o.provider : DEFAULT_PROVIDER;
+    const P = PROVIDERS[provider];
+    return { provider, endpoint: normEndpoint(o.endpoint) || P.endpoint, model: String(o.model || '').trim() || P.model, key: String(o.key || '').trim() };
+  }
+  function getConfig() { return normConfig(loadJSON(CONFIG_LS, null)); }
+  function setConfig(c) { if (!c) { try { localStorage.removeItem(CONFIG_LS); } catch { } return; } saveJSON(CONFIG_LS, normConfig(c)); }
+  /* prêt = un serveur joignable est configuré : clé présente, ou serveur qui n'en demande pas (local) */
+  function configured(c) { c = c || getConfig(); return !!(c.endpoint && c.model && (c.key || !PROVIDERS[c.provider].needsKey)); }
+  const isLocalUrl = u => { try { const h = new URL(u).hostname; return /^(localhost|127\.|0\.0\.0\.0|\[?::1\]?$|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(h) || /\.local$/.test(h); } catch { return false; } };
+
+  /* ---------------- appel du modèle ----------------
+     API compatible OpenAI : POST <endpoint>/chat/completions, en-tête Authorization: Bearer <clé> (si clé), réponse
+     JSON forcée (response_format json_object). Qwen3.8 « réfléchit » par défaut : on le désactive sous les trois formes
+     connues (chat_template_kwargs.enable_thinking pour vLLM / SGLang / llama.cpp, enable_thinking pour Model Studio et
+     Ollama, reasoning.enabled pour OpenRouter) ; si un serveur strict refuse un paramètre inconnu, on le retire et on
+     recommence (mémorisé par serveur). Un éventuel bloc <think>…</think> resté dans la réponse est ignoré.
+     Version PC : un serveur local (Ollama…) est joint par le processus principal (alixoDesktop.aiFetch), ce qui évite
+     la politique CORS du navigateur ; version web : fetch direct (Ollama : OLLAMA_ORIGINS=https://alixoapp.com). */
+  const quirks = {};   // endpoint → { noThink: bool (ne plus envoyer les paramètres anti-réflexion), noFormat: bool }
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const errText = j => {
     if (!j) return '';
     if (typeof j.error === 'string') return j.error;
     if (j.error && typeof j.error.message === 'string') return j.error.message;
     if (typeof j.message === 'string') return j.message;
+    if (typeof j.detail === 'string') return j.detail;
     return '';
   };
-  async function call(key, { system, user, maxTokens, models, timeoutMs = 25000, temperature = 0 }) {
+  const stripThink = t => String(t || '').replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/^\s*<think>[\s\S]*$/i, '').trim();
+  async function post(url, body, key, timeoutMs) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (key) headers.Authorization = 'Bearer ' + key;
+    if (/openrouter\.ai/i.test(url)) { headers['HTTP-Referer'] = 'https://alixoapp.com'; headers['X-Title'] = 'Alixo'; }
+    const desk = window.alixoDesktop;
+    if (desk && desk.aiFetch && isLocalUrl(url)) {
+      const r = await desk.aiFetch({ url, method: 'POST', headers, body: JSON.stringify(body), timeoutMs });
+      if (!r || r.error) { const e = new Error(r && r.error || 'fetch'); e.name = r && r.timeout ? 'AbortError' : 'TypeError'; throw e; }
+      return { ok: r.status >= 200 && r.status < 300, status: r.status, json: async () => JSON.parse(r.body) };
+    }
+    const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), timeoutMs);
+    try { return await fetch(url, { method: 'POST', signal: ctl.signal, headers, body: JSON.stringify(body) }); }
+    finally { clearTimeout(tm); }
+  }
+  /* cfg : { endpoint, model, key } (ou null → configuration enregistrée). `models` (ancien paramètre) est ignoré. */
+  async function call(cfg, { system, user, maxTokens, timeoutMs = 25000, temperature = 0 }) {
+    const c = cfg && typeof cfg === 'object' ? normConfig(cfg) : getConfig();
+    if (!configured(c)) return { ok: false, status: 0, error: 'Aucun serveur d’IA configuré (Paramètres › Correction par IA).' };
+    const url = c.endpoint + '/chat/completions';
+    const q = quirks[c.endpoint] || (quirks[c.endpoint] = {});
+    const where = PROVIDERS[c.provider].needsKey ? PROVIDERS[c.provider].label.replace(/ \(.*$/, '') : (isLocalUrl(c.endpoint) ? 'le serveur local' : 'le serveur');
     let last = null;
-    for (let attempt = 0; attempt < 2; attempt++) for (const model of models) {
-      if (attempt && model === models[0]) await sleep(1500);
-      const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), timeoutMs);
-      const body = {
-        model, temperature, max_tokens: maxTokens, stream: false,
-        response_format: { type: 'json_object' },
-        messages: [{ role: 'system', content: system }, { role: 'user', content: user }]
-      };
-      if (lowEffort && /reasoning$/.test(model) && !/non-reasoning$/.test(model)) body.reasoning_effort = 'low';
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt) await sleep(1500 * attempt);
+      const body = { model: c.model, temperature, max_tokens: maxTokens, stream: false, messages: [{ role: 'system', content: system }, { role: 'user', content: user }] };
+      if (!q.noFormat) body.response_format = { type: 'json_object' };
+      if (!q.noThink) { body.chat_template_kwargs = { enable_thinking: false }; body.enable_thinking = false; body.reasoning = { enabled: false }; }
       let res;
-      try {
-        res = await fetch(API, {
-          method: 'POST', signal: ctl.signal,
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-          body: JSON.stringify(body)
-        });
-      } catch (err) {
-        clearTimeout(tm);
-        if (err && err.name === 'AbortError') { last = { ok: false, status: 0, error: 'xAI ne répond pas (délai dépassé) — réessayez dans un instant.' }; continue; }
-        return { ok: false, status: 0, error: 'Impossible de joindre xAI — vérifiez la connexion internet.' };
+      try { res = await post(url, body, c.key, timeoutMs); }
+      catch (err) {
+        if (err && err.name === 'AbortError') { last = { ok: false, status: 0, error: 'Le modèle ne répond pas (délai dépassé) — réessayez dans un instant.' }; continue; }
+        return { ok: false, status: 0, error: isLocalUrl(c.endpoint) ? `Impossible de joindre ${c.endpoint} — le serveur local (Ollama…) est-il lancé ?` : `Impossible de joindre ${where} — vérifiez la connexion internet et l’adresse du serveur.` };
       }
-      clearTimeout(tm);
       let j = null; try { j = await res.json(); } catch { j = null; }
       if (res.ok) {
         const choice = j && Array.isArray(j.choices) && j.choices[0];
         const msg = choice && choice.message;
-        const content = msg ? (typeof msg.content === 'string' ? msg.content : Array.isArray(msg.content) ? msg.content.map(p => (p && p.text) || '').join('') : '') : '';
+        const raw = msg ? (typeof msg.content === 'string' ? msg.content : Array.isArray(msg.content) ? msg.content.map(p => (p && p.text) || '').join('') : '') : '';
+        const content = stripThink(raw);
         if (!msg || (!content && choice.finish_reason !== 'stop')) {
           const why = (choice && choice.finish_reason) || '';
-          return { ok: false, status: res.status, error: 'Le modèle n’a pas renvoyé de réponse' + (why ? ` (${why})` : '') + '.' };
+          return { ok: false, status: res.status, error: 'Le modèle n’a pas renvoyé de réponse' + (why === 'length' ? ' (réponse tronquée : la « réflexion » du modèle a consommé les jetons ; vérifiez que la réflexion est désactivée sur le serveur)' : why ? ` (${why})` : '') + '.' };
         }
         const usage = j.usage || {};
-        return { ok: true, text: content, model, tokIn: usage.prompt_tokens || 0, tokOut: usage.completion_tokens || 0 };
+        return { ok: true, text: content, model: c.model, tokIn: usage.prompt_tokens || 0, tokOut: usage.completion_tokens || 0 };
       }
       const detail = errText(j);
-      if (res.status === 400 && lowEffort && /reasoning_effort/i.test(detail)) { lowEffort = false; return call(key, { system, user, maxTokens, models, timeoutMs, temperature }); }
-      if (res.status === 404 || /not found|does not exist|not supported|unknown model/i.test(detail)) { last = { ok: false, status: 404, error: `Modèle ${model} indisponible.` }; continue; }
-      if (res.status === 401 || (res.status === 400 && /api key/i.test(detail))) return { ok: false, status: 401, error: 'Clé refusée par xAI : elle est incomplète, révoquée ou mal copiée.' };
-      if (res.status === 403) return { ok: false, status: 403, error: 'Clé reconnue mais sans accès (' + (detail || 'HTTP 403') + '). Vérifiez les droits de la clé et le crédit du compte sur console.x.ai.' };
+      if (res.status === 400 && !q.noThink && /enable_thinking|chat_template_kwargs|reasoning|unknown|unrecognized|unexpected|extra|not permitted|additional propert/i.test(detail)) { q.noThink = true; continue; }
+      if (res.status === 400 && !q.noFormat && /response_format|json_object|json mode|structured/i.test(detail)) { q.noFormat = true; continue; }
+      if (res.status === 404 || /not found|does not exist|not supported|unknown model|no such model|try pulling/i.test(detail)) return { ok: false, status: 404, error: `Modèle « ${c.model} » introuvable sur ${where}${c.provider === 'ollama' ? ' — dans un terminal : ollama pull ' + c.model : ''}.` };
+      if (res.status === 401 || (res.status === 400 && /api key|authentication/i.test(detail))) return { ok: false, status: 401, error: `Clé refusée par ${where} : elle est incomplète, révoquée ou mal copiée.` };
+      if (res.status === 402) return { ok: false, status: 402, error: `Crédit épuisé sur ${where} — rechargez le compte qui a créé la clé.` };
+      if (res.status === 403) return { ok: false, status: 403, error: 'Clé reconnue mais sans accès (' + (detail || 'HTTP 403') + '). Vérifiez les droits de la clé et le crédit du compte.' };
       if (res.status === 503 || res.status === 502 || res.status === 500 || res.status === 429 || /overloaded|capacity|rate limit|too many/i.test(detail)) {
-        last = { ok: false, status: res.status, error: res.status === 429 ? 'Limite de requêtes atteinte pour l’instant (ou crédit épuisé sur console.x.ai) — réessayez dans une minute.' : 'xAI est saturé pour l’instant (' + res.status + ') — réessayez dans un instant.' };
+        last = { ok: false, status: res.status, error: res.status === 429 ? 'Limite de requêtes atteinte pour l’instant (ou crédit épuisé) — réessayez dans une minute.' : `Le serveur est saturé pour l’instant (${res.status}) — réessayez dans un instant.` };
         continue;
       }
-      return { ok: false, status: res.status, error: `Erreur ${res.status} de xAI${detail ? ' : ' + detail : ''}.` };
+      return { ok: false, status: res.status, error: `Erreur ${res.status} de ${where}${detail ? ' : ' + detail : ''}.` };
     }
-    return last || { ok: false, status: 404, error: 'Aucun modèle Grok disponible.' };
+    return last || { ok: false, status: 0, error: 'Le modèle est indisponible pour l’instant.' };
+  }
+  /* liste des modèles du serveur (GET <endpoint>/models) — pour tester une clé ou vérifier qu'un modèle est installé */
+  async function listModels(cfg, timeoutMs = 12000) {
+    const c = normConfig(cfg || getConfig());
+    const url = c.endpoint + '/models';
+    const headers = {}; if (c.key) headers.Authorization = 'Bearer ' + c.key;
+    const desk = window.alixoDesktop;
+    let status, j;
+    try {
+      if (desk && desk.aiFetch && isLocalUrl(url)) { const r = await desk.aiFetch({ url, method: 'GET', headers, timeoutMs }); if (!r || r.error) return { ok: false, error: r && r.error || 'fetch' }; status = r.status; try { j = JSON.parse(r.body); } catch { j = null; } }
+      else { const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), timeoutMs); const res = await fetch(url, { headers, signal: ctl.signal }).finally(() => clearTimeout(tm)); status = res.status; try { j = await res.json(); } catch { j = null; } }
+    } catch (e) { return { ok: false, error: e && e.name === 'AbortError' ? 'délai dépassé' : 'serveur injoignable' }; }
+    if (status < 200 || status >= 300) return { ok: false, status, error: errText(j) || ('HTTP ' + status) };
+    const arr = j && (Array.isArray(j.data) ? j.data : Array.isArray(j.models) ? j.models : []);
+    return { ok: true, models: arr.map(m => (m && (m.id || m.name || m.model)) || '').filter(Boolean) };
   }
   const parseJson = text => { const m = (text || '').match(/\{[\s\S]*\}/); if (!m) return null; try { return JSON.parse(m[0]); } catch { return null; } };
   const KINDS = { f: 'frappe', o: 'orthographe', g: 'grammaire', t: 'typographie', r: 'reformulation' };
@@ -334,7 +399,7 @@ Mise en forme : les lignes « § <lettre> : <numéros> » désignent des paragra
   /* ---------------- une requête : phrases (+ paragraphes à classer) ---------------- */
   /* items : [{ key, text, lang, block, styleTag }] ; styleBlocks : { tag → [indices] } */
   async function request(mode, items, ctx, styleBlocks) {
-    const key = opts.key && opts.key(); if (!key) throw new Error('Aucune clé API.');
+    if (!configured()) throw new Error('Aucun serveur d’IA configuré.');
     const lines = items.map((it, i) => `${i + 1}| ${it.text}`);
     const withStyle = styleBlocks && Object.keys(styleBlocks).length > 0;
     if (withStyle) for (const [tag, idx] of Object.entries(styleBlocks)) lines.push(`§ ${tag} : ${idx.map(i => i + 1).join(', ')}`);
@@ -342,9 +407,9 @@ Mise en forme : les lignes « § <lettre> : <numéros> » désignent des paragra
     if (ctx.already && ctx.already.length) user = `Déjà relevé lors d'une première lecture (ne le répète pas) :\n${ctx.already.map(a => `« ${a.avant} » → « ${a.apres} »`).join('\n')}\n\nRelis maintenant chaque phrase une seconde fois, plus attentivement (homophones, terminaisons, accords, mots oubliés). Réponds {"c":{}} seulement si tu es certain qu'il ne reste rien.\n\n${user}`;
     const chars = user.length;
     const maxTokens = Math.max(512, Math.min(mode === 'live' ? 2048 : 6144, 300 + Math.round(chars / 2)));
-    const r = await call(key, { system: systemPrompt(mode, ctx, withStyle), user, maxTokens, models: mode === 'live' ? MODELS_LIVE : MODELS_FULL, timeoutMs: mode === 'live' ? 20000 : 40000 });
+    const r = await call(null, { system: systemPrompt(mode, ctx, withStyle), user, maxTokens, timeoutMs: mode === 'live' ? 20000 : 40000 });
     stats.req++; stats.chars += chars; stats.sent += items.length;
-    if (!r.ok) { persist(); const e = new Error(r.status === 400 ? 'Clé API refusée — vérifiez-la (Paramètres › IA).' : r.error); e.status = r.status; throw e; }
+    if (!r.ok) { persist(); const e = new Error(r.error); e.status = r.status; throw e; }
     stats.tokIn = (stats.tokIn || 0) + r.tokIn; stats.tokOut = (stats.tokOut || 0) + r.tokOut; persist();
     const j = parseJson(r.text) || {};
     const c = j.c && typeof j.c === 'object' ? j.c : {};
@@ -355,7 +420,7 @@ Mise en forme : les lignes « § <lettre> : <numéros> » désignent des paragra
   }
 
   /* ---------------- étage 3, en direct : file d'attente, regroupement, cadence ---------------- */
-  let opts = {};               // fourni par app.js : key(), ctx(), text(blockId) → { text, lang, type } | null, onResult, onStyle, onError, caretIn(blockId, s, e)
+  let opts = {};               // fourni par app.js : ctx(), text(blockId) → { text, lang, type } | null, onResult, onStyle, onError, caretIn(blockId, s, e)
   const pending = new Map();   // blockId → { keys: Map(key → { text }), style: bool }
   const inflight = new Set();  // clés en cours d'envoi
   const timers = new Map();    // blockId → timer
@@ -408,7 +473,7 @@ Mise en forme : les lignes « § <lettre> : <numéros> » désignent des paragra
   async function run() {
     runTm = null;
     if (busy || !pending.size) return;
-    if (!enabled() || !(opts.key && opts.key())) { pending.clear(); return; }
+    if (!enabled() || !configured()) { pending.clear(); return; }
     // lot : phrases de tous les blocs en attente, dans la limite de taille ; paragraphes à classer en plus
     const items = []; const styleBlocks = {}; const styleTags = {}; let chars = 0; let tag = 65;
     for (const [blockId, entry] of pending) {
@@ -495,9 +560,10 @@ Mise en forme : les lignes « § <lettre> : <numéros> » désignent des paragra
     init, typed, sentenceDone, left, drop, pending: () => pending.size + inflight.size,
     localFix, learn, ignore, isIgnored, forget, known,
     sentences, worth, sureTypo, levenshtein, locate, align,
-    analyzeBlocks, request, call,
+    analyzeBlocks, request, call, listModels,
+    getConfig, setConfig, configured, isLocalUrl,
     cacheGet, cacheSet, clearCache, keyOf,
     stats: getStats, resetStats, note,
-    TYPO_FIXES, MODELS_FULL, MODELS_LIVE, LANG_NAMES
+    TYPO_FIXES, LANG_NAMES, PROVIDERS, DEFAULT_PROVIDER, DEFAULT_MODEL
   };
 })();

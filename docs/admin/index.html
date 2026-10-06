@@ -69,9 +69,9 @@
   </section>
 
   <section id="v-keys" class="view" hidden>
-    <div class="vhead"><h2>Clés API xAI (Grok)</h2><div class="tools"><button id="key-add" class="btn">＋ Ajouter une clé</button></div></div>
-    <p class="muted">Les clés du réservoir sont distribuées aux utilisateurs : chacun reçoit <b>une</b> clé, écrite dans <code>keys/{uid}</code> et lisible par lui seul. L’application l’utilise automatiquement s’il n’a pas de clé personnelle (« Imposer » la remplace même s’il en a une).</p>
-    <div class="card table-card"><table id="keys-tbl"><thead><tr><th>Libellé</th><th>Clé</th><th>Utilisateurs</th><th>État</th><th></th></tr></thead><tbody></tbody></table></div>
+    <div class="vhead"><h2>Accès IA — Qwen3.8-27B</h2><div class="tools"><button id="key-add" class="btn">＋ Ajouter une clé</button></div></div>
+    <p class="muted">Le modèle est ouvert (Qwen3.8-27B, Apache 2.0) ; chaque entrée du réservoir dit <b>où il tourne</b> (OpenRouter, Alibaba Cloud Model Studio ou un serveur à vous) et avec quelle clé. Les accès sont distribués aux utilisateurs : chacun reçoit <b>un</b> accès (serveur, modèle, clé), écrit dans <code>keys/{uid}</code> et lisible par lui seul. L’application l’utilise automatiquement s’il n’a pas de clé personnelle (« Imposer » la remplace même s’il en a une).</p>
+    <div class="card table-card"><table id="keys-tbl"><thead><tr><th>Libellé</th><th>Clé · serveur</th><th>Utilisateurs</th><th>État</th><th></th></tr></thead><tbody></tbody></table></div>
     <div class="card">
       <h3>Distribution</h3>
       <div class="row wrap">

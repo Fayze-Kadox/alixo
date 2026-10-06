@@ -8,8 +8,10 @@
    - audit/{id}              → 1.26 : journal des actions d'administration { ts, by, byEmail, action, target, details } — écrit par
                                 l'administrateur qui agit, jamais modifié ni effacé ; le contenu des cours (users/{uid}/**) n'est
                                 plus lisible depuis le panneau
-   - config/aikeys           → { keys: [{ id, key, label, enabled, addedAt }] }  (réservoir, admins seulement)
-   - keys/{uid}              → { grok, keyId, note, force, assignedAt }  (lisible par l'utilisateur seul ; 1.27 : `grok` remplace `gemini`)
+   - config/aikeys           → { keys: [{ id, key, label, provider, endpoint, model, enabled, addedAt }] }  (réservoir, admins seulement ;
+                                1.28 : provider / endpoint / model = où tourne Qwen3.8-27B — OpenRouter, Model Studio, serveur propre)
+   - keys/{uid}              → { ai, provider, endpoint, model, keyId, note, force, assignedAt }  (lisible par l'utilisateur seul ;
+                                1.28 : `ai` + serveur remplacent `grok` (1.27) et `gemini`)
    - config/public           → { announcements: [{ id, title, text, url, audience, ts, until, silent }],
                                  latestVersion, latestNote, downloadUrl, minVersion (1.18 : en dessous, l'application se bloque
                                  jusqu'à la mise à jour) }  (lisible par tout compte connecté)
@@ -122,8 +124,18 @@
   let tickTm = null;
   function renderAll() { renderDash(); renderUsers(); renderKeys(); }
   const keyById = id => state.keysDoc.keys.find(k => k.id === id) || null;
-  /* 1.27 : une attribution ne compte que si elle porte une clé xAI (`grok`) ; un ancien document `gemini` (clé Google) vaut « sans clé » */
-  const hasKey = uid => { const a = state.assigned.get(uid); return !!(a && typeof a.grok === 'string' && a.grok); };
+  /* 1.28 : une attribution ne compte que si elle porte une clé `ai` (ou un serveur sans clé) ; un ancien document `grok` (xAI, 1.27)
+     ou `gemini` (Google) vaut « sans clé » */
+  const hasKey = uid => { const a = state.assigned.get(uid); return !!(a && ((typeof a.ai === 'string' && a.ai) || (a.endpoint && a.ai !== undefined))); };
+  /* préréglages de serveurs compatibles OpenAI servant Qwen3.8-27B (mêmes valeurs que app/js/corr.js) */
+  const PROVIDERS = {
+    openrouter: { label: 'OpenRouter', endpoint: 'https://openrouter.ai/api/v1', model: 'qwen/qwen3.8-27b', keysUrl: 'https://openrouter.ai/keys', prefix: 'sk-or-' },
+    alibaba: { label: 'Alibaba Cloud Model Studio', endpoint: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1', model: 'qwen3.8-27b', keysUrl: 'https://modelstudio.console.alibabacloud.com/', prefix: 'sk-' },
+    custom: { label: 'Autre serveur compatible OpenAI (vLLM, établissement…)', endpoint: '', model: 'qwen3.8-27b', keysUrl: '', prefix: '' }
+  };
+  const provOf = k => PROVIDERS[k && k.provider] || PROVIDERS.custom;
+  const provLabel = k => k && k.provider === 'custom' && k.endpoint ? k.endpoint.replace(/^https?:\/\//, '').split('/')[0] : provOf(k).label;
+  const assignDoc = (k, extra) => Object.assign({ ai: k.key || '', provider: k.provider || 'openrouter', endpoint: k.endpoint || provOf(k).endpoint, model: k.model || provOf(k).model }, extra);
   const keyLabel = k => k ? (k.label || ('Clé …' + String(k.key || '').slice(-4))) : '';
   const mask = k => k ? k.slice(0, 6) + '…' + k.slice(-4) : '';
 
@@ -176,7 +188,7 @@
         <td title="${esc(when(p.lastSeen))}">${ago(p.lastSeen)}</td>
         <td>${p.version ? `<span class="chip dim">${esc(p.version)}</span>` : '—'} ${p.platform ? `<span class="muted small">${p.platform === 'desktop' ? 'PC' : 'web'}</span>` : ''}</td>
         <td>${p.nDocs ?? '—'}</td>
-        <td>${a && a.grok ? `<span class="chip ok" title="${esc(mask(a.grok))}">${esc(k ? keyLabel(k) : 'clé hors réservoir')}${a.force ? ' · imposée' : ''}</span>` : a ? '<span class="chip bad" title="Attribution antérieure à 1.27 (clé Google) : l’application l’ignore — attribuer une clé xAI">ancienne clé Google</span>' : '<span class="chip dim">aucune</span>'}</td>
+        <td>${hasKey(p.uid) ? `<span class="chip ok" title="${esc(mask(a.ai) + ' · ' + (a.model || ''))}">${esc(k ? keyLabel(k) : 'clé hors réservoir')}${a.force ? ' · imposée' : ''}</span>` : a ? '<span class="chip bad" title="Attribution antérieure à 1.28 (clé xAI ou Google) : l’application l’ignore — attribuer un accès Qwen3.8">ancienne clé</span>' : '<span class="chip dim">aucune</span>'}</td>
         <td>${plusOn ? `<span class="chip ok" title="${esc(pl.note || '')}${pl.by ? ' · par ' + esc(pl.by) : ''}">Alixo+ · ${esc(planLabel(pl))}</span>` : (pl && pl.plus ? '<span class="chip bad" title="Abonnement arrivé à échéance">expiré</span>' : '<span class="chip dim">gratuit</span>')}</td>
         <td>${p.disabled ? `<span class="chip bad" title="${esc(p.disabledReason || '')}">suspendu</span>` : '<span class="chip ok">actif</span>'}</td>
         <td><div class="acts"><button data-ua="msg" title="Envoyer un message direct à cet utilisateur">Message…</button><button data-ua="key" title="Attribuer / retirer une clé IA">Clé…</button><button data-ua="plan" title="Activer, prolonger ou retirer Alixo+">Alixo+…</button><button data-ua="storage" title="Espace utilisé dans la base">Stockage</button><button data-ua="${p.disabled ? 'enable' : 'disable'}" class="${p.disabled ? '' : 'danger'}">${p.disabled ? 'Réactiver' : 'Suspendre'}</button></div></td></tr>`;
@@ -240,24 +252,43 @@
 
   /* ---------------- clés API ---------------- */
   async function saveKeys() { await db.collection('config').doc('aikeys').set({ keys: state.keysDoc.keys, updatedAt: Date.now() }); }
-  async function testKey(key) {
+  /* test en ligne : GET <endpoint>/models avec la clé ; vérifie aussi que le modèle y figure (quand le serveur liste ses modèles) */
+  async function testKey(k) {
+    const endpoint = String(k.endpoint || provOf(k).endpoint).replace(/\/+$/, '');
+    if (!/^https?:\/\//.test(endpoint)) return { ok: false, msg: 'adresse du serveur manquante' };
     try {
-      const r = await fetch('https://api.x.ai/v1/models', { headers: { 'Authorization': 'Bearer ' + key } });
-      if (r.ok) return { ok: true };
+      const headers = {}; if (k.key) headers.Authorization = 'Bearer ' + k.key;
+      const r = await fetch(endpoint + '/models', { headers });
       const j = await r.json().catch(() => ({}));
-      return { ok: false, msg: (typeof j.error === 'string' ? j.error : j.error && j.error.message) || ('HTTP ' + r.status) };
-    } catch (e) { return { ok: false, msg: e.message }; }
+      if (!r.ok) return { ok: false, msg: (typeof j.error === 'string' ? j.error : j.error && j.error.message) || ('HTTP ' + r.status) };
+      const ids = (Array.isArray(j.data) ? j.data : []).map(m => m && (m.id || m.name)).filter(Boolean);
+      const model = k.model || provOf(k).model;
+      if (ids.length && !ids.includes(model)) return { ok: false, msg: `clé acceptée mais le modèle « ${model} » n’est pas proposé par ce serveur` };
+      return { ok: true };
+    } catch (e) { return { ok: false, msg: e.message + ' (serveur injoignable, ou CORS refusé depuis le panneau)' }; }
   }
+  const providerFields = (k, idp) => `<label class="field">Serveur<select id="${idp}-prov">${Object.keys(PROVIDERS).map(x => `<option value="${x}" ${(k.provider || 'openrouter') === x ? 'selected' : ''}>${esc(PROVIDERS[x].label)}</option>`).join('')}</select></label>
+      <label class="field" id="${idp}-endpoint-w">Adresse de l’API (base, …/v1)<input id="${idp}-endpoint" placeholder="https://…/v1" value="${esc(k.endpoint || '')}" autocomplete="off" spellcheck="false"></label>
+      <label class="field">Identifiant du modèle<input id="${idp}-model" placeholder="${esc(provOf(k).model)}" value="${esc(k.model || '')}" autocomplete="off" spellcheck="false"></label>`;
+  const bindProvider = (c, idp) => {
+    const sel = c.querySelector('#' + idp + '-prov'), ep = c.querySelector('#' + idp + '-endpoint'), mo = c.querySelector('#' + idp + '-model');
+    const sync = () => { const P = PROVIDERS[sel.value]; if (sel.value !== 'custom') { ep.value = P.endpoint; mo.placeholder = P.model; if (!mo.value || Object.values(PROVIDERS).some(q => q.model === mo.value)) mo.value = P.model; } else { if (Object.values(PROVIDERS).some(q => q.endpoint === ep.value)) ep.value = ''; } c.querySelector('#' + idp + '-endpoint-w').hidden = sel.value !== 'custom'; };
+    sel.onchange = sync; sync();
+    return () => ({ provider: sel.value, endpoint: ep.value.trim().replace(/\/+$/, '') || PROVIDERS[sel.value].endpoint, model: mo.value.trim() || PROVIDERS[sel.value].model });
+  };
   $('#key-add').addEventListener('click', () => {
-    modal(`<h3>Ajouter une clé API xAI (Grok)</h3><p class="muted small">Clé créée sur <a href="https://console.x.ai/" target="_blank" rel="noopener">console.x.ai</a> (API Keys › Create API key, elle commence par <code>xai-</code>). La consommation est facturée au compte xAI qui a créé la clé : plusieurs clés = répartition de la dépense et des limites de débit.</p>
-      <label class="field">Libellé<input id="k-label" placeholder="Ex. Compte xAI n° 2"></label><label class="field">Clé<input id="k-key" placeholder="xai-…" autocomplete="off" spellcheck="false"></label>
+    modal(`<h3>Ajouter un accès Qwen3.8-27B</h3><p class="muted small">Le modèle est ouvert (Apache 2.0) : choisissez où il tourne. <b>OpenRouter</b> : clé créée sur <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a> (préfixe <code>sk-or-</code>). <b>Alibaba Cloud Model Studio</b> : clé de la console Model Studio (préfixe <code>sk-</code>). <b>Autre serveur</b> : vLLM, SGLang… de l’association ou de l’établissement (clé facultative). La consommation est facturée au compte qui a créé la clé : plusieurs clés = répartition de la dépense et des limites de débit.</p>
+      <label class="field">Libellé<input id="k-label" placeholder="Ex. Compte OpenRouter n° 2"></label>${providerFields({}, 'k')}<label class="field">Clé<input id="k-key" placeholder="sk-or-…" autocomplete="off" spellcheck="false"></label>
       <p id="k-msg" class="muted small"></p><div class="modal-foot"><button class="btn ghost" data-close>Annuler</button><button class="btn ghost" id="k-test">Tester</button><button class="btn" id="k-ok">Ajouter</button></div>`, (c, close) => {
-      const msg = c.querySelector('#k-msg');
-      c.querySelector('#k-test').onclick = async () => { msg.textContent = 'Test…'; const r = await testKey(c.querySelector('#k-key').value.trim()); msg.textContent = r.ok ? '✓ Clé valide' : '✕ ' + r.msg; };
+      const msg = c.querySelector('#k-msg'); const srv = bindProvider(c, 'k');
+      const draft = () => Object.assign({ key: c.querySelector('#k-key').value.trim() }, srv());
+      c.querySelector('#k-test').onclick = async () => { msg.textContent = 'Test…'; const r = await testKey(draft()); msg.textContent = r.ok ? '✓ Serveur joignable, clé acceptée, modèle présent' : '✕ ' + r.msg; };
       c.querySelector('#k-ok').onclick = async () => {
-        const key = c.querySelector('#k-key').value.trim(); if (key.length < 20) { msg.textContent = 'Clé trop courte.'; return; }
-        if (state.keysDoc.keys.some(k => k.key === key)) { msg.textContent = 'Cette clé est déjà dans le réservoir.'; return; }
-        state.keysDoc.keys.push({ id: uid8(), key, label: c.querySelector('#k-label').value.trim(), enabled: true, addedAt: Date.now(), addedBy: me.email || me.uid });
+        const d = draft();
+        if (d.provider !== 'custom' && d.key.length < 20) { msg.textContent = 'Clé trop courte.'; return; }
+        if (!/^https?:\/\//.test(d.endpoint)) { msg.textContent = 'Adresse du serveur manquante.'; return; }
+        if (d.key && state.keysDoc.keys.some(k => k.key === d.key)) { msg.textContent = 'Cette clé est déjà dans le réservoir.'; return; }
+        state.keysDoc.keys.push(Object.assign({ id: uid8(), label: c.querySelector('#k-label').value.trim(), enabled: true, addedAt: Date.now(), addedBy: me.email || me.uid }, d));
         await saveKeys(); close(); toast('Clé ajoutée');
       };
     });
@@ -265,14 +296,14 @@
   function renderKeys() {
     const K = state.keysDoc.keys;
     const usage = {}; for (const a of state.assigned.values()) usage[a.keyId] = (usage[a.keyId] || 0) + 1;
-    $('#keys-tbl tbody').innerHTML = K.length ? K.map(k => `<tr data-kid="${k.id}"><td><b>${esc(keyLabel(k))}</b><div class="u-sub">ajoutée ${when(k.addedAt)}${k.addedBy ? ' par ' + esc(k.addedBy) : ''}</div></td><td class="key-mask" title="Cliquer pour copier" data-copy="${esc(k.key)}">${esc(mask(k.key))}</td><td>${usage[k.id] || 0}</td><td>${k.enabled === false ? '<span class="chip bad">désactivée</span>' : '<span class="chip ok">active</span>'}${k.lastTest ? `<div class="u-sub">test ${k.lastTest.ok ? '✓' : '✕'} ${when(k.lastTest.ts)}</div>` : ''}</td><td><div class="acts"><button data-ka="test">Tester</button><button data-ka="toggle">${k.enabled === false ? 'Activer' : 'Désactiver'}</button><button data-ka="rename">Renommer</button><button data-ka="del" class="danger">Retirer</button></div></td></tr>`).join('') : '<tr><td colspan="5" class="empty">Aucune clé. Ajoutez-en une, puis distribuez-la aux utilisateurs.</td></tr>';
+    $('#keys-tbl tbody').innerHTML = K.length ? K.map(k => `<tr data-kid="${k.id}"><td><b>${esc(keyLabel(k))}</b><div class="u-sub">ajoutée ${when(k.addedAt)}${k.addedBy ? ' par ' + esc(k.addedBy) : ''}</div></td><td><span class="key-mask" title="Cliquer pour copier" data-copy="${esc(k.key)}">${k.key ? esc(mask(k.key)) : '<i>sans clé</i>'}</span><div class="u-sub">${esc(provLabel(k))} · ${esc(k.model || provOf(k).model)}</div></td><td>${usage[k.id] || 0}</td><td>${k.enabled === false ? '<span class="chip bad">désactivée</span>' : '<span class="chip ok">active</span>'}${k.lastTest ? `<div class="u-sub">test ${k.lastTest.ok ? '✓' : '✕'} ${when(k.lastTest.ts)}</div>` : ''}</td><td><div class="acts"><button data-ka="test">Tester</button><button data-ka="toggle">${k.enabled === false ? 'Activer' : 'Désactiver'}</button><button data-ka="rename">Renommer</button><button data-ka="del" class="danger">Retirer</button></div></td></tr>`).join('') : '<tr><td colspan="5" class="empty">Aucune clé. Ajoutez-en une, puis distribuez-la aux utilisateurs.</td></tr>';
   }
   $('#keys-tbl').addEventListener('click', async e => {
     const cp = e.target.closest('[data-copy]'); if (cp) { try { await navigator.clipboard.writeText(cp.dataset.copy); toast('Clé copiée'); } catch { /* presse-papiers indisponible */ } return; }
     const b = e.target.closest('[data-ka]'); if (!b) return;
     const k = keyById(b.closest('tr').dataset.kid); if (!k) return;
     const act = b.dataset.ka;
-    if (act === 'test') { toast('Test en cours…'); const r = await testKey(k.key); k.lastTest = { ok: r.ok, ts: Date.now(), msg: r.msg || '' }; await saveKeys(); toast(r.ok ? 'Clé valide ✓' : 'Clé refusée : ' + r.msg); }
+    if (act === 'test') { toast('Test en cours…'); const r = await testKey(k); k.lastTest = { ok: r.ok, ts: Date.now(), msg: r.msg || '' }; await saveKeys(); toast(r.ok ? 'Clé valide ✓' : 'Clé refusée : ' + r.msg); }
     else if (act === 'toggle') { k.enabled = k.enabled === false; await saveKeys(); }
     else if (act === 'rename') { const v = prompt('Libellé de la clé', k.label || ''); if (v !== null) { k.label = v.trim(); await saveKeys(); } }
     else if (act === 'del') {
@@ -290,18 +321,18 @@
     const K = state.keysDoc.keys.filter(k => k.enabled !== false);
     modal(`<h3>Clé IA de ${esc(p.email || p.uid)}</h3>
       <label class="field">Clé du réservoir<select id="as-key"><option value="">— Aucune (retirer l’attribution) —</option>${K.map(k => `<option value="${k.id}" ${cur && cur.keyId === k.id ? 'selected' : ''}>${esc(keyLabel(k))} (${esc(mask(k.key))})</option>`).join('')}<option value="__custom" ${cur && !keyById(cur.keyId) ? 'selected' : ''}>Clé spécifique à cet utilisateur…</option></select></label>
-      <label class="field" id="as-custom-w" hidden>Clé spécifique<input id="as-custom" placeholder="xai-…" value="${esc(cur && !keyById(cur.keyId) ? cur.grok || '' : '')}"></label>
+      <div id="as-custom-w" hidden>${providerFields(cur && !keyById(cur.keyId) ? cur : {}, 'as')}<label class="field">Clé spécifique<input id="as-custom" placeholder="sk-or-…" value="${esc(cur && !keyById(cur.keyId) ? cur.ai || '' : '')}"></label></div>
       <label class="field">Note (montrée dans la notification)<input id="as-note" placeholder="Ex. Offerte par l’association — merci de ne pas la partager" value="${esc(cur ? cur.note || '' : '')}"></label>
       <label class="chk"><input type="checkbox" id="as-force" ${cur && cur.force ? 'checked' : ''}> Imposer (remplace aussi une clé personnelle)</label>
       <div class="modal-foot"><button class="btn ghost" data-close>Annuler</button><button class="btn" id="as-ok">Enregistrer</button></div>`, (c, close) => {
-      const sel = c.querySelector('#as-key'), cw = c.querySelector('#as-custom-w');
+      const sel = c.querySelector('#as-key'), cw = c.querySelector('#as-custom-w'); const srv = bindProvider(c, 'as');
       const sync = () => { cw.hidden = sel.value !== '__custom'; }; sel.onchange = sync; sync();
       c.querySelector('#as-ok').onclick = async () => {
         const v = sel.value;
         if (!v) { await db.collection('keys').doc(p.uid).delete(); audit('key.remove', p.uid); close(); toast('Attribution retirée'); return; }
-        const key = v === '__custom' ? c.querySelector('#as-custom').value.trim() : keyById(v).key;
-        if (!key || key.length < 20) { toast('Clé invalide'); return; }
-        await db.collection('keys').doc(p.uid).set({ grok: key, keyId: v === '__custom' ? 'custom' : v, note: c.querySelector('#as-note').value.trim(), force: c.querySelector('#as-force').checked, assignedAt: Date.now(), assignedBy: me.email || me.uid });
+        const k = v === '__custom' ? Object.assign({ key: c.querySelector('#as-custom').value.trim() }, srv()) : keyById(v);
+        if (!k || (k.provider !== 'custom' && (!k.key || k.key.length < 20)) || !/^https?:\/\//.test(k.endpoint || provOf(k).endpoint)) { toast('Clé ou serveur invalide'); return; }
+        await db.collection('keys').doc(p.uid).set(assignDoc(k, { keyId: v === '__custom' ? 'custom' : v, note: c.querySelector('#as-note').value.trim(), force: c.querySelector('#as-force').checked, assignedAt: Date.now(), assignedBy: me.email || me.uid }));
         audit('key.assign', p.uid, { keyId: v === '__custom' ? 'custom' : v, force: c.querySelector('#as-force').checked });
         close(); toast('Clé attribuée');
       };
@@ -323,7 +354,7 @@
     const K = state.keysDoc.keys.filter(k => k.enabled !== false);
     if (!K.length) { log('Aucune clé active dans le réservoir.'); return; }
     const load = Object.fromEntries(K.map(k => [k.id, 0]));
-    if (onlyMissing) for (const a of state.assigned.values()) if (a.grok && a.keyId in load) load[a.keyId]++;
+    if (onlyMissing) for (const [u, a] of state.assigned) if (hasKey(u) && a.keyId in load) load[a.keyId]++;
     const targets = state.profiles.filter(p => !p.disabled && (!onlyMissing || !hasKey(p.uid)));
     if (!targets.length) { log('Personne à servir.'); return; }
     if (!await confirmBox(onlyMissing ? 'Attribuer une clé' : 'Rééquilibrer', `${targets.length} utilisateur(s) recevront une clé parmi ${K.length} clé(s) active(s)${force ? ', imposée même s’ils ont une clé personnelle' : ''}.`, 'Continuer')) return;
@@ -331,7 +362,7 @@
     for (const p of targets) {
       const k = K.reduce((a, b) => (load[b.id] < load[a.id] ? b : a));
       load[k.id]++;
-      batch.set(db.collection('keys').doc(p.uid), { grok: k.key, keyId: k.id, note: '', force, assignedAt: Date.now(), assignedBy: me.email || me.uid });
+      batch.set(db.collection('keys').doc(p.uid), assignDoc(k, { keyId: k.id, note: '', force, assignedAt: Date.now(), assignedBy: me.email || me.uid }));
       log(`${p.email || p.uid} ← ${keyLabel(k)}`);
       if (++n % 400 === 0) { await batch.commit(); batch = db.batch(); }
     }
