@@ -1,31 +1,36 @@
 {
- "generatedAt": "2026-10-06T12:51:27.293Z",
- "version": "1.28.0",
- "date": "2026-10-06T12:28:45Z",
- "notes": "Nouveautés 1.28.0 — l'IA passe à un modèle ouvert : Qwen3.8-27B (Apache 2.0)\n\n\n- **Plus de dépendance à un fournisseur d'IA** : la correction d'orthographe / grammaire, l'analyse pendant la frappe\n  et la mise en forme suggérée s'appuient sur **Qwen3.8-27B** (Alibaba, poids publiés le 14 août 2026 sous licence\n  Apache 2.0, excellent en français) à la place de Grok (xAI). Le modèle n'appartient à personne : Alixo parle à\n  n'importe quel serveur **compatible OpenAI** (`POST <endpoint>/chat/completions`), et l'utilisateur choisit où il\n  tourne dans *Paramètres › Correction par IA* (préréglages de `app/js/corr.js`, `PROVIDERS`) :\n  - **OpenRouter** (hébergé, recommandé) : `https://openrouter.ai/api/v1`, modèle `qwen/qwen3.8-27b`, clé `sk-or-…` ;\n  - **Alibaba Cloud Model Studio** (l'éditeur du modèle) : `https://dashscope-intl.aliyuncs.com/compatible-mode/v1`,\n    modèle `qwen3.8-27b`, clé `sk-…` ;\n  - **Ollama sur l'ordinateur de l'utilisateur** : `http://localhost:11434/v1`, modèle `qwen3.8:27b`\n    (`ollama pull qwen3.8:27b`, ≈ 17 Go), **sans clé, sans compte, hors ligne** : rien ne quitte l'appareil ;\n  - **Autre serveur compatible OpenAI** (vLLM, SGLang, LM Studio, llama.cpp, serveur d'un établissement…) : adresse et\n    identifiant du modèle libres, clé facultative.\n- **Moteur** (`app/js/corr.js`) : configuration `{ provider, endpoint, model, key }` dans `alixo.ai.config`\n  (`AlixoCorr.getConfig / setConfig / configured`), un seul modèle par serveur (plus de liste de repli entre\n  modèles), trois essais espacés en cas de saturation. La « réflexion » de Qwen3.8 (activée par défaut, coûteuse en\n  jetons) est désactivée sous les trois formes connues (`chat_template_kwargs.enable_thinking`, `enable_thinking`,\n  `reasoning.enabled`) ; un serveur strict qui refuse un paramètre inconnu le voit retiré au second essai, de même\n  pour `response_format` ; un bloc `<think>…</think>` resté dans la réponse est ignoré. `AlixoCorr.call(cfg | null, …)`\n  reste l'unique point d'entrée (le paramètre `models` disparaît) ; `AlixoCorr.listModels` interroge\n  `GET <endpoint>/models` (test d'une clé, aide quand le modèle est introuvable).\n- **Version PC** : un serveur local ou du réseau privé (Ollama, LM Studio, vLLM de l'établissement) est joint par le\n  processus principal (`main.js`, IPC `ai-fetch`, `alixoDesktop.aiFetch`) : le navigateur refuserait l'appel depuis\n  l'origine `alixo://` (CORS) ; seuls les hôtes `localhost`, `127.*`, `10.*`, `192.168.*`, `172.16-31.*` et `*.local`\n  sont acceptés, les serveurs distants restent appelés par la page. Version web : `OLLAMA_ORIGINS=https://alixoapp.com`.\n- **Parcours guidé** : choix du serveur, étapes adaptées (compte et clé, ou installation d'Ollama), adresse et modèle\n  modifiables (« Adresse et modèle… »), *Tester et enregistrer* fait un appel minimal puis, si le modèle est introuvable,\n  liste les modèles Qwen présents sur le serveur. Messages d'erreur génériques (serveur local éteint, modèle absent,\n  clé refusée, crédit épuisé, saturation).\n- **Anciennes clés ignorées** : la clé xAI (`alixo.grokKey`, 1.27) comme la clé Google (`alixo.geminiKey`) ne sont plus\n  lues — elles ne fonctionneraient pas avec Qwen3.8 : l'application repart « sans serveur » et propose le parcours.\n- **Panneau d'administration** : l'onglet s'appelle « Accès IA — Qwen3.8-27B » ; chaque entrée du réservoir\n  (`config/aikeys`) porte `provider`, `endpoint`, `model` et `key` (clé facultative pour un serveur propre) ; le test en\n  ligne interroge `GET <endpoint>/models` et vérifie que le modèle y figure ; l'attribution écrit `keys/{uid}` =\n  `{ ai, provider, endpoint, model, keyId, note, force, assignedAt }` (`ai` remplace `grok`). Une attribution\n  antérieure (champ `grok` ou `gemini`) s'affiche « ancienne clé », compte « sans clé » et est ignorée par\n  l'application : **réattribuer** après la mise à jour. Côté application (`cloudconfig.js`), l'attribution adoptée\n  remplace toute la configuration (serveur, modèle, clé), mémorisée dans `alixo.ai.admin…` et `alixo.ai.source`.\n- **CLUF** (`LICENSE.txt` § 4 d) : les phrases analysées sont envoyées au serveur d'IA choisi par l'utilisateur (ou\n  attribué par l'administrateur), qui peut être son propre ordinateur. La politique de confidentialité du site\n  (`confidentialite.html`, hors de ce dépôt) est à mettre à jour : sous-traitant = l'hébergeur choisi (OpenRouter,\n  Alibaba Cloud…) ou aucun (Ollama local), à la place de xAI.\n- Version 1.28.0.\n\n\n▶ **Les nouveautés en vidéo** (présentation animée, jouée dans l’application après la mise à jour) : https://alixoapp.com/docs/nouveautes.html?v=1.28.0",
+ "generatedAt": "2026-10-06T12:56:57.303Z",
+ "version": "1.28.1",
+ "date": "2026-10-06T12:56:40Z",
+ "notes": "Nouveautés 1.28.1 — quiz : le fichier audio personnalisé s'importe à nouveau\n\n\n- **Quiz › Apparence › Musique › « Mon fichier audio »** : le bouton **Choisir…** n'ouvrait plus la boîte de sélection\n  du fichier, et le bouton ▶ d'écoute des musiques intégrées ne réagissait pas non plus. Cause (`app/js/quiz.js`) : le\n  clic dans la fenêtre cherchait une vignette de thème avec `closest('[data-theme]')`, qui remontait jusqu'à l'élément\n  `<html data-theme=\"…\">` de la page ; tout clic hors des vignettes était donc pris pour un choix de thème et s'arrêtait\n  là. La recherche est limitée aux vignettes (`.qz-tile[data-theme]`, dans la fenêtre). Même précaution dans\n  Paramètres › Apparence (`app/js/app.js`, `.set-tile[data-theme]`).\n- Le fichier choisi (≤ 25 Mo) est bien enregistré sur l'appareil, son nom s'affiche et la piste « Mon fichier audio »\n  est sélectionnée, comme prévu depuis la 1.25.\n- Version 1.28.1.\n\n\n▶ **Les nouveautés en vidéo** (présentation animée, jouée dans l’application après la mise à jour) : https://alixoapp.com/docs/nouveautes.html?v=1.28.1",
  "assets": {
   "setup": {
    "name": "Alixo-Setup.exe",
-   "url": "https://github.com/ultra-project/alixo/releases/download/v1.28.0/Alixo-Setup.exe",
-   "size": 76901124
+   "url": "https://github.com/ultra-project/alixo/releases/download/v1.28.1/Alixo-Setup.exe",
+   "size": 76901791
   },
   "portable": {
    "name": "Alixo-Portable.exe",
-   "url": "https://github.com/ultra-project/alixo/releases/download/v1.28.0/Alixo-Portable.exe",
-   "size": 76664731
+   "url": "https://github.com/ultra-project/alixo/releases/download/v1.28.1/Alixo-Portable.exe",
+   "size": 76665390
   },
   "mac": {
    "name": "Alixo-Mac.dmg",
-   "url": "https://github.com/ultra-project/alixo/releases/download/v1.28.0/Alixo-Mac.dmg",
-   "size": 183976034
+   "url": "https://github.com/ultra-project/alixo/releases/download/v1.28.1/Alixo-Mac.dmg",
+   "size": 183987479
   },
   "macZip": {
-   "name": "Alixo-1.28.0-mac.zip",
-   "url": "https://github.com/ultra-project/alixo/releases/download/v1.28.0/Alixo-1.28.0-mac.zip",
-   "size": 177398713
+   "name": "Alixo-1.28.1-mac.zip",
+   "url": "https://github.com/ultra-project/alixo/releases/download/v1.28.1/Alixo-1.28.1-mac.zip",
+   "size": 177398355
   }
  },
  "history": [
+  {
+   "version": "1.28.1",
+   "date": "2026-10-06T12:56:40Z",
+   "notes": "Nouveautés 1.28.1 — quiz : le fichier audio personnalisé s'importe à nouveau\n\n\n- **Quiz › Apparence › Musique › « Mon fichier audio »** : le bouton **Choisir…** n'ouvrait plus la boîte de sélection\n  du fichier, et le bouton ▶ d'écoute des musiques intégrées ne réagissait pas non plus. Cause (`app/js/quiz.js`) : le\n  clic dans la fenêtre cherchait une vignette de thème avec `closest('[data-theme]')`, qui remontait jusqu'à l'élément\n  `<html data-theme=\"…\">` de la page ; tout clic hors des vignettes était donc pris pour un choix de thème et s'arrêtait\n  là. La recherche est limitée aux vignettes (`.qz-tile[data-theme]`, dans la fenêtre). Même précaution dans\n  Paramètres › Apparence (`app/js/app.js`, `.set-tile[data-theme]`).\n- Le fichier choisi (≤ 25 Mo) est bien enregistré sur l'appareil, son nom s'affiche et la piste « Mon fichier audio »\n  est sélectionnée, comme prévu depuis la 1.25.\n- Version 1.28.1.\n\n\n▶ **Les nouveautés en vidéo** (présentation animée, jouée dans l’application après la mise à jour) : https://alixoapp.com/docs/nouveautes.html?v=1.28.1"
+  },
   {
    "version": "1.28.0",
    "date": "2026-10-06T12:28:45Z",
