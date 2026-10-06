@@ -358,10 +358,12 @@ window.AlixoQuiz = (() => {
       const prev = card.querySelector('#qz-lprev');
       const saveTheme = () => { commit(); renderBar(); prev.style.cssText = C.themeStyle(themeOf(dd)); };
       card.addEventListener('click', e => {
-        const t = e.target.closest('[data-theme]');
-        if (t) {
+        /* 1.28.1 : vignettes seulement — `[data-theme]` seul remontait jusqu'à <html data-theme="…"> : tout clic dans la
+           fenêtre (bouton « Choisir… » du fichier audio, aperçu ▶ des musiques) était pris pour un choix de thème */
+        const t = e.target.closest('.qz-tile[data-theme]');
+        if (t && card.contains(t)) {
           const k = t.dataset.theme;
-          card.querySelectorAll('[data-theme]').forEach(b => b.classList.toggle('on', b === t));
+          card.querySelectorAll('.qz-tile[data-theme]').forEach(b => b.classList.toggle('on', b === t));
           card.querySelector('#qz-custom').hidden = k !== 'custom';
           const font = card.querySelector('#qz-font').value;
           dd.theme = k === 'custom' ? Object.assign({ k: 'custom', font }, custom, { k: 'custom' }) : { k, font };

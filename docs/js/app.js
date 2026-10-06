@@ -16,7 +16,7 @@ const fmtDate = ts => new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric',
 
 const DEFAULT_TINT = '#33658a';
 /* version de l'application (tenue à jour avec package.json) — sert aux notifications « nouvelle version installée » */
-const ALIXO_VERSION = '1.28.0';
+const ALIXO_VERSION = '1.28.1';
 /* version web d'Alixo (GitHub Pages) et téléchargement de la version PC */
 const ALIXO_WEB_URL = 'https://alixoapp.com/docs/';
 /* 1.23 : tout passe par le site (pages de téléchargement et de versions) — jamais de lien direct vers l'hébergement des fichiers */
@@ -2478,7 +2478,7 @@ function bindSettingsSection(k, root) {
   }
   if (k === 'apparence') {
     root.querySelector('#set-theme').addEventListener('click', e => {
-      const b = e.target.closest('[data-theme]'); if (!b) return;
+      const b = e.target.closest('.set-tile[data-theme]'); if (!b) return;   /* 1.28.1 : pas <html data-theme> */
       if (themeLocked(b.dataset.theme)) { openPlusDialog('themes'); return; }
       if (b.dataset.theme === 'auto') delete state.settings.theme; else state.settings.theme = b.dataset.theme;
       save(); applyTheme();
@@ -9823,7 +9823,7 @@ setTimeout(() => {
     if (prev !== ALIXO_VERSION) {
       state.settings.lastVersion = ALIXO_VERSION; save();
       if (prev && !wn) showWhatsNew(ALIXO_VERSION);
-      if (prev && window.AlixoNotify) AlixoNotify.push({ id: 'ver_' + ALIXO_VERSION, kind: 'update', title: `Alixo ${ALIXO_VERSION} installé`, text: 'Nouveautés : la correction par IA passe à Qwen3.8-27B, un modèle ouvert qui ne dépend d’aucun fournisseur — vous choisissez où il tourne (OpenRouter, Alibaba Cloud, ou gratuitement sur votre ordinateur avec Ollama) dans Paramètres › Correction par IA ; les anciennes clés xAI ne sont plus utilisées.', action: (window.AlixoWhatsNew && AlixoWhatsNew.has(ALIXO_VERSION)) ? { type: 'whatsnew', version: ALIXO_VERSION } : { type: 'url', url: ALIXO_VERSIONS_URL } });
+      if (prev && window.AlixoNotify) AlixoNotify.push({ id: 'ver_' + ALIXO_VERSION, kind: 'update', title: `Alixo ${ALIXO_VERSION} installé`, text: 'Correction : dans un quiz, Apparence › Musique, le bouton « Choisir… » d’un fichier audio personnalisé et l’écoute ▶ des musiques fonctionnent à nouveau. Pour mémoire, depuis la 1.28 : la correction par IA tourne sur Qwen3.8-27B, un modèle ouvert — vous choisissez où il tourne dans Paramètres › Correction par IA.', action: (window.AlixoWhatsNew && AlixoWhatsNew.has(ALIXO_VERSION)) ? { type: 'whatsnew', version: ALIXO_VERSION } : { type: 'url', url: ALIXO_VERSIONS_URL } });
     }
   } catch { /* stockage indisponible */ }
   if (window.AlixoStats) AlixoStats.maybeOpen();
