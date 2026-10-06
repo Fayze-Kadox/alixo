@@ -1,31 +1,36 @@
 {
- "generatedAt": "2026-10-06T12:06:17.826Z",
- "version": "1.27.0",
- "date": "2026-10-06T10:57:00Z",
- "notes": "Nouveautés 1.27.0 — l'IA passe de Gemini (Google) à Grok (xAI)\n\n\n- **Nouveau fournisseur d'IA** : la correction d'orthographe / grammaire, l'analyse pendant la frappe et la mise en\n  forme suggérée s'appuient désormais sur **Grok** (xAI, `api.x.ai`, API compatible OpenAI) à la place de Gemini.\n  Motif : la politique de confidentialité de xAI pour son API (pas d'entraînement des modèles sur les données\n  envoyées). Modèles essayés dans l'ordre : relecture à la demande (F7) `grok-4-1-fast-reasoning` →\n  `grok-4-1-fast-non-reasoning` → `grok-4-fast-non-reasoning` ; pendant la frappe `grok-4-1-fast-non-reasoning` →\n  `grok-4-fast-non-reasoning` → `grok-4-1-fast-reasoning`. Réponse JSON forcée (`response_format`), effort de\n  raisonnement « low » sur les modèles qui l'acceptent. Un seul point d'entrée, `AlixoCorr.call`, comme avant.\n- **Clé API** : elle se crée sur <https://console.x.ai/> (*API Keys › Create API key*, préfixe `xai-`) ; l'usage\n  est facturé au compte xAI, il n'y a plus de « palier gratuit ». Le parcours guidé, le test de la clé et les\n  messages d'erreur (clé refusée, crédit épuisé, saturation) sont adaptés.\n- **Anciennes clés Google ignorées** : la clé personnelle est désormais lue dans `alixo.grokKey` (plus\n  `alixo.geminiKey`), et la clé attribuée par l'administrateur dans le champ `grok` de `keys/{uid}` (plus\n  `gemini`). Une clé Google ne fonctionnerait pas chez xAI : l'application repart donc « sans clé » et propose\n  le parcours de configuration ; l'administrateur doit **réattribuer** des clés xAI.\n- **Panneau d'administration** : l'onglet s'appelle « Clés API xAI (Grok) », le test en ligne interroge\n  `api.x.ai/v1/models`, une attribution antérieure à 1.27 (champ `gemini`) s'affiche « ancienne clé Google » et\n  compte comme « sans clé » pour la distribution et le tableau de bord.\n- **CLUF** (`LICENSE.txt` § 4 d) : les phrases analysées sont envoyées à l'API Grok de xAI. La politique de\n  confidentialité du site (`confidentialite.html`, hors de ce dépôt) est à mettre à jour dans le même sens :\n  sous-traitant xAI à la place de Google (Gemini) pour la correction par IA.",
+ "generatedAt": "2026-10-06T12:13:01.387Z",
+ "version": "1.27.1",
+ "date": "2026-10-06T12:12:45Z",
+ "notes": "Nouveautés 1.27.1 — connexion Apple prête (navigateur et PC), présentation animée des nouveautés\n\n\n- **Connexion avec Apple** (`app/js/auth.js`) : le bouton « Continuer avec Apple » répondait toujours « nécessite l’Apple Developer Program », même une fois Apple activé dans Firebase : l’application exigeait un réglage côté client (`ALIXO_APPLE_CONFIG`) qui ne servait à rien, le fournisseur étant entièrement réglé côté serveur. Ce verrou est retiré. Dans le **navigateur**, la connexion s’ouvre dans une fenêtre ; si elle est bloquée (Safari sur iPhone, application « sur l’écran d’accueil »), elle passe par une redirection et se termine toute seule au retour. Le prénom transmis par Apple à la première connexion est gardé dans le profil. Tant qu’Apple n’est pas activé dans la console Firebase, le bouton le dit clairement (« Ce mode de connexion n’est pas activé sur le serveur d’Alixo ») au lieu de parler du programme développeur. **À faire côté serveur** : activer Apple dans Firebase (compte Apple Developer, Service ID, clé — `SETUP-COMPTES.md` § 2) ; la connexion fonctionnera alors sans nouvelle version de l’application.\n- **Connexion Apple dans la version PC** (`main.js`, `preload.js`, nouvelle page `app/apple.html`) : Apple n’accepte pas d’adresse de retour locale comme Google ; le bouton ouvre donc le navigateur système sur `alixoapp.com/docs/apple.html`, où la connexion se fait, puis la page revient d’elle-même dans Alixo (boucle locale `127.0.0.1`, jeton à usage unique, jamais transmis ailleurs). Mode d’emploi côté Firebase et Apple Developer dans `SETUP-COMPTES.md` § 2.\n- **Messages de connexion** : fenêtre bloquée, connexion annulée, domaine non autorisé, « un compte existe déjà avec cet e-mail par un autre mode de connexion »… sont expliqués en français au lieu du code d’erreur brut.\n- **Présentation animée des nouveautés** (`app/js/whatsnew.js`, `app/whatsnew.css`, scènes dans `app/js/whatsnew-scenes.js`) : au premier lancement qui suit une mise à jour, une courte séquence animée (une idée par scène, texte et illustration, progression, pause, Échap) présente ce qui change, à la place de la seule notification de la cloche. Rejouable depuis Paramètres › À propos › « Revoir la présentation » et depuis la cloche ; aussi en page seule sur `alixoapp.com/docs/nouveautes.html?v=1.27.1` (lien ajouté aux notes de version).\n\n\n▶ **Les nouveautés en vidéo** (présentation animée, jouée dans l’application après la mise à jour) : https://alixoapp.com/docs/nouveautes.html?v=1.27.1",
  "assets": {
   "setup": {
    "name": "Alixo-Setup.exe",
-   "url": "https://github.com/ultra-project/alixo/releases/download/v1.27.0/Alixo-Setup.exe",
-   "size": 76884108
+   "url": "https://github.com/ultra-project/alixo/releases/download/v1.27.1/Alixo-Setup.exe",
+   "size": 76896370
   },
   "portable": {
    "name": "Alixo-Portable.exe",
-   "url": "https://github.com/ultra-project/alixo/releases/download/v1.27.0/Alixo-Portable.exe",
-   "size": 76647860
+   "url": "https://github.com/ultra-project/alixo/releases/download/v1.27.1/Alixo-Portable.exe",
+   "size": 76660106
   },
   "mac": {
    "name": "Alixo-Mac.dmg",
-   "url": "https://github.com/ultra-project/alixo/releases/download/v1.27.0/Alixo-Mac.dmg",
-   "size": 183953706
+   "url": "https://github.com/ultra-project/alixo/releases/download/v1.27.1/Alixo-Mac.dmg",
+   "size": 183992304
   },
   "macZip": {
-   "name": "Alixo-1.27.0-mac.zip",
-   "url": "https://github.com/ultra-project/alixo/releases/download/v1.27.0/Alixo-1.27.0-mac.zip",
-   "size": 177376481
+   "name": "Alixo-1.27.1-mac.zip",
+   "url": "https://github.com/ultra-project/alixo/releases/download/v1.27.1/Alixo-1.27.1-mac.zip",
+   "size": 177393586
   }
  },
  "history": [
+  {
+   "version": "1.27.1",
+   "date": "2026-10-06T12:12:45Z",
+   "notes": "Nouveautés 1.27.1 — connexion Apple prête (navigateur et PC), présentation animée des nouveautés\n\n\n- **Connexion avec Apple** (`app/js/auth.js`) : le bouton « Continuer avec Apple » répondait toujours « nécessite l’Apple Developer Program », même une fois Apple activé dans Firebase : l’application exigeait un réglage côté client (`ALIXO_APPLE_CONFIG`) qui ne servait à rien, le fournisseur étant entièrement réglé côté serveur. Ce verrou est retiré. Dans le **navigateur**, la connexion s’ouvre dans une fenêtre ; si elle est bloquée (Safari sur iPhone, application « sur l’écran d’accueil »), elle passe par une redirection et se termine toute seule au retour. Le prénom transmis par Apple à la première connexion est gardé dans le profil. Tant qu’Apple n’est pas activé dans la console Firebase, le bouton le dit clairement (« Ce mode de connexion n’est pas activé sur le serveur d’Alixo ») au lieu de parler du programme développeur. **À faire côté serveur** : activer Apple dans Firebase (compte Apple Developer, Service ID, clé — `SETUP-COMPTES.md` § 2) ; la connexion fonctionnera alors sans nouvelle version de l’application.\n- **Connexion Apple dans la version PC** (`main.js`, `preload.js`, nouvelle page `app/apple.html`) : Apple n’accepte pas d’adresse de retour locale comme Google ; le bouton ouvre donc le navigateur système sur `alixoapp.com/docs/apple.html`, où la connexion se fait, puis la page revient d’elle-même dans Alixo (boucle locale `127.0.0.1`, jeton à usage unique, jamais transmis ailleurs). Mode d’emploi côté Firebase et Apple Developer dans `SETUP-COMPTES.md` § 2.\n- **Messages de connexion** : fenêtre bloquée, connexion annulée, domaine non autorisé, « un compte existe déjà avec cet e-mail par un autre mode de connexion »… sont expliqués en français au lieu du code d’erreur brut.\n- **Présentation animée des nouveautés** (`app/js/whatsnew.js`, `app/whatsnew.css`, scènes dans `app/js/whatsnew-scenes.js`) : au premier lancement qui suit une mise à jour, une courte séquence animée (une idée par scène, texte et illustration, progression, pause, Échap) présente ce qui change, à la place de la seule notification de la cloche. Rejouable depuis Paramètres › À propos › « Revoir la présentation » et depuis la cloche ; aussi en page seule sur `alixoapp.com/docs/nouveautes.html?v=1.27.1` (lien ajouté aux notes de version).\n\n\n▶ **Les nouveautés en vidéo** (présentation animée, jouée dans l’application après la mise à jour) : https://alixoapp.com/docs/nouveautes.html?v=1.27.1"
+  },
   {
    "version": "1.27.0",
    "date": "2026-10-06T10:57:00Z",
