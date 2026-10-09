@@ -57,7 +57,7 @@
   <div style="position:relative">
     <div class="eyebrow">Politique de confidentialité</div>
     <h1>Vos cours sont <em>à vous.</em></h1>
-    <p>Ce que l’application et le site enregistrent, pourquoi, où, et comment en garder le contrôle. Dernière mise à jour : 5 octobre 2026.</p>
+    <p>Ce que l’application et le site enregistrent, pourquoi, où, et comment en garder le contrôle. Dernière mise à jour : 9 octobre 2026.</p>
   </div>
 </section>
 
@@ -68,7 +68,7 @@
       <ul>
         <li>Sans compte, <strong>vos cours ne quittent pas votre appareil</strong> : ils sont enregistrés dans le navigateur ou dans le dossier de l’application. L’application PC contacte seulement GitHub (vérification de mise à jour à chaque démarrage) et, au premier lancement, Google (dictionnaires du correcteur orthographique de Chromium).</li>
         <li>Avec un compte, vos cours, dossiers et fichiers sont <strong>synchronisés dans votre espace privé</strong> (Firebase, Google Cloud), lisibles par vous seul — et par les personnes que vous invitez sur un partage. <strong>Ni l’éditeur ni les administrateurs ne peuvent en lire le contenu</strong> : les règles de la base le leur interdisent.</li>
-        <li>La correction par IA n’envoie à Google <strong>que le texte analysé</strong>, avec votre propre clé ou celle fournie par l’administrateur ; jamais vos fichiers, jamais votre bibliothèque entière.</li>
+        <li>La correction par IA (modèle ouvert Qwen3.8) n’envoie <strong>que le texte analysé</strong>, et seulement au serveur d’IA que vous avez choisi (ou que l’administrateur vous a attribué) ; jamais vos fichiers, jamais votre bibliothèque entière. Si le modèle tourne sur votre ordinateur (Ollama), <strong>rien ne quitte l’appareil</strong>. Alixo n’utilise plus Google Gemini ni Grok (xAI).</li>
         <li>Aucune publicité, aucune revente de données, aucun traqueur sur le site.</li>
       </ul>
     </section>
@@ -79,11 +79,11 @@
     <section id="donnees">
       <h2>Ce qui est enregistré</h2>
       <h3>Sur votre appareil (toujours)</h3>
-      <p>Les cours, dossiers, présentations, tableurs, fichiers importés, réglages et la clé IA éventuelle sont enregistrés localement (stockage du navigateur ou profil de l’application PC). La clé IA n’est jamais synchronisée.</p>
+      <p>Les cours, dossiers, présentations, tableurs, planches, quiz, fichiers importés et réglages sont enregistrés localement (stockage du navigateur ou profil de l’application PC), de même que la configuration de la correction par IA (serveur, modèle et clé d’accès éventuelle) et le fichier audio que vous choisissez comme musique de quiz. Votre clé d’accès IA et ce fichier audio ne sont jamais synchronisés.</p>
       <h3>Avec un compte</h3>
       <ul>
         <li><strong>Identité</strong> : adresse e-mail, prénom ou pseudo, fournisseur de connexion (e-mail et mot de passe, Google ou Apple). Le mot de passe est géré par Firebase Authentication ; Alixo ne le voit jamais. Si vous choisissez un pseudo, il est inscrit dans un annuaire avec votre prénom et votre e-mail, consultable uniquement par une personne qui connaît ce pseudo exactement, afin de vous inviter à un partage ; retirer le pseudo efface cette entrée.</li>
-        <li><strong>Contenu</strong> : cours, dossiers, agenda, tâches, images et fichiers importés, dans votre espace privé (<code>users/{votre identifiant}</code>). Ils servent uniquement à vous les restituer sur vos autres appareils.</li>
+        <li><strong>Contenu</strong> : cours, dossiers, présentations, tableurs, planches, quiz (avec leurs résultats), agenda, tâches, images et fichiers importés, dans votre espace privé (<code>users/{votre identifiant}</code>). Ils servent uniquement à vous les restituer sur vos autres appareils.</li>
         <li><strong>Profil</strong> : niveau d’études et spécialités choisis au questionnaire de bienvenue (modifiables dans Paramètres › Compte) ; ils adaptent les blocs proposés. <strong>Date de naissance</strong>, demandée pour vérifier votre âge : elle reste dans les réglages de votre compte, lisibles par vous seul ; seule votre tranche d’âge (moins de 15 ans, 15-17 ans, majeur) est visible de l’administrateur. Pour un mineur de moins de 15 ans : adresse e-mail du parent ou tuteur et date de son accord.</li>
         <li><strong>Activité</strong> : version utilisée, dernière connexion, présence (« en ligne », « rédige une séance ») envoyée toutes les 60 secondes pendant l’utilisation, nombre de séances, tailles de votre espace (cours, images, fichiers — sans leur contenu). Ces informations sont visibles de l’administrateur pour le support, et d’aucun autre utilisateur.</li>
         <li><strong>Alixo+</strong> : état de l’abonnement, code d’activation utilisé et, avant un paiement, la trace de votre acceptation des conditions générales de vente et de votre renonciation au droit de rétractation (date, prix affiché).</li>
@@ -91,11 +91,18 @@
         <li><strong>Notifications et messages</strong> : annonces et messages de l’administrateur, avec leur état lu / non lu.</li>
       </ul>
       <h3>Ce que voient les administrateurs</h3>
-      <p>Les administrateurs d’Alixo voient les informations de compte ci-dessus (identité, profil, activité, abonnement, messages) et les métadonnées des partages (titre, membres, journal des modifications). Ils <strong>ne peuvent pas lire le contenu de vos cours, images ou fichiers</strong>, ni celui des partages : les règles de sécurité de la base le leur interdisent. Chaque action d’administration (suspension, activation d’Alixo+, attribution d’une clé, message, export, consultation de la base) est inscrite dans un journal qui ne peut être ni modifié ni effacé.</p>
+      <p>Les administrateurs d’Alixo voient les informations de compte ci-dessus (identité, profil, activité, abonnement, messages, accès IA attribué) et les métadonnées des partages (titre, membres, journal des modifications). Ils <strong>ne peuvent pas lire le contenu de vos cours, images ou fichiers</strong>, ni celui des partages : les règles de sécurité de la base le leur interdisent. Chaque action d’administration (suspension, activation d’Alixo+, attribution d’une clé, message, export, consultation de la base) est inscrite dans un journal qui ne peut être ni modifié ni effacé.</p>
       <h3>Quiz en direct (participants sans compte)</h3>
-      <p>Pour rejoindre un quiz, un participant saisit un pseudo ; ses réponses, leurs horodatages et un identifiant aléatoire gardé dans son navigateur sont enregistrés le temps de la partie, visibles du présentateur seulement, puis effacés par le présentateur à la fin de la partie.</p>
+      <p>Pour rejoindre un quiz, un participant ouvre alixoapp.com/quiz, saisit le code de la partie et un pseudo (24 caractères au plus) ; aucun compte n’est demandé. Son pseudo, ses réponses, leurs horodatages et un identifiant aléatoire gardé dans son navigateur sont enregistrés le temps de la partie dans un espace propre à celle-ci, que seul le présentateur peut parcourir. Les participants voient le titre du quiz, le prénom ou pseudo du présentateur (à défaut son adresse e-mail), les questions et leurs images, et le classement par pseudo. Quand le présentateur arrête la présentation, la partie et les fiches des participants sont effacées. Le classement final (pseudos, scores, bonnes réponses, temps moyen) et les statistiques par question sont enregistrés dans le quiz, dans l’espace privé du présentateur, qui peut les supprimer à tout moment (bouton Résultats). Conseil : un pseudo n’a pas besoin d’être votre nom.</p>
       <h3>Correction par IA</h3>
-      <p>Si vous activez la correction (fonction Alixo+), le texte à analyser — phrase par phrase, uniquement les phrases nouvelles ou modifiées — est envoyé à l’API Gemini de Google avec la clé enregistrée sur votre appareil ou attribuée par l’administrateur. Les fautes de frappe courantes sont corrigées sur l’appareil sans rien envoyer. Le traitement par Google est soumis aux <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener">conditions de l’API Gemini</a>.</p>
+      <p>Depuis la version 1.28, la correction s’appuie sur <strong>Qwen3.8-27B</strong>, un modèle de langage ouvert (poids publiés par Alibaba sous licence Apache 2.0). Le modèle n’appartient à aucun service en particulier : c’est vous qui choisissez où il tourne, dans Paramètres › Correction par IA. Si vous activez la correction (fonction Alixo+), le texte à analyser — phrase par phrase, uniquement les phrases nouvelles ou modifiées — est envoyé à ce serveur, et à lui seul :</p>
+      <ul>
+        <li><strong>Ollama sur votre ordinateur</strong> : le modèle tourne sur votre propre machine, sans compte ni clé ; <strong>aucun texte ne quitte l’appareil</strong>.</li>
+        <li><strong>Un hébergeur</strong> (OpenRouter, Alibaba Cloud Model Studio) : le texte part chez cet hébergeur avec la clé de votre compte chez lui, enregistrée sur votre appareil. Le traitement est soumis à ses propres conditions et à sa politique de confidentialité (<a href="https://openrouter.ai" target="_blank" rel="noopener">openrouter.ai</a>, <a href="https://www.alibabacloud.com" target="_blank" rel="noopener">alibabacloud.com</a>) ; il peut avoir lieu hors de l’Union européenne. Alixo n’a pas de contrat avec l’hébergeur que vous choisissez et ne reçoit pas votre texte.</li>
+        <li><strong>Un autre serveur compatible</strong> (serveur de votre établissement, vLLM, LM Studio…) : le texte part à l’adresse que vous avez saisie ; son exploitant en est responsable.</li>
+        <li><strong>Un accès attribué par l’administrateur</strong> : l’application reçoit la configuration (serveur, modèle, clé) dans votre espace et l’utilise pour vous ; les administrateurs voient quel accès vous est attribué, jamais le texte analysé.</li>
+      </ul>
+      <p>Les fautes de frappe courantes sont corrigées sur l’appareil sans rien envoyer. Les clés Google (Gemini) et xAI (Grok) utilisées par les versions précédentes ne sont plus lues ni envoyées ; vous pouvez les révoquer chez Google ou xAI.</p>
       <h3>Sur le site alixoapp.com</h3>
       <p>Le site est statique : il ne dépose aucun cookie publicitaire ni outil de mesure d’audience. Il mémorise votre thème (clair / sombre) dans le navigateur, lit un petit fichier du site (releases.json) pour afficher la dernière version disponible, et charge les polices depuis Google Fonts. Les vidéos de présentation sont hébergées sur le site.</p>
     </section>
@@ -104,7 +111,8 @@
       <ul>
         <li><strong>Fournir le service</strong> (exécution du contrat) : enregistrer, synchroniser et partager vos cours, vous reconnaître à la connexion.</li>
         <li><strong>Assistance et sécurité</strong> (intérêt légitime) : comprendre un problème signalé, repérer un usage abusif, suspendre un compte qui enfreint les <a href="/conditions.html">conditions d’utilisation</a>.</li>
-        <li><strong>Correction par IA</strong> (votre choix) : uniquement si vous l’activez.</li>
+        <li><strong>Correction par IA</strong> (votre choix) : uniquement si vous l’activez, et vers le serveur que vous choisissez.</li>
+        <li><strong>Quiz en direct</strong> (exécution du service demandé par le présentateur et le participant) : faire fonctionner la partie et en garder le résultat pour le présentateur.</li>
       </ul>
       <p>Vos données ne sont ni vendues, ni louées, ni utilisées pour de la publicité, ni pour entraîner un modèle d’IA par Alixo.</p>
     </section>
@@ -112,7 +120,7 @@
       <h2>Où et chez qui</h2>
       <ul>
         <li><strong>Firebase / Google Cloud</strong> (authentification, base de données Firestore) : hébergement des comptes et du contenu synchronisé. Google agit comme sous-traitant ; des transferts hors Union européenne peuvent avoir lieu dans le cadre des clauses contractuelles types de Google.</li>
-        <li><strong>Google AI Studio (Gemini)</strong> : correction par IA, à votre demande.</li>
+        <li><strong>Correction par IA</strong> : le serveur que vous choisissez — votre ordinateur (Ollama, aucun tiers), un hébergeur comme OpenRouter ou Alibaba Cloud (selon ses propres conditions, avec votre compte chez lui), ou le serveur attribué par l’administrateur. Alixo ne fait appel à aucun service d’IA par défaut.</li>
         <li><strong>GitHub</strong> : hébergement du site, des installateurs et des mises à jour automatiques (l’application PC vérifie la dernière version au démarrage).</li>
         <li><strong>Google Fonts</strong> : polices du site vitrine (pas de l’application).</li>
       </ul>

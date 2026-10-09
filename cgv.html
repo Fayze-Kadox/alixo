@@ -57,7 +57,7 @@
   <div style="position:relative">
     <div class="eyebrow">Conditions générales de vente</div>
     <h1>Acheter Alixo+, <em>sans surprise.</em></h1>
-    <p>Prix, durée, paiement, droit de rétractation, garantie et médiation pour l’abonnement Alixo+. Dernière mise à jour : 5 octobre 2026.</p>
+    <p>Prix, durée, paiement, droit de rétractation, garantie et médiation pour l’abonnement Alixo+. Dernière mise à jour : 9 octobre 2026.</p>
   </div>
 </section>
 
@@ -70,11 +70,18 @@
     </section>
     <section id="offre">
       <h2>2. L’offre Alixo+</h2>
-      <p>Alixo+ ouvre, sur le compte Alixo de l’Acheteur et sur tous ses appareils : la correction et la mise en forme par intelligence artificielle (avec une clé Google Gemini, voir § 2 bis), les tâches à faire, tous les thèmes de couleurs, toutes les polices et le stockage au-delà de 3 Go. Le contenu exact de l’offre est décrit dans l’application (Paramètres › Alixo+) et sur la page <a href="/index.html?site#alixo-plus">Alixo+</a> du site.</p>
+      <p>Alixo+ ouvre, sur le compte Alixo de l’Acheteur et sur tous ses appareils : la correction et la mise en forme par intelligence artificielle (modèle ouvert Qwen3.8-27B, sur le serveur choisi par l’Acheteur, voir § 2 bis), les tâches à faire, tous les thèmes de couleurs, toutes les polices et le stockage au-delà de 3 Go. Le contenu exact de l’offre est décrit dans l’application (Paramètres › Alixo+) et sur la page <a href="/index.html?site#alixo-plus">Alixo+</a> du site.</p>
       <p><strong>Durées</strong> : 1, 3, 6 ou 12 mois à compter de l’activation. L’abonnement <strong>ne se renouvelle pas automatiquement</strong> ; à l’échéance, les fonctions gratuites restent disponibles et les réglages Alixo+ sont mémorisés.</p>
       <p><strong>Prix</strong> : <mark>[prix TTC par durée — à compléter]</mark>, affichés en euros toutes taxes comprises dans l’application et sur la page de paiement avant la commande. <mark>[« TVA non applicable, article 293 B du CGI » ou taux de TVA — à compléter]</mark>. Le Vendeur peut modifier ses prix ; le prix applicable est celui affiché au moment de la commande.</p>
       <h3 id="ia">2 bis. Intelligence artificielle</h3>
-      <p>Les fonctions d’IA d’Alixo+ font appel à l’API Gemini de Google avec une clé d’accès enregistrée sur l’appareil de l’Acheteur. L’Acheteur obtient cette clé gratuitement auprès de Google (Google AI Studio) et en accepte les conditions ; le Vendeur ne garantit pas la disponibilité ni la gratuité de ce service tiers. Lorsqu’une clé est mise à disposition par l’administrateur d’Alixo, elle est réservée à la correction dans l’application.</p>
+      <p>Depuis la version 1.28, les fonctions d’IA d’Alixo+ s’appuient sur le modèle de langage ouvert <strong>Qwen3.8-27B</strong> (Alibaba, licence Apache 2.0). Le prix d’Alixo+ couvre les fonctions de l’application (analyse, propositions, application des corrections) ; <strong>il ne comprend pas la puissance de calcul du modèle</strong>, que l’Acheteur choisit dans Paramètres › Correction par IA :</p>
+      <ul>
+        <li><strong>sur son ordinateur</strong> avec Ollama : gratuit, sans compte, hors ligne ; demande un ordinateur capable de faire tourner le modèle (environ 17 Go à télécharger) ;</li>
+        <li><strong>chez un hébergeur</strong> (OpenRouter, Alibaba Cloud Model Studio…) : avec un compte et une clé ouverts par l’Acheteur auprès de cet hébergeur, dont il accepte les conditions et, le cas échéant, la facturation à l’usage ;</li>
+        <li><strong>sur un autre serveur compatible</strong> (par exemple celui de son établissement).</li>
+      </ul>
+      <p>Le Vendeur ne garantit ni la disponibilité, ni les prix, ni la gratuité de ces services tiers. Lorsqu’un accès est mis à disposition par l’administrateur d’Alixo, il est réservé à la correction dans l’application et ne peut être communiqué à un tiers. Les clés Google Gemini ou xAI utilisées avec les versions antérieures ne sont plus prises en charge.</p>
+      <p><strong>Évolution du service d’IA</strong> : si une évolution d’Alixo+ modifie de manière défavorable l’accès de l’Acheteur à la correction par IA pendant son abonnement (par exemple le changement de modèle de la version 1.28), le Vendeur l’en informe à l’avance, dans l’application ou par e-mail ; l’Acheteur peut alors, dans les 30 jours qui suivent cette information ou la modification si elle est plus tardive, demander la résolution du contrat et le remboursement au prorata de la période restante, conformément au Code de la consommation.</p>
     </section>
     <section id="commande">
       <h2>3. Commande et paiement</h2>
@@ -99,7 +106,7 @@
     </section>
     <section id="garantie">
       <h2>5. Garantie légale de conformité</h2>
-      <p>L’Acheteur bénéficie de la garantie légale de conformité des contenus et services numériques (articles L. 224-25-1 et suivants du Code de la consommation) : Alixo+ doit correspondre à sa description et rester fonctionnel pendant toute la durée de l’abonnement, mises à jour comprises. En cas de défaut de conformité, l’Acheteur peut demander la mise en conformité, puis une réduction du prix ou la résolution du contrat avec remboursement au prorata. La garantie ne couvre pas un service tiers (Google Gemini, GitHub) indisponible pour des raisons extérieures au Vendeur, ni l’usage d’une version de l’application que l’Acheteur a refusé de mettre à jour.</p>
+      <p>L’Acheteur bénéficie de la garantie légale de conformité des contenus et services numériques (articles L. 224-25-1 et suivants du Code de la consommation) : Alixo+ doit correspondre à sa description et rester fonctionnel pendant toute la durée de l’abonnement, mises à jour comprises. En cas de défaut de conformité, l’Acheteur peut demander la mise en conformité, puis une réduction du prix ou la résolution du contrat avec remboursement au prorata. La garantie ne couvre pas un service tiers (hébergeur d’IA choisi par l’Acheteur, GitHub) indisponible ou facturé pour des raisons extérieures au Vendeur, ni un ordinateur insuffisant pour faire tourner le modèle localement, ni l’usage d’une version de l’application que l’Acheteur a refusé de mettre à jour.</p>
     </section>
     <section id="mineurs">
       <h2>6. Mineurs</h2>
