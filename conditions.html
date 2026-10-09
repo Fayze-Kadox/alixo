@@ -57,7 +57,7 @@
   <div style="position:relative">
     <div class="eyebrow">Conditions d’utilisation</div>
     <h1>Les règles du <em>jeu.</em></h1>
-    <p>Ce que vous pouvez attendre d’Alixo, et ce qu’Alixo attend de vous. Dernière mise à jour : 5 octobre 2026.</p>
+    <p>Ce que vous pouvez attendre d’Alixo, et ce qu’Alixo attend de vous. Dernière mise à jour : 9 octobre 2026.</p>
   </div>
 </section>
 
@@ -83,7 +83,8 @@
         <li>de publier ou partager un contenu illicite, diffamatoire, haineux ou portant atteinte aux droits d’autrui ;</li>
         <li>de diffuser via Alixo Share des supports de cours protégés sans l’autorisation de leur auteur ou de l’établissement ;</li>
         <li>de tenter d’accéder aux données d’un autre compte, de contourner les règles de sécurité ou de surcharger le service ;</li>
-        <li>d’utiliser une clé IA attribuée par l’administrateur à d’autres fins que la correction dans l’application.</li>
+        <li>d’utiliser un accès IA (serveur, clé) attribué par l’administrateur à d’autres fins que la correction dans l’application, ou de le communiquer à un tiers ;</li>
+        <li>d’utiliser un quiz en direct pour recueillir des informations personnelles des participants ou pour diffuser un contenu interdit ci-dessus ; un pseudo de participant injurieux ou usurpant l’identité d’autrui est interdit.</li>
       </ul>
       <p>Un compte qui enfreint ces règles peut être suspendu, après avertissement sauf urgence.</p>
     </section>
@@ -93,23 +94,28 @@
     </section>
     <section id="plus">
       <h2>5. Alixo+</h2>
-      <p>Alixo+ est une option payante (correction par IA, thèmes et polices supplémentaires, tâches, stockage étendu) activée par une clé d’activation ou par l’administrateur. Sa vente — prix, durées, paiement, droit de rétractation, remboursement, garantie légale de conformité, médiation — est régie par les <a href="/cgv.html">conditions générales de vente</a>, présentées avant tout paiement dans l’application et sur ce site. Une clé est personnelle et ne peut pas être revendue. À l’échéance, les fonctions gratuites restent disponibles et les thèmes ou polices choisis sont mémorisés.</p>
+      <p>Alixo+ est une option payante (correction par IA sur le serveur de votre choix, thèmes et polices supplémentaires, tâches, stockage étendu) activée par une clé d’activation ou par l’administrateur. Sa vente — prix, durées, paiement, droit de rétractation, remboursement, garantie légale de conformité, médiation — est régie par les <a href="/cgv.html">conditions générales de vente</a>, présentées avant tout paiement dans l’application et sur ce site. Une clé est personnelle et ne peut pas être revendue. À l’échéance, les fonctions gratuites restent disponibles et les thèmes ou polices choisis sont mémorisés.</p>
     </section>
     <section id="disponibilite">
       <h2>6. Disponibilité et évolutions</h2>
-      <p>Alixo est fourni « en l’état ». Le service peut être interrompu pour maintenance, mise à jour ou en cas d’incident chez un prestataire (Google, GitHub). Les fonctions peuvent évoluer, être ajoutées ou retirées ; une mise à jour peut être rendue obligatoire pour des raisons de sécurité ou de compatibilité, sans jamais vous priver de l’accès à vos cours enregistrés localement ni de leur export. L’application PC se met à jour automatiquement.</p>
+      <p>Alixo est fourni « en l’état ». Le service peut être interrompu pour maintenance, mise à jour ou en cas d’incident chez un prestataire (Google, GitHub) ou chez le serveur d’IA que vous avez choisi. Les fonctions peuvent évoluer, être ajoutées ou retirées ; une mise à jour peut être rendue obligatoire pour des raisons de sécurité ou de compatibilité, sans jamais vous priver de l’accès à vos cours enregistrés localement ni de leur export. L’application PC se met à jour automatiquement.</p>
     </section>
     <section id="ia">
       <h2>7. Correction par IA</h2>
-      <p>Les corrections et propositions de mise en forme sont produites par un modèle de langage et peuvent être inexactes. Elles ne s’appliquent jamais sans votre accord, sauf les fautes de frappe évidentes, annulables d’un geste (Ctrl+Z ou Retour arrière). Relisez toujours un texte avant de le rendre.</p>
+      <p>La correction et les propositions de mise en forme reposent sur le modèle de langage ouvert <strong>Qwen3.8-27B</strong> (Alibaba, licence Apache 2.0), qui n’est pas fourni avec Alixo : il tourne sur le serveur que vous configurez dans Paramètres › Correction par IA — votre propre ordinateur (Ollama), un hébergeur (OpenRouter, Alibaba Cloud Model Studio…) ou un autre serveur compatible — ou sur l’accès attribué par l’administrateur.</p>
+      <ul>
+        <li>Lorsque vous utilisez un hébergeur, vous ouvrez un compte chez lui, acceptez ses conditions et réglez, le cas échéant, sa facturation à l’usage ; Alixo n’est pas partie à ce contrat et ne garantit ni sa disponibilité, ni ses prix, ni le traitement qu’il fait du texte reçu. Pour un texte sensible, préférez le modèle sur votre ordinateur : rien ne quitte l’appareil.</li>
+        <li>Les corrections peuvent être inexactes. Elles ne s’appliquent jamais sans votre accord, sauf les fautes de frappe évidentes, annulables d’un geste (Ctrl+Z ou Retour arrière). Relisez toujours un texte avant de le rendre.</li>
+        <li>Les clés Google (Gemini) et xAI (Grok) des versions antérieures à la 1.28 ne sont plus prises en charge ; l’application vous guide pour configurer un nouveau serveur.</li>
+      </ul>
     </section>
     <section id="propriete">
       <h2>8. Propriété intellectuelle</h2>
-      <p>Alixo (logiciel, interface, logo, textes et vidéos du site) est protégé par le droit d’auteur. Les composants tiers (Electron, Chromium, three.js, JSZip, mammoth, qrcode…) restent soumis à leurs licences respectives. Toute reproduction ou redistribution du logiciel sans autorisation est interdite, dans les limites prévues par la loi.</p>
+      <p>Alixo (logiciel, interface, logo, textes et vidéos du site) est protégé par le droit d’auteur. Les composants tiers (Electron, Chromium, three.js, JSZip, mammoth, qrcode…) restent soumis à leurs licences respectives, de même que le modèle Qwen3.8-27B (Apache 2.0), qui n’est pas distribué avec Alixo. Toute reproduction ou redistribution du logiciel sans autorisation est interdite, dans les limites prévues par la loi.</p>
     </section>
     <section id="responsabilite">
       <h2>9. Responsabilité</h2>
-      <p>Dans la mesure permise par la loi, Alixo ne saurait être tenu responsable d’une perte de données, d’une indisponibilité, d’une erreur de correction ou d’un dommage indirect lié à l’utilisation du service. Les liens vers des sites tiers (Légifrance, calculatrices en ligne…) sont soumis aux conditions de ces sites.</p>
+      <p>Dans la mesure permise par la loi, Alixo ne saurait être tenu responsable d’une perte de données, d’une indisponibilité, d’une erreur de correction, du fonctionnement ou de la facturation d’un serveur d’IA tiers choisi par vous, ou d’un dommage indirect lié à l’utilisation du service. Les liens vers des sites tiers (Légifrance, calculatrices en ligne…) sont soumis aux conditions de ces sites.</p>
     </section>
     <section id="resiliation">
       <h2>10. Durée et résiliation</h2>
