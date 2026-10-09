@@ -44,7 +44,7 @@
   let toastTm = null;
   function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTm); toastTm = setTimeout(() => { t.hidden = true; }, 2600); }
   function modal(html, onMount) {
-    const m = $('#modal'), c = $('#modal-card'); c.innerHTML = html; m.hidden = false;
+    const m = $('#modal'), c = $('#modal-card'); c.className = 'card modal-card'; c.innerHTML = html; m.hidden = false;
     const close = () => { m.hidden = true; c.innerHTML = ''; };
     m.onclick = e => { if (e.target === m) close(); };
     c.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', close));
@@ -319,53 +319,70 @@
     }).join('') : '<div class="empty">Aucune action enregistrée pour l’instant.</div>';
   }
 
-  /* ---------------- utilisateurs ---------------- */
+  /* ---------------- utilisateurs ----------------
+     refonte 2026 : lignes compactes (statut + dernière ouverture réunis, spécialités résumées, UID dans la fiche),
+     tri par colonne, filtres rapides, actions dans un menu ⋯, fiche complète au clic sur la ligne */
+  const usort = { key: 'seen', dir: -1 };
   $('#users-q').addEventListener('input', renderUsers);
   $('#users-f').addEventListener('change', renderUsers);
+  $('#users-chips').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (!b) return; $('#users-f').value = b.dataset.f; renderUsers(); });
+  $('#users-tbl thead').addEventListener('click', e => {
+    const th = e.target.closest('[data-sort]'); if (!th) return;
+    const k = th.dataset.sort; usort.dir = usort.key === k ? -usort.dir : (k === 'name' ? 1 : -1); usort.key = k; renderUsers();
+  });
+  const userMatches = (p, f, now) => {
+    if (f === 'online') return presence(p).on;
+    if (f === 'active') return p.lastSeen && now - p.lastSeen < 7 * 86400000;
+    if (f === 'key') return hasKey(p.uid);
+    if (f === 'nokey') return !hasKey(p.uid);
+    if (f === 'disabled') return !!p.disabled;
+    if (f === 'plus') return planActive(planOf(p.uid));
+    if (f === 'free') return !planActive(planOf(p.uid));
+    if (f === 'desktop' || f === 'web') return p.platform === f;
+    return true;
+  };
   function filteredUsers() {
     const q = $('#users-q').value.trim().toLowerCase(), f = $('#users-f').value, now = Date.now();
+    const val = p => usort.key === 'name' ? String(userLabel(p)).toLowerCase() : usort.key === 'docs' ? (+p.nDocs || 0) : usort.key === 'ver' ? String(p.version || '0').split('.').map(n => n.padStart(4, '0')).join('.') : (p.lastSeen || 0);
     return state.profiles.filter(p => {
       if (q && ![p.email, p.pseudo, p.name, p.uid].some(v => String(v || '').toLowerCase().includes(q))) return false;
-      if (f === 'online') return presence(p).on;
-      if (f === 'active') return p.lastSeen && now - p.lastSeen < 7 * 86400000;
-      if (f === 'key') return hasKey(p.uid);
-      if (f === 'nokey') return !hasKey(p.uid);
-      if (f === 'disabled') return !!p.disabled;
-      if (f === 'plus') return planActive(planOf(p.uid));
-      if (f === 'free') return !planActive(planOf(p.uid));
-      if (f === 'desktop' || f === 'web') return p.platform === f;
-      return true;
-    }).sort((a, b) => (b.lastSeen || 0) - (a.lastSeen || 0));
+      return userMatches(p, f, now);
+    }).sort((a, b) => { const x = val(a), y = val(b); return (x < y ? -1 : x > y ? 1 : 0) * usort.dir || (b.lastSeen || 0) - (a.lastSeen || 0); });
   }
+  const keyChip = p => { const a = state.assigned.get(p.uid); const k = a ? keyById(a.keyId) : null; return hasKey(p.uid) ? `<span class="chip ok" title="${esc(mask(a.ai) + ' · ' + (a.model || ''))}">${esc(k ? keyLabel(k) : 'clé hors réservoir')}${a.force ? ' · imposée' : ''}</span>` : a ? '<span class="chip warn" title="Attribution antérieure à 1.28 (clé xAI ou Google) : l’application l’ignore — attribuer un accès Qwen3.8">ancienne clé</span>' : '<span class="muted">—</span>'; };
+  const planChip = p => { const pl = planOf(p.uid); return planActive(pl) ? `<span class="chip brand" title="${esc(pl.note || '')}${pl.by ? ' · par ' + esc(pl.by) : ''}"><svg class="ic xs"><use href="#i-crown"/></svg>Alixo+</span><div class="cell-sub">${esc(planLabel(pl))}</div>` : (pl && pl.plus ? '<span class="chip warn" title="Abonnement arrivé à échéance">expiré</span>' : '<span class="muted">Gratuit</span>'); };
+  const specChips = (p, max = 2) => { const S = (p.specialites || []).map(s => SPECS[s] || s); return S.length ? S.slice(0, max).map(s => `<span class="chip dim">${esc(s)}</span>`).join('') + (S.length > max ? `<span class="chip dim more-chip" title="${esc(S.slice(max).join(', '))}">+${S.length - max}</span>` : '') : '<span class="muted">—</span>'; };
   function renderUsers() {
-    const list = filteredUsers();
+    const list = filteredUsers(), now = Date.now(), f = $('#users-f').value, latest = state.pub.latestVersion || '';
     $('#users-count').textContent = `${list.length} / ${state.profiles.length}`;
+    $$('#users-chips [data-f]').forEach(b => { b.classList.toggle('on', b.dataset.f === f); b.querySelector('b').textContent = state.profiles.filter(p => userMatches(p, b.dataset.f, now)).length; });
+    $$('#users-tbl th[data-sort]').forEach(th => { th.classList.toggle('sorted', th.dataset.sort === usort.key); th.dataset.dir = usort.dir > 0 ? 'asc' : 'desc'; });
     $('#users-tbl tbody').innerHTML = list.length ? list.map(p => {
-      const a = state.assigned.get(p.uid); const k = a ? keyById(a.keyId) : null;
       const isAdm = state.admins.some(x => x.uid === p.uid);
-      const pl = planOf(p.uid), plusOn = planActive(pl);
-      return `<tr data-uid="${esc(p.uid)}">
-        <td><div class="u-cell">${avatar(p, 'sm')}<div><div class="u-main">${esc(p.name || p.pseudo || '—')}${isAdm ? ' <span class="chip brand">admin</span>' : ''}</div><div class="u-sub">${esc(p.email || '')}${p.pseudo ? ' · @' + esc(p.pseudo) : ''}</div><div class="u-sub" title="UID">${esc(p.uid)}</div></div></div></td>
-        <td>${(p.specialites || []).map(s => `<span class="chip dim">${esc(SPECS[s] || s)}</span>`).join('') || '<span class="muted">—</span>'}</td>
-        <td>${presenceHTML(p)}</td>
-        <td title="${esc(when(p.lastSeen))}">${ago(p.lastSeen)}</td>
-        <td>${p.version ? `<span class="chip dim">${esc(p.version)}</span>` : '—'} ${p.platform ? `<span class="muted small">${p.platform === 'desktop' ? 'PC' : 'web'}</span>` : ''}</td>
-        <td>${p.nDocs ?? '—'}</td>
-        <td>${hasKey(p.uid) ? `<span class="chip ok" title="${esc(mask(a.ai) + ' · ' + (a.model || ''))}">${esc(k ? keyLabel(k) : 'clé hors réservoir')}${a.force ? ' · imposée' : ''}</span>` : a ? '<span class="chip bad" title="Attribution antérieure à 1.28 (clé xAI ou Google) : l’application l’ignore — attribuer un accès Qwen3.8">ancienne clé</span>' : '<span class="chip dim">aucune</span>'}</td>
-        <td>${plusOn ? `<span class="chip ok" title="${esc(pl.note || '')}${pl.by ? ' · par ' + esc(pl.by) : ''}">Alixo+ · ${esc(planLabel(pl))}</span>` : (pl && pl.plus ? '<span class="chip bad" title="Abonnement arrivé à échéance">expiré</span>' : '<span class="chip dim">gratuit</span>')}</td>
-        <td>${p.disabled ? `<span class="chip bad" title="${esc(p.disabledReason || '')}">suspendu</span>` : '<span class="chip ok">actif</span>'}</td>
-        <td><div class="acts"><button data-ua="msg" title="Envoyer un message direct à cet utilisateur">Message…</button><button data-ua="key" title="Attribuer / retirer une clé IA">Clé…</button><button data-ua="plan" title="Activer, prolonger ou retirer Alixo+">Alixo+…</button><button data-ua="storage" title="Espace utilisé dans la base">Stockage</button><button data-ua="${p.disabled ? 'enable' : 'disable'}" class="${p.disabled ? '' : 'danger'}">${p.disabled ? 'Réactiver' : 'Suspendre'}</button></div></td></tr>`;
-    }).join('') : '<tr><td colspan="10" class="empty">Aucun utilisateur ne correspond.</td></tr>';
+      const pr = presence(p);
+      const old = latest && p.version && cmpVer(p.version, latest) < 0;
+      return `<tr data-uid="${esc(p.uid)}" class="${p.disabled ? 'off' : ''}">
+        <td><div class="u-cell">${avatar(p, 'sm')}<div class="u-txt"><div class="u-main">${esc(userLabel(p) || '—')}${isAdm ? ' <span class="chip brand">admin</span>' : ''}${p.disabled ? ` <span class="chip bad" title="${esc(p.disabledReason || '')}">suspendu</span>` : ''}</div><div class="u-mail">${esc(p.email || p.uid)}</div></div></div></td>
+        <td title="${esc(when(p.lastSeen))}"><div class="st-line"><i class="dot ${pr.on ? (pr.cls.includes('idle') ? 'warn' : 'ok') : ''}"></i>${pr.on ? 'En ligne' : (p.lastSeen ? 'Hors ligne' : 'Jamais connecté')}</div><div class="cell-sub">${pr.on ? esc(pr.label.replace('Connecté · ', '')) : ago(p.lastSeen)}</div></td>
+        <td><div class="chips">${specChips(p)}</div></td>
+        <td>${p.version ? `<span class="chip ${old ? 'warn' : 'dim'}" title="${old ? 'Plus ancienne que la version annoncée ' + esc(latest) : 'À jour'}">${esc(p.version)}</span><div class="cell-sub">${p.platform === 'desktop' ? 'PC' : p.platform === 'web' ? 'Web' : '—'}</div>` : '<span class="muted">—</span>'}</td>
+        <td class="num">${p.nDocs ?? '—'}</td>
+        <td>${planChip(p)}</td>
+        <td>${keyChip(p)}</td>
+        <td class="menu-cell"><button class="icon-btn kebab" data-umenu aria-label="Actions" title="Actions"><svg class="ic"><use href="#i-dots"/></svg></button></td></tr>`;
+    }).join('') : '<tr><td colspan="8" class="empty">Aucun utilisateur ne correspond.</td></tr>';
     const n = $('#msg-all-n'); if (n) n.textContent = `${list.length} destinataire${list.length > 1 ? 's' : ''}`;
   }
-  $('#users-tbl').addEventListener('click', async e => {
-    const b = e.target.closest('[data-ua]'); if (!b) return;
-    const uid = b.closest('tr').dataset.uid; const p = state.profiles.find(x => x.uid === uid); if (!p) return;
-    const act = b.dataset.ua;
+
+  /* actions sur un compte (menu ⋯, fiche) */
+  async function userAction(act, p) {
+    const uid = p.uid;
+    if (act === 'card') return openUserCard(p);
     if (act === 'key') return openAssignModal(p);
     if (act === 'plan') return openPlanModal(p);
     if (act === 'storage') return openStorageModal(p);
     if (act === 'msg') return openMsgModal(p);
+    if (act === 'copy-mail' || act === 'copy-uid') { try { await navigator.clipboard.writeText(act === 'copy-uid' ? uid : p.email || ''); toast(act === 'copy-uid' ? 'UID copié' : 'E-mail copié'); } catch { /* presse-papiers indisponible */ } return; }
     if (act === 'disable') {
       modal(`<h3>Suspendre ${esc(p.email || p.uid)}</h3><p class="muted">L’application affichera « Accès suspendu » à sa prochaine synchronisation ; ses cours restent sur ses appareils.</p><label class="field">Motif (affiché à l’utilisateur)<textarea id="dis-reason" placeholder="Ex. compte partagé entre plusieurs personnes, contactez…"></textarea></label><div class="modal-foot"><button class="btn ghost" data-close>Annuler</button><button class="btn danger ghost" id="dis-ok">Suspendre</button></div>`, (c, close) => {
         c.querySelector('#dis-ok').onclick = async () => { const reason = c.querySelector('#dis-reason').value.trim(); await db.collection('profiles').doc(uid).set({ disabled: true, disabledReason: reason, disabledAt: Date.now() }, { merge: true }); audit('user.suspend', uid, { reason }); close(); toast('Compte suspendu'); };
@@ -373,7 +390,65 @@
       return;
     }
     if (act === 'enable') { await db.collection('profiles').doc(uid).set({ disabled: false, disabledReason: FV.delete(), disabledAt: FV.delete() }, { merge: true }); audit('user.enable', uid); toast('Compte réactivé'); }
+  }
+  const menuItems = p => [
+    ['card', 'user', 'Ouvrir la fiche'], ['msg', 'chat', 'Envoyer un message'], null,
+    ['plan', 'crown', planActive(planOf(p.uid)) ? 'Prolonger ou retirer Alixo+' : 'Activer Alixo+'], ['key', 'spark', 'Accès IA…'], ['storage', 'hdd', 'Stockage'], null,
+    ['copy-mail', 'copy', 'Copier l’e-mail'], ['copy-uid', 'copy', 'Copier l’UID'], null,
+    p.disabled ? ['enable', 'check', 'Réactiver le compte'] : ['disable', 'ban', 'Suspendre le compte', 'danger']
+  ];
+  let menuFor = null;
+  function closeMenu() { $('#umenu').hidden = true; menuFor = null; $$('.kebab.open').forEach(b => b.classList.remove('open')); }
+  function openMenu(btn, p) {
+    if (menuFor === p.uid) return closeMenu();
+    closeMenu(); menuFor = p.uid; btn.classList.add('open');
+    const m = $('#umenu');
+    m.innerHTML = `<div class="dmenu-head">${avatar(p, 'sm')}<div><b>${esc(userLabel(p))}</b><span>${esc(p.email || p.uid)}</span></div></div>` + menuItems(p).map(it => it ? `<button role="menuitem" data-mact="${it[0]}" class="${it[3] || ''}"><svg class="ic"><use href="#i-${it[1]}"/></svg>${esc(it[2])}</button>` : '<hr>').join('');
+    m.hidden = false;
+    if (matchMedia('(max-width: 760px)').matches) { m.style.left = m.style.top = ''; return; }   /* téléphone : feuille en bas (admin.css) */
+    const r = btn.getBoundingClientRect(), w = m.offsetWidth, h = m.offsetHeight;
+    m.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.right - w)) + 'px';
+    m.style.top = (r.bottom + 6 + h > innerHeight - 8 ? Math.max(8, r.top - h - 6) : r.bottom + 6) + 'px';
+  }
+  $('#umenu').addEventListener('click', e => { const b = e.target.closest('[data-mact]'); if (!b) return; const p = state.profiles.find(x => x.uid === menuFor); closeMenu(); if (p) userAction(b.dataset.mact, p); });
+  document.addEventListener('click', e => { if (!$('#umenu').hidden && !e.target.closest('#umenu, [data-umenu]')) closeMenu(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
+  window.addEventListener('scroll', () => { if (!matchMedia('(max-width: 760px)').matches) closeMenu(); }, true);
+  window.addEventListener('resize', closeMenu);
+  $('#users-tbl').addEventListener('click', e => {
+    const tr = e.target.closest('tr[data-uid]'); if (!tr) return;
+    const p = state.profiles.find(x => x.uid === tr.dataset.uid); if (!p) return;
+    const k = e.target.closest('[data-umenu]'); if (k) { e.stopPropagation(); return openMenu(k, p); }
+    if (e.target.closest('a, button, .chip[title]') && !e.target.closest('td:first-child')) return;
+    if (getSelection && String(getSelection())) return;   /* sélection de texte : pas d'ouverture */
+    openUserCard(p);
   });
+
+  /* fiche utilisateur : tout ce qu'on sait du compte + les actions */
+  function openUserCard(p) {
+    const pr = presence(p), pl = planOf(p.uid), a = state.assigned.get(p.uid), st = p.storage || null;
+    const isAdm = state.admins.some(x => x.uid === p.uid);
+    const row = (l, v) => `<div class="kv"><span>${l}</span><div>${v}</div></div>`;
+    modal(`<div class="ucard-head">${avatar(p)}<div class="u-txt"><h3>${esc(userLabel(p) || '—')}</h3><div class="u-mail">${esc(p.email || '')}${p.pseudo ? ' · @' + esc(p.pseudo) : ''}</div><div class="chips">${isAdm ? '<span class="chip brand">admin</span>' : ''}${p.disabled ? '<span class="chip bad">suspendu</span>' : '<span class="chip ok">actif</span>'}${planActive(pl) ? '<span class="chip brand">Alixo+</span>' : ''}</div></div></div>
+      ${p.disabled && p.disabledReason ? `<p class="note bad">Motif de suspension : ${esc(p.disabledReason)}</p>` : ''}
+      <div class="kvs">
+        ${row('Statut', `<span class="st-line"><i class="dot ${pr.on ? (pr.cls.includes('idle') ? 'warn' : 'ok') : ''}"></i>${esc(pr.label)}</span>`)}
+        ${row('Dernière ouverture', esc(when(p.lastSeen)))}
+        ${row('Version', p.version ? `${esc(p.version)} · ${p.platform === 'desktop' ? 'PC' : p.platform === 'web' ? 'web' : '?'}` : '—')}
+        ${row('Spécialités', `<div class="chips">${specChips(p, 99)}</div>`)}
+        ${row('Séances', esc(p.nDocs ?? '—'))}
+        ${row('Stockage', st ? `${fmtBytes(st.total)} <span class="muted small">(${st.nFiles ?? 0} fichier${(st.nFiles || 0) > 1 ? 's' : ''})</span>` : '<span class="muted">non mesuré</span>')}
+        ${row('Formule', planActive(pl) ? `Alixo+ · ${esc(planLabel(pl))}${pl.note ? `<div class="cell-sub">${esc(pl.note)}</div>` : ''}` : pl && pl.plus ? 'Alixo+ expiré' : 'Gratuite')}
+        ${row('Accès IA', keyChip(p) + (a && a.note ? `<div class="cell-sub">${esc(a.note)}</div>` : ''))}
+        ${row('UID', `<code class="key-mask" data-copy-uid>${esc(p.uid)}</code>`)}
+      </div>
+      <div class="ucard-acts"><button class="btn" data-cact="msg"><svg class="ic"><use href="#i-chat"/></svg>Message</button><button class="btn ghost" data-cact="plan"><svg class="ic"><use href="#i-crown"/></svg>Alixo+</button><button class="btn ghost" data-cact="key"><svg class="ic"><use href="#i-spark"/></svg>Accès IA</button>${p.disabled ? '<button class="btn ghost" data-cact="enable"><svg class="ic"><use href="#i-check"/></svg>Réactiver</button>' : '<button class="btn ghost danger" data-cact="disable"><svg class="ic"><use href="#i-ban"/></svg>Suspendre</button>'}</div>
+      <div class="modal-foot"><button class="btn ghost" data-close>Fermer</button></div>`, (c, close) => {
+      c.classList.add('ucard');
+      c.querySelector('[data-copy-uid]').onclick = () => userAction('copy-uid', p);
+      c.querySelectorAll('[data-cact]').forEach(b => b.onclick = () => { const act = b.dataset.cact; if (act === 'enable') close(); userAction(act, p); });
+    });
+  }
   $('#users-csv').addEventListener('click', () => {
     const rows = [['uid', 'email', 'nom', 'pseudo', 'specialites', 'statut', 'derniere_ouverture', 'version', 'plateforme', 'seances', 'cle_ia', 'alixo_plus', 'alixo_plus_fin', 'suspendu']].concat(filteredUsers().map(p => { const pl = planOf(p.uid); return [p.uid, p.email || '', p.name || '', p.pseudo || '', (p.specialites || []).join('|'), presence(p).label, p.lastSeen ? new Date(p.lastSeen).toISOString() : '', p.version || '', p.platform || '', p.nDocs ?? '', state.assigned.has(p.uid) ? 'oui' : 'non', planActive(pl) ? 'oui' : 'non', planActive(pl) && pl.until ? new Date(+pl.until).toISOString() : '', p.disabled ? 'oui' : 'non']; }));
     const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\n');
