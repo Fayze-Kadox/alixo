@@ -214,6 +214,8 @@ document.querySelectorAll('.stat-n').forEach(el => countObs.observe(el));
 const SHOT_TITLES = {
   droit: "Droit des obligations — fiche d'arrêt, définition, références Légifrance",
   eco: 'Macroéconomie — formules rendues et graphique IS-LM',
+  quiz: 'Quiz — dix types de questions à glisser, test et présentation en direct',
+  board: 'Planche — post-it, formes, zones et flèches sur un tableau blanc infini',
   sheet: 'Tableur — formules, SOMME, graphique de la sélection',
   galaxy: 'Bibliothèque — vue Galaxie de tes dossiers et séances',
   slides: 'Présentations — blocs à glisser-déposer, thèmes, notes',
