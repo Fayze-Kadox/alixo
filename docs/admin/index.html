@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="admin.css?v=2026-10-09b">
+<link rel="stylesheet" href="admin.css?v=2026-10-09c">
 <link rel="icon" type="image/png" href="logo.png?v=2">
 <link rel="apple-touch-icon" href="logo.png?v=2">
 <script>/* thème choisi (clair / sombre / auto) appliqué avant le premier rendu */ try { const t = localStorage.getItem('alixo.admin.theme'); if (t) document.documentElement.dataset.theme = t; } catch { /* stockage indisponible */ }</script>
@@ -71,7 +71,6 @@
       <div class="sep"><span>ou</span></div>
       <form id="pwform"><input id="pw-mail" type="email" placeholder="E-mail" autocomplete="username" required><input id="pw-pass" type="password" placeholder="Mot de passe" autocomplete="current-password" required><button class="btn wide" type="submit">Se connecter</button></form>
       <p id="login-err" class="err" hidden></p>
-      <p class="muted small">La première personne administratrice se déclare dans la console Firebase : Firestore › collection <code>admins</code> › document dont l’identifiant est son UID (Authentication › Utilisateurs). Voir <code>SETUP-COMPTES.md</code> § 6.</p>
     </div>
   </div>
 </section>
@@ -336,6 +335,6 @@
 <script>if (typeof firebase !== 'undefined' && !firebase.auth) document.write('<script src="vendor/firebase-auth-compat.js"><\/script><script src="vendor/firebase-firestore-compat.js"><\/script>');</script>
 <script src="editions.js"></script>
 <script>if (!window.ALIXO_EDITIONS) document.write('<script src="../app/js/editions.js"><\/script>');</script>
-<script src="admin.js?v=2026-10-09b"></script>
+<script src="admin.js?v=2026-10-09c"></script>
 </body>
 </html>
