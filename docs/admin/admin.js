@@ -37,6 +37,10 @@
   const SPECS = { droit: 'Droit', economie: 'Économie', medecine: 'Médecine', pharmacie: 'Pharmacie', odontologie: 'Odontologie', maieutique: 'Maïeutique', kine: 'Kiné', gestion: 'Gestion', sciencepo: 'Science po', maths: 'Maths', finance: 'Finance', histgeo: 'Hist-géo', lettres: 'Lettres', langues: 'Langues', sciences: 'Sciences', info: 'Info', commerce: 'Commerce', staps: 'STAPS', autre: 'Autre' };
   const HEALTH = ['medecine', 'pharmacie', 'odontologie', 'maieutique', 'kine'];
   const cmpVer = (a, b) => { const x = String(a || '').split('.').map(Number), y = String(b || '').split('.').map(Number); for (let i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); } return 0; };
+  /* refonte 2026 : pastilles d'initiales colorées (couleur stable par compte) */
+  const initials = s => { s = String(s || '?').split('@')[0].replace(/[._-]+/g, ' ').trim(); const w = s.split(/\s+/).filter(Boolean); return ((w[0] || '?')[0] + (w.length > 1 ? w[w.length - 1][0] : (w[0] || '')[1] || '')).toUpperCase(); };
+  const avColor = id => { let h = 0; for (const ch of String(id || '')) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return ['#e5322d', '#2f6fa8', '#c98316', '#2e8b6a', '#8a4b9c', '#3d4250'][h % 6]; };
+  const avatar = (p, cls = '') => { const pr = presence(p); return `<span class="av-wrap"><span class="avatar ${cls}" style="background:${avColor(p.uid)}">${esc(initials(p.name || p.pseudo || p.email || p.uid))}</span><i class="pres-dot ${pr.cls}"></i></span>`; };
   let toastTm = null;
   function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTm); toastTm = setTimeout(() => { t.hidden = true; }, 2600); }
   function modal(html, onMount) {
@@ -88,25 +92,65 @@
   auth.onAuthStateChanged(async user => {
     unsubs.splice(0).forEach(u => { try { u(); } catch { /* déjà arrêté */ } });
     me = user || null;
-    $('#login').hidden = !!user; $('#denied').hidden = true; $('#panel').hidden = true; $('#nav').hidden = true; $('#me').hidden = !user;
+    $('#login').hidden = !!user; $('#denied').hidden = true; $('#panel').hidden = true; $('#shell').hidden = true; $('#me').hidden = !user;
     if (!user) return;
     $('#me-mail').textContent = user.email || user.uid;
+    $('#me-name').textContent = user.displayName || (user.email || '').split('@')[0] || 'Administrateur';
+    $('#me-av').textContent = initials(user.displayName || user.email || '?');
+    $('#me-av').style.background = avColor(user.uid);
     let ok = false;
     try { const s = await db.collection('admins').doc(user.uid).get(); ok = s.exists; } catch { ok = false; }
     if (!ok) { $('#denied').hidden = false; $('#den-mail').textContent = user.email || ''; $('#den-uid').textContent = user.uid; return; }
-    $('#panel').hidden = false; $('#nav').hidden = false;
+    $('#panel').hidden = false; $('#shell').hidden = false;
+    const first = (user.displayName || '').split(' ')[0];
+    $('#dash-hello').textContent = `${first ? 'Bonjour ' + first + ' — v' : 'V'}oici un aperçu de l’activité sur Alixo.`;
     start();
   });
 
-  /* ---------------- navigation ---------------- */
+  /* ---------------- navigation ----------------
+     refonte 2026 : barre latérale (tiroir sur tablette / téléphone) + barre d'onglets en bas sur téléphone ; les deux portent data-view */
+  const TITLES = { dash: 'Tableau de bord', users: 'Utilisateurs', msg: 'Messages', ann: 'Annonces et version', codes: 'Clés Alixo+', keys: 'Accès IA', db: 'Base de données', admins: 'Administrateurs' };
   function showView(name) {
-    $$('#nav button').forEach(x => x.classList.toggle('on', x.dataset.view === name));
+    $$('[data-view]').forEach(x => x.classList.toggle('on', x.dataset.view === name));
+    /* « Plus » (téléphone) reste allumé pour les vues qui ne sont pas dans la barre d'onglets */
+    $('#tab-more').classList.toggle('on', !$(`#tabbar [data-view="${name}"]`));
     $$('.view').forEach(v => { v.hidden = v.id !== 'v-' + name; });
+    $('#top-title').textContent = TITLES[name] || '';
+    drawer(false); window.scrollTo(0, 0);
     if (name === 'db' && typeof dbEnsure === 'function') dbEnsure();
     if (name === 'msg' && typeof msgEnsure === 'function') msgEnsure();
   }
+  const drawer = open => { document.body.classList.toggle('drawer', !!open); $('#scrim').hidden = !open; };
   $('#nav').addEventListener('click', e => { const b = e.target.closest('[data-view]'); if (b) showView(b.dataset.view); });
-  document.addEventListener('click', e => { const a = e.target.closest('[data-goto]'); if (a) { e.preventDefault(); showView(a.dataset.goto); } });
+  $('#tabbar').addEventListener('click', e => { const b = e.target.closest('[data-view]'); if (b) showView(b.dataset.view); else if (e.target.closest('#tab-more')) drawer(true); });
+  $('#menu-btn').addEventListener('click', () => drawer(true));
+  $('#side-close').addEventListener('click', () => drawer(false));
+  $('#scrim').addEventListener('click', () => drawer(false));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { drawer(false); document.body.classList.remove('searching'); if (!$('#modal').hidden) { $('#modal').hidden = true; $('#modal-card').innerHTML = ''; } } });
+  $('#side-logout').addEventListener('click', () => auth.signOut());
+  document.addEventListener('click', e => {
+    const a = e.target.closest('[data-goto]'); if (a) { e.preventDefault(); showView(a.dataset.goto); return; }
+    const d = e.target.closest('[data-dbopen]'); if (d) { e.preventDefault(); const ready = dbs.ready; dbs.start = d.dataset.dbopen; showView('db'); if (ready) dbOpen(d.dataset.dbopen); }
+  });
+  /* recherche globale : renvoie vers Utilisateurs avec le texte saisi */
+  const goSearch = q => { $('#users-q').value = q; showView('users'); renderUsers(); };
+  $('#gsearch').addEventListener('input', () => goSearch($('#gsearch').value));
+  $('#gsearch').addEventListener('keydown', e => { if (e.key === 'Enter') { e.target.blur(); document.body.classList.remove('searching'); } });
+  $('#gsearch').addEventListener('blur', () => setTimeout(() => document.body.classList.remove('searching'), 120));
+  $('#search-btn').addEventListener('click', () => { document.body.classList.add('searching'); $('#gsearch').value = $('#users-q').value; $('#gsearch').focus(); });
+  $('#online-btn').addEventListener('click', () => { $('#users-q').value = ''; $('#users-f').value = 'online'; showView('users'); renderUsers(); });
+  /* thème : auto → sombre → clair (mémorisé sur cet appareil) */
+  const themeNow = () => document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const themeIcon = () => { $('#theme-btn use').setAttribute('href', themeNow() === 'dark' ? '#i-sun' : '#i-moon'); };
+  $('#theme-btn').addEventListener('click', () => {
+    const t = themeNow() === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = t; try { localStorage.setItem('alixo.admin.theme', t); } catch { /* stockage indisponible */ }
+    themeIcon(); renderDash();
+  });
+  themeIcon();
+  /* petits écrans : chaque cellule de tableau porte le titre de sa colonne (affiché en carte, voir admin.css) */
+  const labelize = tbl => { const heads = [...tbl.querySelectorAll('thead th')].map(th => th.textContent.trim()); tbl.querySelectorAll('tbody tr').forEach(tr => [...tr.children].forEach((td, i) => { if (!td.hasAttribute('data-label')) td.setAttribute('data-label', td.colSpan > 1 ? '' : heads[i] || ''); })); };
+  $$('table.rtable').forEach(t => { new MutationObserver(() => labelize(t)).observe(t.querySelector('tbody'), { childList: true }); });
 
   /* ---------------- données (temps réel) ---------------- */
   function start() {
@@ -115,8 +159,9 @@
     unsubs.push(db.collection('plans').onSnapshot(s => { state.plans = new Map(s.docs.map(d => [d.id, d.data()])); renderAll(); }, err => toast('Alixo+ : ' + err.message + ' (règles Firestore à redéployer : collection plans)')));
     unsubs.push(db.collection('config').doc('aikeys').onSnapshot(s => { state.keysDoc = s.exists ? s.data() : { keys: [] }; if (!Array.isArray(state.keysDoc.keys)) state.keysDoc.keys = []; renderKeys(); renderUsers(); renderDash(); }, err => toast('Réservoir de clés : ' + err.message)));
     unsubs.push(db.collection('config').doc('public').onSnapshot(s => { state.pub = s.exists ? s.data() : {}; renderAnn(); renderDash(); }, err => toast('Config publique : ' + err.message)));
-    unsubs.push(db.collection('codes').onSnapshot(s => { state.codes = s.docs.map(d => Object.assign({ code: d.id }, d.data())); renderCodes(); }, err => toast('Clés Alixo+ : ' + err.message + ' (règles Firestore à redéployer ?)')));
-    unsubs.push(db.collection('admins').onSnapshot(s => { state.admins = s.docs.map(d => Object.assign({ uid: d.id }, d.data())); renderAdmins(); }, err => toast('Administrateurs : ' + err.message)));
+    unsubs.push(db.collection('codes').onSnapshot(s => { state.codes = s.docs.map(d => Object.assign({ code: d.id }, d.data())); renderCodes(); renderDash(); }, err => toast('Clés Alixo+ : ' + err.message + ' (règles Firestore à redéployer ?)')));
+    unsubs.push(db.collection('admins').onSnapshot(s => { state.admins = s.docs.map(d => Object.assign({ uid: d.id }, d.data())); renderAdmins(); renderDash(); }, err => toast('Administrateurs : ' + err.message)));
+    unsubs.push(db.collection('audit').orderBy('ts', 'desc').limit(7).onSnapshot(s => renderAudit(s.docs.map(d => d.data())), err => { $('#dash-audit').innerHTML = `<div class="empty">Journal illisible : ${esc(err.message)}</div>`; }));
     unsubs.push(db.collection('config').doc('msglog').onSnapshot(s => { const d = s.exists ? s.data() : {}; state.msglog = Array.isArray(d.items) ? d.items : []; renderMsgLog(); }, err => toast('Journal des messages : ' + err.message)));
     /* les durées relatives (« il y a 3 min », présence) se rafraîchissent d'elles-mêmes */
     clearInterval(tickTm); tickTm = setInterval(() => { if (!$('#v-users').hidden) renderUsers(); if (!$('#v-dash').hidden) renderDash(); }, 30000);
@@ -139,21 +184,142 @@
   const keyLabel = k => k ? (k.label || ('Clé …' + String(k.key || '').slice(-4))) : '';
   const mask = k => k ? k.slice(0, 6) + '…' + k.slice(-4) : '';
 
-  /* ---------------- tableau de bord ---------------- */
+  /* ---------------- tableau de bord ----------------
+     refonte 2026 : indicateurs, courbe d'activité (dernière ouverture par jour), anneau de répartition, derniers actifs,
+     fil des actions d'administration (audit), chiffres secondaires et versions en usage */
+  const DAY = 86400000;
+  const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
+  const nf = n => Number(n || 0).toLocaleString('fr-FR');
+  const dashUI = { range: 30, mode: 'spec' };
   function renderDash() {
     const P = state.profiles, now = Date.now();
-    const act7 = P.filter(p => p.lastSeen && now - p.lastSeen < 7 * 86400000).length;
-    const act30 = P.filter(p => p.lastSeen && now - p.lastSeen < 30 * 86400000).length;
-    const docs = P.reduce((n, p) => n + (+p.nDocs || 0), 0);
-    const sante = P.filter(p => (p.specialites || []).some(k => HEALTH.includes(k))).length, droit = P.filter(p => (p.specialites || []).includes('droit')).length, eco = P.filter(p => (p.specialites || []).includes('economie')).length;
-    const anns = (state.pub.announcements || []).filter(a => !a.until || a.until > now).length;
+    const live = P.filter(p => !p.disabled);
+    const act7 = P.filter(p => p.lastSeen && now - p.lastSeen < 7 * DAY).length;
+    const act30 = P.filter(p => p.lastSeen && now - p.lastSeen < 30 * DAY).length;
     const online = P.filter(p => presence(p).on).length;
-    $('#dash-tiles').innerHTML = [[online, 'connectés maintenant'], [P.length, 'comptes'], [act7, 'actifs sur 7 jours'], [act30, 'actifs sur 30 jours'], [docs, 'séances (déclarées)'], [[...state.assigned.keys()].filter(hasKey).length, 'clés IA attribuées'], [P.filter(p => planActive(planOf(p.uid))).length, 'abonnés Alixo+'], [state.keysDoc.keys.filter(k => k.enabled !== false).length, 'clés actives au réservoir'], [P.filter(p => p.disabled).length, 'comptes suspendus'], [anns, 'annonces en cours']].map(([v, l]) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`).join('') +
-      `<div class="tile"><b style="font-size:16px; margin-top:6px">${droit} · ${eco} · ${sante}</b><span>Droit · Économie · Santé</span></div>`;
-    const recent = P.filter(p => p.lastSeen).sort((a, b) => b.lastSeen - a.lastSeen).slice(0, 8);
-    $('#dash-recent').innerHTML = recent.length ? recent.map(p => { const pr = presence(p); return `<div class="recent-row"><span><span class="pres ${pr.cls}" title="${esc(pr.label)}"></span>${esc(p.name || p.pseudo || p.email || p.uid)} <span class="muted small">${esc(p.email || '')}</span></span><span>${pr.on ? esc(pr.label) : ago(p.lastSeen)} · ${esc(p.version || '?')}</span></div>`; }).join('') : '<div class="empty">Aucune activité remontée pour l’instant (les applications 1.11+ signalent leur dernière ouverture).</div>';
+    const plus = P.filter(p => planActive(planOf(p.uid))).length;
+    const keyed = [...state.assigned.keys()].filter(hasKey).length;
+    const activeKeys = state.keysDoc.keys.filter(k => k.enabled !== false).length;
+    const kpi = (tone, ic, label, val, bar, foot, go) => `<button class="card kpi tone-${tone}" data-kgo="${go}"><div class="kpi-top"><span class="kpi-ic"><svg class="ic"><use href="#i-${ic}"/></svg></span><span>${label}</span></div><div class="kpi-val">${nf(val)}</div><div class="kpi-bar"><i style="width:${Math.min(100, bar)}%"></i></div><div class="kpi-foot">${foot}</div></button>`;
+    $('#dash-kpis').innerHTML =
+      kpi('red', 'users', 'Comptes', P.length, pct(act30, P.length), `<b class="up">${nf(act30)}</b> actifs sur 30 j`, '') +
+      kpi('green', 'pulse', 'Connectés maintenant', online, pct(online, act7), `sur <b>${nf(act7)}</b> actifs cette semaine`, 'online') +
+      kpi('amber', 'crown', 'Abonnés Alixo+', plus, pct(plus, P.length), `<b>${pct(plus, P.length)} %</b> des comptes`, 'plus') +
+      kpi('blue', 'spark', 'Accès IA attribués', keyed, pct(keyed, live.length), `<b>${activeKeys}</b> clé${activeKeys > 1 ? 's' : ''} active${activeKeys > 1 ? 's' : ''} au réservoir`, 'key');
+    const online0 = online ? String(online) : '';
+    $('#nav-online').textContent = online0; $('#nav-online').hidden = !online;
+    $('#online-badge').textContent = online0; $('#online-badge').hidden = !online;
+    $('#side-ver').textContent = state.pub.latestVersion || '—';
+    renderActivity(); renderRepart();
+    /* derniers utilisateurs actifs */
+    const recent = P.filter(p => p.lastSeen).sort((a, b) => b.lastSeen - a.lastSeen).slice(0, 6);
+    $('#dash-recent').innerHTML = recent.length ? `<div class="ulist">${recent.map(p => { const pr = presence(p); return `<div class="urow" data-ugo="${esc(p.email || p.uid)}">${avatar(p, 'sm')}<div class="who"><b>${esc(userLabel(p))}</b><span>${esc(p.email || p.uid)}</span></div><div class="when">${p.version ? `<span class="chip dim">${esc(p.version)} · ${p.platform === 'desktop' ? 'PC' : 'web'}</span><br>` : ''}${pr.on ? `<span class="up">${esc(pr.label.replace('Connecté · ', ''))}</span>` : ago(p.lastSeen)}</div></div>`; }).join('')}</div>` : '<div class="empty">Aucune activité remontée pour l’instant (les applications 1.11+ signalent leur dernière ouverture).</div>';
+    /* chiffres secondaires */
+    const docs = P.reduce((n, p) => n + (+p.nDocs || 0), 0);
+    const anns = (state.pub.announcements || []).filter(a => !a.until || a.until > now).length;
+    const freeCodes = state.codes.filter(c => !c.usedBy).length;
+    const mini = (tone, ic, v, l, go) => `<div class="card mini-t" ${go}><span class="tl-ic t-${tone}"><svg class="ic"><use href="#i-${ic}"/></svg></span><div><b>${v}</b><span>${l}</span></div></div>`;
+    $('#dash-tiles').innerHTML = mini('blue', 'doc', nf(docs), 'séances déclarées', '') + mini('green', 'users', nf(act7), 'actifs sur 7 jours', '') + mini('red', 'ban', nf(P.filter(p => p.disabled).length), 'comptes suspendus', '') +
+      mini('amber', 'mega', nf(anns), 'annonces en cours', '') + mini('violet', 'ticket', nf(freeCodes), 'clés Alixo+ libres', '') + mini('gray', 'shield', nf(state.admins.length), 'administrateurs', '');
+    /* versions */
     const vers = {}; P.forEach(p => { if (p.version) vers[p.version] = (vers[p.version] || 0) + 1; });
-    $('#dash-version').innerHTML = `<div class="storage">Version annoncée : <b>${esc(state.pub.latestVersion || '—')}</b></div><div class="storage" style="margin-top:8px">Versions en usage :<br>${Object.entries(vers).sort((a, b) => b[1] - a[1]).map(([v, n]) => `<span class="chip">${esc(v)} × ${n}</span>`).join(' ') || '<span class="muted">—</span>'}</div><div class="storage" style="margin-top:8px">Plateformes : ${['desktop', 'web'].map(k => `<span class="chip dim">${k === 'desktop' ? 'PC' : 'web'} × ${P.filter(p => p.platform === k).length}</span>`).join(' ')}</div>`;
+    const top = Object.entries(vers).sort((a, b) => b[1] - a[1]).slice(0, 6), max = top.length ? top[0][1] : 1, latest = state.pub.latestVersion || '';
+    const plat = k => P.filter(p => p.platform === k).length;
+    $('#dash-version').innerHTML = `<div class="vstat"><span>Version annoncée</span><b>${esc(latest || '—')}</b></div><div class="vstat"><span>Version minimale</span><b>${esc(state.pub.minVersion || '—')}</b></div><div class="vstat"><span>Plateformes</span><span><span class="chip dim">PC × ${plat('desktop')}</span><span class="chip dim">web × ${plat('web')}</span></span></div>
+      <div class="vbars">${top.map(([v, n]) => `<div class="vbar"><span>${esc(v)}</span><span class="tr"><i class="${v === latest ? 'cur' : ''}" style="width:${pct(n, max)}%"></i></span><span>${n}</span></div>`).join('') || '<span class="muted small">Aucune version remontée.</span>'}</div>`;
+  }
+  $('#dash-kpis').addEventListener('click', e => { const b = e.target.closest('[data-kgo]'); if (!b) return; $('#users-q').value = ''; $('#users-f').value = b.dataset.kgo; showView('users'); renderUsers(); });
+  $('#dash-recent').addEventListener('click', e => { const r = e.target.closest('[data-ugo]'); if (r) { $('#users-f').value = ''; goSearch(r.dataset.ugo); } });
+  $('#act-range').addEventListener('click', e => { const b = e.target.closest('[data-r]'); if (!b) return; dashUI.range = +b.dataset.r; $$('#act-range button').forEach(x => x.classList.toggle('on', x === b)); renderActivity(); });
+  $('#rep-mode').addEventListener('change', e => { dashUI.mode = e.target.value; renderRepart(); });
+
+  /* courbe : nombre de comptes dont la dernière ouverture tombe sur chaque jour de la période */
+  function renderActivity() {
+    const R = dashUI.range, t0 = new Date(); t0.setHours(0, 0, 0, 0);
+    const start = t0.getTime() - (R - 1) * DAY;
+    const bins = new Array(R).fill(0);
+    for (const p of state.profiles) { if (!p.lastSeen || p.lastSeen < start) continue; const i = Math.min(R - 1, Math.floor((p.lastSeen - start) / DAY)); bins[i]++; }
+    const total = bins.reduce((a, b) => a + b, 0);
+    $('#act-total').textContent = nf(total);
+    $('#act-pill').textContent = state.profiles.length ? `${pct(total, state.profiles.length)} % des comptes` : '';
+    const el = $('#act-chart'); const W = Math.max(280, el.clientWidth || 600), H = el.clientHeight || 240;
+    const padL = 34, padR = 10, padT = 10, padB = 26, iw = W - padL - padR, ih = H - padT - padB;
+    const top = Math.max(4, ...bins); const step = Math.max(1, Math.ceil(top / 4)); const ymax = step * 4;
+    const x = i => padL + (R === 1 ? iw / 2 : i / (R - 1) * iw), y = v => padT + ih - v / ymax * ih;
+    const pts = bins.map((v, i) => [x(i), y(v)]);
+    /* lissage léger (courbe de Catmull-Rom bornée) */
+    let d = `M${pts[0][0]},${pts[0][1]}`;
+    for (let i = 0; i < pts.length - 1; i++) { const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2; const c1x = p1[0] + (p2[0] - p0[0]) / 6, c1y = Math.min(padT + ih, p1[1] + (p2[1] - p0[1]) / 6), c2x = p2[0] - (p3[0] - p1[0]) / 6, c2y = Math.min(padT + ih, p2[1] - (p3[1] - p1[1]) / 6); d += ` C${c1x},${c1y} ${c2x},${c2y} ${p2[0]},${p2[1]}`; }
+    const area = `${d} L${pts[pts.length - 1][0]},${padT + ih} L${pts[0][0]},${padT + ih} Z`;
+    const dayLbl = i => new Date(start + i * DAY).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }).replace('.', '');
+    const nT = W < 420 ? 4 : 6; const ticks = [...new Set(Array.from({ length: nT }, (_, k) => Math.round(k * (R - 1) / (nT - 1))))];
+    el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Comptes par jour de dernière ouverture, ${R} derniers jours">
+      <defs><linearGradient id="act-grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--brand)" stop-opacity=".28"/><stop offset="1" stop-color="var(--brand)" stop-opacity="0"/></linearGradient></defs>
+      <g class="grid">${[0, 1, 2, 3, 4].map(k => `<line x1="${padL}" x2="${W - padR}" y1="${y(k * step)}" y2="${y(k * step)}"/>`).join('')}</g>
+      <g class="axis">${[0, 1, 2, 3, 4].map(k => `<text x="${padL - 8}" y="${y(k * step) + 4}" text-anchor="end">${k * step}</text>`).join('')}${ticks.map(i => `<text x="${x(i)}" y="${H - 6}" text-anchor="${i === 0 ? 'start' : i === R - 1 ? 'end' : 'middle'}">${dayLbl(i)}</text>`).join('')}</g>
+      <path class="area" d="${area}"/><path class="line" d="${d}"/>
+      <line class="cross" y1="${padT}" y2="${padT + ih}" x1="-10" x2="-10" visibility="hidden"/><circle class="dot" r="5" cx="-10" cy="-10" visibility="hidden"/>
+    </svg><div class="tip" hidden></div>`;
+    const svg = el.querySelector('svg'), cross = svg.querySelector('.cross'), dot = svg.querySelector('.dot'), tip = el.querySelector('.tip');
+    const move = ev => {
+      const r = svg.getBoundingClientRect(); const px = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left; const sx = px * W / r.width;
+      const i = Math.max(0, Math.min(R - 1, Math.round((sx - padL) / iw * (R - 1))));
+      const [cx, cy] = pts[i];
+      cross.setAttribute('x1', cx); cross.setAttribute('x2', cx); cross.setAttribute('visibility', 'visible');
+      dot.setAttribute('cx', cx); dot.setAttribute('cy', cy); dot.setAttribute('visibility', 'visible');
+      tip.hidden = false; tip.style.left = Math.max(60, Math.min(r.width - 60, cx * r.width / W)) + 'px'; tip.style.top = (cy * r.height / H) + 'px';
+      tip.innerHTML = `<b>${bins[i]} compte${bins[i] > 1 ? 's' : ''}</b>${new Date(start + i * DAY).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}`;
+    };
+    const leave = () => { tip.hidden = true; cross.setAttribute('visibility', 'hidden'); dot.setAttribute('visibility', 'hidden'); };
+    svg.addEventListener('pointermove', move); svg.addEventListener('pointerdown', move); svg.addEventListener('pointerleave', leave);
+  }
+  let actRsz = null; window.addEventListener('resize', () => { clearTimeout(actRsz); actRsz = setTimeout(() => { if (!$('#v-dash').hidden && state.profiles) renderActivity(); }, 150); });
+
+  /* anneau : répartition des comptes (couleurs dans un ordre fixe, « Autres » en gris) */
+  function renderRepart() {
+    const P = state.profiles, mode = dashUI.mode;
+    let cats;
+    if (mode === 'spec') {
+      const grp = p => { const s = (p.specialites || [])[0]; if (!s) return 'Non renseignée'; if (s === 'droit') return 'Droit'; if (s === 'economie') return 'Économie'; if (HEALTH.includes(s)) return 'Santé'; if (s === 'commerce') return 'Commerce'; if (s === 'staps') return 'STAPS'; return 'Autres'; };
+      const c = {}; P.forEach(p => { const g = grp(p); c[g] = (c[g] || 0) + 1; });
+      cats = ['Droit', 'Économie', 'Santé', 'Commerce', 'STAPS'].map(k => [k, c[k] || 0]).concat([['Autres', (c.Autres || 0) + (c['Non renseignée'] || 0)]]);
+    } else if (mode === 'plan') {
+      const n = P.filter(p => planActive(planOf(p.uid))).length;
+      cats = [['Alixo+', n], ['Gratuit', P.length - n]];
+    } else if (mode === 'plat') {
+      const d = P.filter(p => p.platform === 'desktop').length, w = P.filter(p => p.platform === 'web').length;
+      cats = [['Version PC', d], ['Version web', w], ['Inconnue', P.length - d - w]];
+    } else {
+      const v = {}; P.forEach(p => { const k = p.version || '?'; v[k] = (v[k] || 0) + 1; });
+      const top = Object.entries(v).filter(([k]) => k !== '?').sort((a, b) => b[1] - a[1]).slice(0, 4);
+      cats = top.concat([['Autres', P.length - top.reduce((n, [, c]) => n + c, 0)]]);
+    }
+    const gray = new Set(['Autres', 'Inconnue', 'Gratuit']);
+    let ci = 0; cats = cats.map(([l, n]) => ({ l, n, col: gray.has(l) ? 'var(--c-other)' : `var(--c${Math.min(5, ++ci)})` }));
+    const total = P.length, C = 2 * Math.PI * 36, gap = cats.filter(c => c.n).length > 1 ? 1.2 : 0;
+    let off = 0;
+    const arcs = cats.filter(c => c.n).map(c => { const len = c.n / Math.max(1, total) * C; const s = `<circle class="seg-arc" r="36" cx="50" cy="50" stroke="${c.col}" stroke-dasharray="${Math.max(0, len - gap)} ${C}" stroke-dashoffset="${-off}" pathLength="${C}"><title>${esc(c.l)} : ${c.n} (${pct(c.n, total)} %)</title></circle>`; off += len; return s; }).join('');
+    $('#rep-donut').innerHTML = `<svg viewBox="0 0 100 100"><circle r="36" cx="50" cy="50" fill="none" stroke="var(--surface-3)" stroke-width="${total ? 0 : 22}"/>${arcs}</svg><div class="donut-mid"><b>${nf(total)}</b><span>comptes</span></div>`;
+    $('#rep-legend').innerHTML = `<thead><tr><th></th><th>%</th><th>Total</th></tr></thead><tbody>${cats.map(c => `<tr><td><span class="sw" style="background:${c.col}"></span>${esc(c.l)}</td><td>${pct(c.n, total)} %</td><td>${nf(c.n)}</td></tr>`).join('')}</tbody>`;
+  }
+
+  /* fil des actions d'administration (journal audit, 7 dernières) */
+  const AUDIT = {
+    'user.suspend': ['ban', 'red', 'Compte suspendu'], 'user.enable': ['users', 'green', 'Compte réactivé'], 'users.csv': ['download', 'gray', 'Export CSV des utilisateurs'],
+    'plan.set': ['crown', 'amber', 'Alixo+ activé'], 'plan.remove': ['crown', 'gray', 'Alixo+ retiré'],
+    'key.assign': ['spark', 'blue', 'Accès IA attribué'], 'key.remove': ['spark', 'gray', 'Accès IA retiré'], 'key.distribute': ['spark', 'blue', 'Accès IA distribués'], 'key.rebalance': ['spark', 'blue', 'Accès IA rééquilibrés'], 'key.clearAll': ['spark', 'red', 'Tous les accès IA retirés'],
+    'code.create': ['ticket', 'violet', 'Clés Alixo+ générées'], 'code.delete': ['ticket', 'gray', 'Clé Alixo+ supprimée'],
+    'msg.send': ['chat', 'green', 'Message envoyé'], 'admin.add': ['shield', 'violet', 'Administrateur ajouté'], 'admin.remove': ['shield', 'red', 'Administrateur retiré'],
+    'db.list': ['db', 'gray', 'Collection consultée'], 'db.read': ['db', 'gray', 'Document consulté'], 'db.export': ['download', 'gray', 'Export JSON']
+  };
+  function renderAudit(items) {
+    $('#dash-audit').innerHTML = items.length ? items.map(a => {
+      const [ic, tone, label] = AUDIT[a.action] || ['clock', 'gray', a.action];
+      const u = a.target ? userOf(a.target) : null;
+      const det = a.details || {};
+      const what = [u ? userLabel(u) : (a.target && !/^[A-Za-z0-9]{20,}$/.test(a.target) ? a.target : ''), det.n ? `${det.n} élément${det.n > 1 ? 's' : ''}` : '', det.title ? `« ${det.title} »` : ''].filter(Boolean).join(' · ');
+      return `<div class="tl"><span class="tl-ic t-${tone}"><svg class="ic"><use href="#i-${ic}"/></svg></span><div><b>${esc(label)}</b><p>${esc(what || '—')} · par ${esc((a.byEmail || '').split('@')[0] || '?')}</p></div><time title="${esc(when(a.ts))}">${ago(a.ts)}</time></div>`;
+    }).join('') : '<div class="empty">Aucune action enregistrée pour l’instant.</div>';
   }
 
   /* ---------------- utilisateurs ---------------- */
@@ -182,7 +348,7 @@
       const isAdm = state.admins.some(x => x.uid === p.uid);
       const pl = planOf(p.uid), plusOn = planActive(pl);
       return `<tr data-uid="${esc(p.uid)}">
-        <td><div class="u-main">${esc(p.name || p.pseudo || '—')}${isAdm ? ' <span class="chip">admin</span>' : ''}</div><div class="u-sub">${esc(p.email || '')}${p.pseudo ? ' · @' + esc(p.pseudo) : ''}</div><div class="u-sub" title="UID">${esc(p.uid)}</div></td>
+        <td><div class="u-cell">${avatar(p, 'sm')}<div><div class="u-main">${esc(p.name || p.pseudo || '—')}${isAdm ? ' <span class="chip brand">admin</span>' : ''}</div><div class="u-sub">${esc(p.email || '')}${p.pseudo ? ' · @' + esc(p.pseudo) : ''}</div><div class="u-sub" title="UID">${esc(p.uid)}</div></div></div></td>
         <td>${(p.specialites || []).map(s => `<span class="chip dim">${esc(SPECS[s] || s)}</span>`).join('') || '<span class="muted">—</span>'}</td>
         <td>${presenceHTML(p)}</td>
         <td title="${esc(when(p.lastSeen))}">${ago(p.lastSeen)}</td>
@@ -625,7 +791,7 @@
     $('#db-export').addEventListener('click', () => { if (!dbs.docs.length) { toast('Rien à exporter'); return; } audit('db.export', dbs.path, { n: dbs.docs.length }); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(dbs.docs.map(d => Object.assign({ _id: d.id, _path: d.path }, plain(d.data))), null, 2)], { type: 'application/json' })); a.download = `alixo-${dbs.path.replace(/\//g, '_')}-${new Date().toISOString().slice(0, 10)}.json`; a.click(); });
     $('#db-tbl').addEventListener('click', e => { const tr = e.target.closest('tr[data-path]'); if (tr) dbOpenDoc(tr.dataset.path); });
     $('#db-crumbs').addEventListener('click', e => { const b = e.target.closest('[data-cp]'); if (!b) return; const p = b.dataset.cp; if (!p) return; if (p.split('/').length % 2 === 0) dbOpenDoc(p); else dbOpen(p); });
-    dbOpen('profiles');
+    dbOpen(dbs.start || 'profiles');
   }
   function dbCrumbs(path) {
     const segs = path.split('/'); let acc = '';
