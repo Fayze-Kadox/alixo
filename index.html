@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Alixo — L'app de prise de notes des étudiants en Droit, Éco et Santé</title>
-<meta name="description" content="Alixo est le cockpit d'amphi des étudiants : numérotation juridique automatique, fiches d'arrêt, formules, graphiques, IA de correction, présentations, agenda, partage en direct et recherche instantanée. Gratuit sur Windows et dans le navigateur. Bientôt sur macOS.">
+<meta name="description" content="Alixo est le cockpit d'amphi des étudiants : numérotation juridique automatique, fiches d'arrêt, formules, graphiques, IA de correction, quiz en direct, planches (tableau blanc), présentations, agenda, partage en direct et recherche instantanée. Gratuit sur Windows et dans le navigateur. Bientôt sur macOS.">
 <meta property="og:title" content="Alixo — Ton cours va vite. Alixo va plus vite.">
 <meta property="og:description" content="La prise de notes pensée pour l'amphi. Gratuit sur Windows, bientôt sur macOS.">
 <meta property="og:type" content="website">
@@ -60,16 +60,16 @@
 <section id="top" class="hero">
   <div class="hero-bg" aria-hidden="true"><span class="orb o1"></span><span class="orb o2"></span><span class="grid"></span></div>
   <div class="hero-inner">
-    <a class="pill reveal" href="#nouveautes">
+    <a class="pill reveal" href="#plus">
       <span class="pill-tag">Nouveau</span>
-      <span class="pill-txt"><span class="js-version">Dernière version</span> disponible · <span id="pill-mac">la version macOS arrive bientôt</span></span>
+      <span class="pill-txt">Quiz en direct &amp; planches · <span class="js-version">dernière version</span> · <span id="pill-mac">la version macOS arrive bientôt</span></span>
       <span class="pill-arrow">→</span>
     </a>
     <h1 class="reveal">Ton cours va vite.<br><em>Alixo va plus vite.</em></h1>
     <p class="hero-sub reveal">
       L'application de prise de notes conçue pour l'amphi&nbsp;: structure juridique automatique,
-      fiches d'arrêt, formules, graphiques, IA de correction, présentations, agenda, partage en direct
-      et recherche instantanée. Tout au clavier, même hors-ligne.
+      fiches d'arrêt, formules, graphiques, IA de correction, <strong>quiz en direct</strong>, <strong>planches</strong>
+      pour réviser, présentations, agenda, partage en direct et recherche instantanée. Tout au clavier, même hors-ligne.
     </p>
     <div class="hero-ctas reveal">
       <a class="btn primary big" href="#telecharger" data-download>
@@ -104,6 +104,8 @@
     <div class="shots-tabs" role="tablist" aria-label="Choisir un écran de l'application">
       <button class="shots-tab active" data-shot="droit" role="tab" aria-selected="true">⚖️ Droit</button>
       <button class="shots-tab" data-shot="eco" role="tab" aria-selected="false">📈 Économie</button>
+      <button class="shots-tab" data-shot="quiz" role="tab" aria-selected="false">🏆 Quiz <span class="tab-new">Nouveau</span></button>
+      <button class="shots-tab" data-shot="board" role="tab" aria-selected="false">🧩 Planche <span class="tab-new">Nouveau</span></button>
       <button class="shots-tab" data-shot="sheet" role="tab" aria-selected="false">🧮 Tableur</button>
       <button class="shots-tab" data-shot="galaxy" role="tab" aria-selected="false">🪐 Galaxie</button>
       <button class="shots-tab" data-shot="slides" role="tab" aria-selected="false">🎞️ Présentations</button>
@@ -115,6 +117,8 @@
       <div class="shots-stage">
         <img class="shot on timg" data-shot="droit" data-light="img/shot-droit-light.jpg" data-dark="img/shot-droit-dark.jpg" width="2880" height="1800" alt="Alixo — séance de droit des obligations avec plan automatique, encadré définition, références d'articles et fiche d'arrêt" fetchpriority="high">
         <img class="shot timg" data-shot="eco" data-light="img/shot-eco-light.jpg" data-dark="img/shot-eco-dark.jpg" width="2880" height="1800" alt="Alixo — séance de macroéconomie avec formules rendues et graphique IS-LM" loading="lazy">
+        <img class="shot timg" data-shot="quiz" data-light="img/shot-quiz-light.jpg" data-dark="img/shot-quiz-dark.jpg" width="2880" height="1800" alt="Alixo — éditeur de quiz : déroulé des questions, propositions A B C D, palette de types à glisser" loading="lazy">
+        <img class="shot timg" data-shot="board" data-light="img/shot-board-light.jpg" data-dark="img/shot-board-dark.jpg" width="2880" height="1800" alt="Alixo — planche de révision : zones, post-it, formes, flèches et liste à cocher sur un tableau blanc infini" loading="lazy">
         <img class="shot timg" data-shot="sheet" data-light="img/shot-sheet-light.jpg" data-dark="img/shot-sheet-dark.jpg" width="2880" height="1800" alt="Alixo — tableur avec formules SOMME et graphique de la sélection" loading="lazy">
         <img class="shot timg" data-shot="galaxy" data-light="img/shot-galaxy-light.jpg" data-dark="img/shot-galaxy-dark.jpg" width="2880" height="1800" alt="Alixo — vue Galaxie de la bibliothèque : dossiers et séances en orbite" loading="lazy">
         <img class="shot timg" data-shot="slides" data-light="img/shot-slides-light.jpg" data-dark="img/shot-slides-dark.jpg" width="2880" height="1800" alt="Alixo — éditeur de présentations avec palette de blocs et notes" loading="lazy">
@@ -356,10 +360,41 @@
   <div class="section-head reveal">
     <div class="eyebrow">Nouveau</div>
     <h2>Bien plus qu'un <em>éditeur.</em></h2>
-    <p>Les dernières versions d'Alixo ajoutent tout ce qu'il faut pour calculer, organiser, présenter et travailler à plusieurs.</p>
+    <p>Les dernières versions d'Alixo ajoutent tout ce qu'il faut pour réviser, faire réviser, calculer, organiser, présenter et travailler à plusieurs.</p>
   </div>
 
-  <div class="feat-row reveal">
+  <div class="feat-row reveal" id="quiz">
+    <div class="feat-img"><img class="timg" data-light="img/shot-quizplay-light.jpg" data-dark="img/shot-quizplay-dark.jpg" width="2880" height="1800" alt="Quiz Alixo en cours : question, chronomètre et propositions A B C D" loading="lazy"></div>
+    <div class="feat-txt">
+      <div class="feat-tag">Nouveau · Quiz</div>
+      <h3>Des quiz pour réviser, ou pour faire jouer tout l'amphi</h3>
+      <p>Transforme ton cours en quiz en quelques minutes&nbsp;: choix multiple, vrai / faux, nombre, curseur, réponse écrite, remise en ordre, association, sondage, échelle, nuage de mots et pages d'explication, à glisser dans le déroulé. <strong>Tester</strong> (<kbd>F5</kbd>) te fait réviser seul avec chronomètre et score&nbsp;; <strong>Présenter en direct</strong> affiche un code et un QR code&nbsp;: chacun répond depuis son téléphone sur <strong>alixoapp.com/quiz</strong>, sans compte.</p>
+      <ul class="feat-list"><li>Révélation avec pourcentages, classement qui bouge, podium animé</li><li>8 thèmes ou le tien, musiques de fond et sons intégrés</li><li>Partageable comme une séance, export PDF des corrigés</li></ul>
+    </div>
+  </div>
+
+  <div class="feat-row rev reveal">
+    <div class="feat-img"><img class="timg" data-light="img/shot-quizstats-light.jpg" data-dark="img/shot-quizstats-dark.jpg" width="2880" height="1800" alt="Résultats d'un quiz Alixo : participants, score moyen, réussite question par question" loading="lazy"></div>
+    <div class="feat-txt">
+      <div class="feat-tag">Quiz · Résultats</div>
+      <h3>Tu sais tout de suite ce qui n'est pas compris</h3>
+      <p>Après chaque partie, les <strong>statistiques</strong> s'enregistrent dans le quiz&nbsp;: participants, score moyen et médiane, taux de bonnes réponses, temps moyen, répartition des scores, réussite question par question avec <em>la plus dure</em> signalée, et le tableau de chaque participant. Idéal pour un TD, une conférence de méthode ou un groupe de révision.</p>
+      <ul class="feat-list"><li>Tests en solo et parties en direct, tous gardés</li><li>Export CSV vers ton tableur</li><li>Le présentateur garde la main&nbsp;: Espace pour avancer, Échap pour arrêter</li></ul>
+      <div class="feat-btns"><a class="btn ghost small" href="/quiz/" target="_blank" rel="noopener">Rejoindre un quiz avec un code →</a></div>
+    </div>
+  </div>
+
+  <div class="feat-row reveal" id="planches">
+    <div class="feat-img"><img class="timg" data-light="img/shot-board-light.jpg" data-dark="img/shot-board-dark.jpg" width="2880" height="1800" alt="Planche Alixo : carte de révision du contrat avec zones, post-it, formes et flèches" loading="lazy"></div>
+    <div class="feat-txt">
+      <div class="feat-tag">Nouveau · Planches</div>
+      <h3>Un tableau blanc infini pour tes cartes de révision</h3>
+      <p>La planche, c'est l'endroit où tu étales tes idées&nbsp;: <strong>post-it</strong>, textes, <strong>formes</strong>, <strong>zones</strong> nommées, <strong>flèches</strong> courbes ou pointillées, images, liens, listes à cocher, stickers, et même des <strong>blocs de tes séances</strong> épinglés qui rouvrent le cours au double-clic. Tu déplaces, tu zoomes, tu alignes, tu verrouilles.</p>
+      <ul class="feat-list"><li>Modèles prêts&nbsp;: carte mentale, fiche d'arrêt, plan de dissertation, SWOT, kanban, frise</li><li>Mini-carte, mode présentation plein écran, export PDF</li><li>Synchronisée, partageable, cherchable avec Ctrl+K</li></ul>
+    </div>
+  </div>
+
+  <div class="feat-row rev reveal">
     <div class="feat-img"><img class="timg" data-light="img/shot-sheet-light.jpg" data-dark="img/shot-sheet-dark.jpg" width="2880" height="1800" alt="Tableur Alixo avec formules et graphique" loading="lazy"></div>
     <div class="feat-txt">
       <div class="feat-tag">Nouveau · Tableurs</div>
@@ -662,6 +697,29 @@
     <h2>Une mise à jour <em>chaque semaine.</em></h2>
     <p>Alixo évolue avec les retours des étudiants. Les versions installées se mettent à jour toutes seules.</p>
   </div>
+  <div class="news-grid reveal">
+    <a class="news-card" href="#quiz">
+      <span class="news-ico" aria-hidden="true">🏆</span>
+      <span class="news-tag">À la une</span>
+      <b>Quiz en direct</b>
+      <span>Crée un quiz depuis ton cours, révise seul ou fais jouer le groupe&nbsp;: code, QR code, réponses sur téléphone, classement et statistiques.</span>
+      <span class="news-more">Découvrir les quiz →</span>
+    </a>
+    <a class="news-card" href="#planches">
+      <span class="news-ico" aria-hidden="true">🧩</span>
+      <span class="news-tag">À la une</span>
+      <b>Planches</b>
+      <span>Un tableau blanc infini&nbsp;: post-it, formes, zones, flèches, listes, blocs de cours épinglés et modèles (carte mentale, fiche d'arrêt, plan).</span>
+      <span class="news-more">Découvrir les planches →</span>
+    </a>
+    <a class="news-card" href="#fonctions">
+      <span class="news-ico" aria-hidden="true">✨</span>
+      <span class="news-tag">Nouveau</span>
+      <b>IA ouverte, au choix</b>
+      <span>La correction par IA tourne sur Qwen3.8, un modèle ouvert&nbsp;: en ligne, sur le serveur de ton établissement ou sur ton PC avec Ollama, hors ligne.</span>
+      <span class="news-more">Voir les fonctionnalités →</span>
+    </a>
+  </div>
   <div class="changelog reveal" id="changelog">
     <div class="cl-head">
       <span class="cl-tag js-version">Dernière version</span>
@@ -669,10 +727,10 @@
     </div>
     <div class="cl-body" id="cl-body">
       <ul>
-        <li><strong>Tableurs</strong> : formules, une cinquantaine de fonctions, plusieurs feuilles, tri, formats, graphique de la sélection, CSV et PDF.</li>
-        <li><strong>Partage des fichiers</strong> : PDF, Word, diaporamas, images et audio se partagent comme une séance.</li>
-        <li><strong>Alixo+</strong> et logo Alixo+, Paramètres › Compte redessinés.</li>
-        <li><strong>Version web et mobile</strong>, travail à plusieurs en direct, Galaxie 3D, présentations, macOS.</li>
+        <li><strong>Quiz</strong> : dix types de questions et des pages, test en solo, présentation en direct avec code et QR code, thèmes, musiques, statistiques et export CSV.</li>
+        <li><strong>Planches</strong> : tableau blanc infini avec post-it, formes, zones, flèches, listes, blocs de cours épinglés et modèles prêts à l'emploi.</li>
+        <li><strong>IA de correction</strong> sur un modèle ouvert (Qwen3.8), en ligne ou en local avec Ollama.</li>
+        <li><strong>Tableurs</strong>, partage des fichiers, version web et mobile, travail à plusieurs en direct, Galaxie 3D, présentations.</li>
       </ul>
     </div>
     <a class="cl-more" href="/versions/">Voir toutes les versions →</a>
