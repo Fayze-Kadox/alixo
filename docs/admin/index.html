@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="admin.css?v=2026-10-09">
+<link rel="stylesheet" href="admin.css?v=2026-10-09b">
 <link rel="icon" type="image/png" href="logo.png?v=2">
 <link rel="apple-touch-icon" href="logo.png?v=2">
 <script>/* thème choisi (clair / sombre / auto) appliqué avant le premier rendu */ try { const t = localStorage.getItem('alixo.admin.theme'); if (t) document.documentElement.dataset.theme = t; } catch { /* stockage indisponible */ }</script>
@@ -111,12 +111,6 @@
       <button data-view="db"><svg class="ic"><use href="#i-db"/></svg><span>Base de données</span></button>
       <button data-view="admins"><svg class="ic"><use href="#i-shield"/></svg><span>Administrateurs</span></button>
     </nav>
-    <div class="side-card">
-      <div class="side-card-ic"><svg class="ic"><use href="#i-bolt"/></svg></div>
-      <b>Version annoncée <span id="side-ver">—</span></b>
-      <p>Les applications plus anciennes reçoivent « Mise à jour disponible » au démarrage.</p>
-      <button class="btn wide" data-goto="ann">Publier une version</button>
-    </div>
     <button class="side-out" id="side-logout"><svg class="ic"><use href="#i-logout"/></svg><span>Déconnexion</span></button>
   </aside>
   <div id="scrim" hidden></div>
@@ -182,7 +176,7 @@
         </div>
         <div class="dgrid c">
           <div class="minis" id="dash-tiles"></div>
-          <div class="card"><div class="chead"><div class="ctitle"><span class="cic"><svg class="ic"><use href="#i-monitor"/></svg></span><h3>Versions et plateformes</h3></div></div><div id="dash-version"></div></div>
+          <div class="card"><div class="chead"><div class="ctitle"><span class="cic"><svg class="ic"><use href="#i-monitor"/></svg></span><h3>Versions en usage</h3></div></div><div id="dash-version"></div></div>
         </div>
       </section>
 
@@ -342,6 +336,6 @@
 <script>if (typeof firebase !== 'undefined' && !firebase.auth) document.write('<script src="vendor/firebase-auth-compat.js"><\/script><script src="vendor/firebase-firestore-compat.js"><\/script>');</script>
 <script src="editions.js"></script>
 <script>if (!window.ALIXO_EDITIONS) document.write('<script src="../app/js/editions.js"><\/script>');</script>
-<script src="admin.js?v=2026-10-09"></script>
+<script src="admin.js?v=2026-10-09b"></script>
 </body>
 </html>

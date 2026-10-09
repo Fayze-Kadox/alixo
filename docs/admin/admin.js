@@ -193,39 +193,36 @@
   const dashUI = { range: 30, mode: 'spec' };
   function renderDash() {
     const P = state.profiles, now = Date.now();
-    const live = P.filter(p => !p.disabled);
     const act7 = P.filter(p => p.lastSeen && now - p.lastSeen < 7 * DAY).length;
     const act30 = P.filter(p => p.lastSeen && now - p.lastSeen < 30 * DAY).length;
     const online = P.filter(p => presence(p).on).length;
     const plus = P.filter(p => planActive(planOf(p.uid))).length;
-    const keyed = [...state.assigned.keys()].filter(hasKey).length;
-    const activeKeys = state.keysDoc.keys.filter(k => k.enabled !== false).length;
+    const docs = P.reduce((n, p) => n + (+p.nDocs || 0), 0), writers = P.filter(p => +p.nDocs > 0).length;
+    const today = new Date().setHours(0, 0, 0, 0), actToday = P.filter(p => p.lastSeen && p.lastSeen >= today).length;
     const kpi = (tone, ic, label, val, bar, foot, go) => `<button class="card kpi tone-${tone}" data-kgo="${go}"><div class="kpi-top"><span class="kpi-ic"><svg class="ic"><use href="#i-${ic}"/></svg></span><span>${label}</span></div><div class="kpi-val">${nf(val)}</div><div class="kpi-bar"><i style="width:${Math.min(100, bar)}%"></i></div><div class="kpi-foot">${foot}</div></button>`;
     $('#dash-kpis').innerHTML =
       kpi('red', 'users', 'Comptes', P.length, pct(act30, P.length), `<b class="up">${nf(act30)}</b> actifs sur 30 j`, '') +
       kpi('green', 'pulse', 'Connectés maintenant', online, pct(online, act7), `sur <b>${nf(act7)}</b> actifs cette semaine`, 'online') +
       kpi('amber', 'crown', 'Abonnés Alixo+', plus, pct(plus, P.length), `<b>${pct(plus, P.length)} %</b> des comptes`, 'plus') +
-      kpi('blue', 'spark', 'Accès IA attribués', keyed, pct(keyed, live.length), `<b>${activeKeys}</b> clé${activeKeys > 1 ? 's' : ''} active${activeKeys > 1 ? 's' : ''} au réservoir`, 'key');
+      kpi('blue', 'doc', 'Séances déclarées', docs, pct(writers, P.length), `<b>${writers ? (docs / writers).toFixed(1).replace('.', ',') : 0}</b> par compte qui écrit`, 'active');
     const online0 = online ? String(online) : '';
     $('#nav-online').textContent = online0; $('#nav-online').hidden = !online;
     $('#online-badge').textContent = online0; $('#online-badge').hidden = !online;
-    $('#side-ver').textContent = state.pub.latestVersion || '—';
     renderActivity(); renderRepart();
     /* derniers utilisateurs actifs */
     const recent = P.filter(p => p.lastSeen).sort((a, b) => b.lastSeen - a.lastSeen).slice(0, 6);
     $('#dash-recent').innerHTML = recent.length ? `<div class="ulist">${recent.map(p => { const pr = presence(p); return `<div class="urow" data-ugo="${esc(p.email || p.uid)}">${avatar(p, 'sm')}<div class="who"><b>${esc(userLabel(p))}</b><span>${esc(p.email || p.uid)}</span></div><div class="when">${p.version ? `<span class="chip dim">${esc(p.version)} · ${p.platform === 'desktop' ? 'PC' : 'web'}</span><br>` : ''}${pr.on ? `<span class="up">${esc(pr.label.replace('Connecté · ', ''))}</span>` : ago(p.lastSeen)}</div></div>`; }).join('')}</div>` : '<div class="empty">Aucune activité remontée pour l’instant (les applications 1.11+ signalent leur dernière ouverture).</div>';
     /* chiffres secondaires */
-    const docs = P.reduce((n, p) => n + (+p.nDocs || 0), 0);
     const anns = (state.pub.announcements || []).filter(a => !a.until || a.until > now).length;
     const freeCodes = state.codes.filter(c => !c.usedBy).length;
     const mini = (tone, ic, v, l, go) => `<div class="card mini-t" ${go}><span class="tl-ic t-${tone}"><svg class="ic"><use href="#i-${ic}"/></svg></span><div><b>${v}</b><span>${l}</span></div></div>`;
-    $('#dash-tiles').innerHTML = mini('blue', 'doc', nf(docs), 'séances déclarées', '') + mini('green', 'users', nf(act7), 'actifs sur 7 jours', '') + mini('red', 'ban', nf(P.filter(p => p.disabled).length), 'comptes suspendus', '') +
-      mini('amber', 'mega', nf(anns), 'annonces en cours', '') + mini('violet', 'ticket', nf(freeCodes), 'clés Alixo+ libres', '') + mini('gray', 'shield', nf(state.admins.length), 'administrateurs', '');
+    $('#dash-tiles').innerHTML = mini('blue', 'clock', nf(actToday), 'actifs aujourd’hui', '') + mini('green', 'users', nf(act7), 'actifs sur 7 jours', '') + mini('red', 'ban', nf(P.filter(p => p.disabled).length), 'suspendus', '') +
+      mini('amber', 'mega', nf(anns), 'annonces actives', '') + mini('violet', 'ticket', nf(freeCodes), 'clés Alixo+ libres', '') + mini('gray', 'shield', nf(state.admins.length), 'admins', '');
     /* versions */
     const vers = {}; P.forEach(p => { if (p.version) vers[p.version] = (vers[p.version] || 0) + 1; });
     const top = Object.entries(vers).sort((a, b) => b[1] - a[1]).slice(0, 6), max = top.length ? top[0][1] : 1, latest = state.pub.latestVersion || '';
     const plat = k => P.filter(p => p.platform === k).length;
-    $('#dash-version').innerHTML = `<div class="vstat"><span>Version annoncée</span><b>${esc(latest || '—')}</b></div><div class="vstat"><span>Version minimale</span><b>${esc(state.pub.minVersion || '—')}</b></div><div class="vstat"><span>Plateformes</span><span><span class="chip dim">PC × ${plat('desktop')}</span><span class="chip dim">web × ${plat('web')}</span></span></div>
+    $('#dash-version').innerHTML = `<div class="vstat"><span>Plateformes</span><span><span class="chip dim">PC × ${plat('desktop')}</span><span class="chip dim">web × ${plat('web')}</span></span></div>
       <div class="vbars">${top.map(([v, n]) => `<div class="vbar"><span>${esc(v)}</span><span class="tr"><i class="${v === latest ? 'cur' : ''}" style="width:${pct(n, max)}%"></i></span><span>${n}</span></div>`).join('') || '<span class="muted small">Aucune version remontée.</span>'}</div>`;
   }
   $('#dash-kpis').addEventListener('click', e => { const b = e.target.closest('[data-kgo]'); if (!b) return; $('#users-q').value = ''; $('#users-f').value = b.dataset.kgo; showView('users'); renderUsers(); });
