@@ -371,15 +371,29 @@ Mise en forme : les lignes « § <lettre> : <numéros> » désignent des paragra
     for (let i = 1; i <= m; i++) { const cur = [i]; for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); prev = cur; }
     return prev[n];
   }
-  /* une correction est une « faute de frappe sûre » : un seul mot, à peine changé, et le modèle l'a classée ainsi */
+  /* une correction est une « faute de frappe sûre » : un seul mot, à peine changé. 1.21 : seulement quand le modèle l'a
+     classée « frappe » ; 1.29 : aussi une faute d'orthographe mineure relevée plus tard par le modèle (accent oublié,
+     lettre doublée ou manquante, lettres inversées) dont le résultat est un mot du lexique et le mot tapé n'en est pas
+     un — jamais un homophone grammatical (a/à, et/est), ni une reformulation : ceux-là restent proposés (Tab). */
   function sureTypo(f) {
-    if (!f || f.kind !== 'frappe') return false;
+    if (!f || (f.kind !== 'frappe' && f.kind !== 'orthographe')) return false;
     const a = String(f.avant).trim(), b = String(f.apres).trim();
     if (!a || !b || /\s/.test(a) || /\s/.test(b) || a.length < 3) return false;
     if (a === a.toUpperCase() && /[A-Z]/.test(a)) return false;
     if (a.toLowerCase() === b.toLowerCase()) return false;
     if (ignored.has(a.toLowerCase())) return false;
-    return levenshtein(a.toLowerCase(), b.toLowerCase()) <= (a.length >= 8 ? 3 : 2);
+    const d = levenshtein(a.toLowerCase(), b.toLowerCase());
+    if (f.kind === 'frappe') return d <= (a.length >= 8 ? 3 : 2);
+    return minorSpelling(a, b, d);
+  }
+  /* faute d'orthographe « mineure » : le mot corrigé est connu, le mot tapé ne l'est pas, et ils ne diffèrent que par
+     les accents ou par une lettre (deux à partir de 8 lettres) */
+  function minorSpelling(a, b, d) {
+    const ka = a.toLowerCase(), kb = b.toLowerCase();
+    if (/[^a-zàâäçéèêëîïôöûùüÿœæ-]/.test(kb) || /[^a-zàâäçéèêëîïôöûùüÿœæ-]/.test(ka)) return false;
+    if (!LEX.size || !LEX.has(kb) || LEX.has(ka)) return false;
+    if (strip(ka) === strip(kb)) return true;
+    return d <= (a.length >= 8 ? 2 : 1);
   }
   /* normalise la réponse d'une phrase : [[avant, apres, type, regle]…] → fixes localisées dans la phrase */
   function fixesFor(text, raw) {

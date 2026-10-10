@@ -16,7 +16,7 @@ const fmtDate = ts => new Date(ts).toLocaleDateString('fr-FR', { day: 'numeric',
 
 const DEFAULT_TINT = '#33658a';
 /* version de l'application (tenue à jour avec package.json) — sert aux notifications « nouvelle version installée » */
-const ALIXO_VERSION = '1.28.1';
+const ALIXO_VERSION = '1.29.0';
 /* version web d'Alixo (GitHub Pages) et téléchargement de la version PC */
 const ALIXO_WEB_URL = 'https://alixoapp.com/docs/';
 /* 1.23 : tout passe par le site (pages de téléchargement et de versions) — jamais de lien direct vers l'hébergement des fichiers */
@@ -2429,7 +2429,7 @@ function settingsSectionHTML(k) {
       <div class="set-checks" id="set-ai">
         <label><input type="checkbox" data-ai="auto" ${o.auto ? 'checked' : ''}><span><b>Analyse automatique pendant la frappe</b><small>À chaque fin de phrase (point, Entrée), après une pause de frappe ou en quittant le paragraphe, les phrases nouvelles partent en une seule requête ; les propositions apparaissent sous le paragraphe, Tab pour accepter, Échap pour ignorer. Sinon, seulement à la demande (✨ ou F7).</small></span></label>
         <label><input type="checkbox" data-ai="fix" ${o.fix ? 'checked' : ''}><span><b>Corriger l’orthographe et la grammaire</b><small>Accords, conjugaison, ponctuation… selon le niveau choisi ci-dessous.</small></span></label>
-        <label><input type="checkbox" data-ai="autofix" ${o.autofix ? 'checked' : ''}><span><b>Corriger seul les fautes de frappe évidentes (sans Tab)</b><small>Lettres inversées, lettre manquante, accent oublié : quand l’IA est sûre, la correction s’applique d’elle-même (le mot est surligné un instant, Ctrl+Z pour revenir) et le mot est appris : la prochaine fois, il est corrigé à l’espace, sans requête. Les autres fautes restent proposées sous le paragraphe, Tab pour accepter.</small></span></label>
+        <label><input type="checkbox" data-ai="autofix" ${o.autofix ? 'checked' : ''}><span><b>Corriger seul les fautes de frappe et les fautes mineures (sans Tab)</b><small>Lettres inversées, lettre manquante ou doublée, accent oublié — repérées à l’espace ou plus tard par l’IA : quand la correction ne change qu’un mot d’une lettre, elle s’applique d’elle-même (le mot est surligné un instant, Ctrl+Z pour revenir) et le mot est appris : la prochaine fois, il est corrigé à l’espace, sans requête. Les autres fautes restent proposées sous le paragraphe, Tab pour accepter.</small></span></label>
         <label><input type="checkbox" data-ai="multilang" ${o.multilang ? 'checked' : ''}><span><b>Corriger aussi les textes écrits dans une autre langue</b><small>Un bloc en anglais, espagnol, allemand, italien ou portugais est alors corrigé dans sa langue. Décoché : il est laissé tel quel. Dans tous les cas, un mot ou une citation en langue étrangère au milieu d’un texte français n’est jamais « corrigé ».</small></span></label>
         <label><input type="checkbox" data-ai="style" ${o.style ? 'checked' : ''}><span><b>Proposer une mise en forme</b><small>Repère les définitions, titres, arrêts, exemples, points à retenir… et propose l’encadré ou le titre adapté.</small></span></label>
         <label><input type="checkbox" data-ai="rephrase" ${o.rephrase ? 'checked' : ''}><span><b>Proposer des reformulations</b><small>Avec parcimonie : une phrase lourde peut être reformulée plus clairement, sans changer le sens (règle « Reformulation : … »).</small></span></label>
@@ -4175,6 +4175,7 @@ blocksEl.addEventListener('paste', e => {
   if (!field && objSel) {
     e.preventDefault();
     let arr = null; if (alx) { try { arr = JSON.parse(alx); } catch { arr = null; } }
+    if (Array.isArray(arr)) arr = specFilterBlocks(arr);
     if (!Array.isArray(arr) || !arr.length) {
       let lines = html ? htmlToLines(html) : null;
       if (!lines || !lines.length) lines = (text || '').split(/\r?\n/).map(l => esc(l.replace(/\s+$/, ''))).filter(l => l.trim());
@@ -4202,6 +4203,7 @@ blocksEl.addEventListener('paste', e => {
   // blocs copiés depuis Alixo (objets compris)
   if (alx) {
     let arr = null; try { arr = JSON.parse(alx); } catch { arr = null; }
+    if (Array.isArray(arr)) arr = specFilterBlocks(arr);
     if (Array.isArray(arr) && arr.length) {
       if (arr.length === 1 && isTextBlock(arr[0])) { document.execCommand('insertHTML', false, arr[0].text || ''); return; }
       insertBlocksAtCaret(arr);
@@ -4834,21 +4836,32 @@ $('#doc').addEventListener('click', e => {
   if (above && below) { focusBlock(above.dataset.id, 'end'); return; }
   focusLastOrNew();
 });
-/* double-clic dans l'espace entre deux blocs : un paragraphe s'y insère */
-blocksEl.addEventListener('dblclick', e => {
-  if (e.target !== blocksEl) return;
+/* double-clic dans le vide (1.29) : entre deux blocs, un paragraphe s'insère à cet endroit ; sous le dernier bloc (bas de
+   la feuille, fin de page en vue par pages, fond gris), un paragraphe s'ajoute à la fin ; au-dessus du premier, il s'insère
+   en tête. L'ancien gestionnaire n'écoutait que #blocks — jamais atteint dans la marge de la feuille — et ignorait le
+   double-clic sous le dernier bloc (« next <= 0 ») : depuis la vue par pages, qui remplit le bas de la page, il ne faisait
+   plus rien. On raisonne sur la géométrie : le point doit être hors de tout bloc. */
+$('#docwrap').addEventListener('dblclick', e => {
+  if (e.target.closest('#blocks > .block, #doc-meta, #pg-head, #day-banner, #page-tabs, button, input, a')) return;
+  if (!doc()) return;
   const els = $$('#blocks > .block').filter(x => x.offsetParent !== null);
   const y = e.clientY;
-  /* 1.21 : le navigateur sélectionne le mot le plus proche même quand on double-clique dans le vide entre deux
-     blocs ; on ne se fie donc plus à la sélection mais à la géométrie : le point doit être hors de tout bloc */
   if (els.some(x => { const r = x.getBoundingClientRect(); return y >= r.top && y <= r.bottom; })) return;
-  const next = els.findIndex(x => x.getBoundingClientRect().top > y);
-  if (next <= 0) return;
   e.preventDefault();
   const sl = getSelection(); if (sl.rangeCount && !sl.isCollapsed) sl.collapseToEnd();
-  const idx = blockIndex(els[next].dataset.id);
-  if (idx >= 0) insertParagraphAt(idx);
+  const next = els.findIndex(x => x.getBoundingClientRect().top > y);
+  if (next === 0) { insertParagraphAt(0); return; }
+  if (next > 0) { const idx = blockIndex(els[next].dataset.id); if (idx >= 0) insertParagraphAt(idx); return; }
+  appendParagraph();
 });
+/* paragraphe vide ajouté en fin de cours (ou le dernier, s'il est déjà vide) */
+function appendParagraph() {
+  const d = doc(); if (!d) return;
+  const last = d.blocks[d.blocks.length - 1];
+  if (isEmptyPara(last)) { focusBlock(last.id, 'start'); return; }
+  const nb = { id: uid(), type: 'p', text: '' };
+  d.blocks.push(nb); touch(); renderBlocks(nb.id, 'start');
+}
 function insertParagraphAt(idx) {
   const d = doc(); if (!d) return;
   const here = d.blocks[idx];
@@ -5961,6 +5974,19 @@ function blockSpec(b) {
   if (b.type === 'score' || b.type === 'mcalc') return 'sante';
   return '';
 }
+/* blocs collés ou glissés depuis un autre cours (1.29) : ceux d'une spécialité absente du profil (fiche médicament, score
+   clinique, fiche d'arrêt, encadré Drapeaux rouges…) deviennent de simples paragraphes avec leur texte ; les autres passent */
+function specFilterBlocks(arr) {
+  let n = 0; const out = [];
+  for (const b of arr) {
+    const sp = blockSpec(b);
+    if (!sp || specAllowed(sp)) { out.push(b); continue; }
+    n++;
+    const text = blockPlain(b); if (text && text.trim()) out.push({ type: 'p', text: esc(text.trim()) });
+  }
+  if (n) toast(n === 1 ? 'Un bloc d’une autre spécialité a été collé en texte simple (Paramètres › Modifier mon profil)' : `${n} blocs d’une autre spécialité ont été collés en texte simple (Paramètres › Modifier mon profil)`);
+  return out;
+}
 function slashSpecOk(it, q) {
   if (!it.spec) return true;
   if (it.spec === 'sym') return !!q;
@@ -6219,8 +6245,8 @@ function openGraphChooser(bid) {
   showPopover(`<h4>Insérer un graphique</h4>
       <div class="po-label" style="margin-top:0">Graphique de données</div>
       <div class="po-list po-charts">${Object.entries(AlixoCharts.TYPES).map(([k, t]) => `<button data-ck="${k}">${AlixoIcons.svg(t.ico, 'po-ico')}${t.name}</button>`).join('')}</div>
-      <div class="po-label">Gabarits économiques</div>
-      <div class="po-list">${entries.map(([k, t]) => `<button data-gt="${k}">${t.name}</button>`).join('')}</div>`,
+      ${specAllowed('economie') ? `<div class="po-label">Gabarits économiques</div>
+      <div class="po-list">${entries.map(([k, t]) => `<button data-gt="${k}">${t.name}</button>`).join('')}</div>` : ''}`,
     anchorForBlock(bid), pop => {
       pop.addEventListener('click', e => {
         const ck = e.target.closest('[data-ck]');
@@ -6511,6 +6537,8 @@ const SYM_SNIPPETS = [
   ['ℝ ℕ ℤ', 'RR '], ['∈ ∉', ' in '], ['∀ ∃', 'forall '], ['⊂ ∪ ∩', ' cap ']
 ];
 
+/* sections de la bibliothèque propres à une spécialité (1.29 : cachées si le profil ne la contient pas) */
+const FORMULA_LIB_SPEC = { 'Médecine — calculs cliniques': 'sante', 'Biostatistiques': 'sante', 'Commerce & marketing': 'commerce', 'STAPS — physiologie et entraînement': 'staps' };
 const FORMULA_LIB = {
   'Microéconomie': [
     ['Cobb-Douglas', 'U(x, y) = x^alpha y^(1-alpha)'],
@@ -7420,7 +7448,7 @@ function renderMathPanel(tab) {
         <code>&lt;=</code> ≤ · <code>-&gt;</code> → · <code>=&gt;</code> ⇒ · <code>+-</code> ± · <code>xx</code> × · <code>in</code> ∈ · <code>RR NN ZZ</code> ℝ ℕ ℤ · <code>...</code> …<br>
         <code>0,5</code> décimale · <code>\\\\</code> ou Maj+Entrée : nouvelle ligne · <code>bold(x)</code> gras · <code>cancel(x)</code> barré</div>`;
   } else if (tab === 'mod') {
-    body.innerHTML = Object.entries(FORMULA_LIB).map(([sect, items]) =>
+    body.innerHTML = Object.entries(FORMULA_LIB).filter(([sect]) => specAllowed(FORMULA_LIB_SPEC[sect])).map(([sect, items]) =>
       `<div class="mp-sect">${sect}</div>` + items.map(([name, src]) =>
         `<button class="mod-item" data-src="${esc(src)}">
           <div class="mod-name">${name}</div>
@@ -7504,14 +7532,14 @@ $('#toolbar').addEventListener('click', e => {
   }
   if (act === 'callout') {
     showPopover(`<h4>Encadré typé</h4><div class="po-list">
-        ${Object.entries(CALLOUTS).map(([k, c]) => `<button data-ct="${k}">${AlixoIcons.svg(c.ico, 'po-ico')}${c.name}</button>`).join('')}</div>`,
+        ${Object.entries(CALLOUTS).filter(([, c]) => specAllowed(c.spec)).map(([k, c]) => `<button data-ct="${k}">${AlixoIcons.svg(c.ico, 'po-ico')}${c.name}</button>`).join('')}</div>`,
       above, pop => pop.querySelector('.po-list').addEventListener('click', ev => {
         const c = ev.target.closest('[data-ct]'); if (!c) return;
         hidePopover();
         insertSpecial({ type: 'callout', ct: c.dataset.ct, text: '' });
       }));
   }
-  if (act === 'juris') { insertSpecial({ type: 'juris', fields: {} }); toast('Fiche d’arrêt — Entrée pour passer au champ suivant'); }
+  if (act === 'juris') { if (!specAllowed('droit')) { toast('Ce bloc n’est pas disponible avec vos spécialités (Paramètres › Modifier mon profil)'); return; } insertSpecial({ type: 'juris', fields: {} }); toast('Fiche d’arrêt — Entrée pour passer au champ suivant'); }
   if (act === 'formula') {
     const nb = insertSpecial({ type: 'formula', src: '' });
     editingFormula[nb.id] = true; renderBlocks(nb.id); openMathPanel();
@@ -7528,7 +7556,7 @@ $('#toolbar').addEventListener('click', e => {
   if (act === 'ai') runAiCorrection();
   if (act === 'ti') toggleCalcPanel();
   if (act === 'link') openLinkPopover({});
-  if (act === 'refart') openArticlePopover(bid);
+  if (act === 'refart') { if (!specAllowed('droit')) { toast('Les références d’articles ne sont pas disponibles avec vos spécialités (Paramètres › Modifier mon profil)'); return; } openArticlePopover(bid); }
   if (act === 'dict') togglePanel('#dictpanel', openDictPanel);
   if (act === 'cal') togglePanel('#calpanel', openCalPanel);
   if (act === 'viewer') { if (!$('#viewpanel').hidden) { const d = doc(); if (d && d.vwOpen) { d.vwOpen = false; save(); } closeRightPanels(); } else { openViewer(); const d = doc(); if (d && $('#vw-body').dataset.loaded === '1') { d.vwOpen = true; save(); } } }
@@ -9730,6 +9758,8 @@ window.AlixoApp = {
   showUpdatePopup, closeUpdatePopup,
   mergeRemoteDoc, renderAccess, onPresence: () => { renderAccess(); renderPeers(); if (!currentDocId && (libMode === 'docs' || libMode === 'shfolder')) renderLibrary(); },
   showLibrary: () => { showLibrary(); return true; },
+  /* 1.29 : exposés pour les tests automatisés (scripts Playwright) — pas une API pour les modules */
+  currentDoc: doc, createDoc: createDocIn, renderBlocks, focusBlock, specAllowed, applyPagesMode, openMathPanel,
 
   /* séances reçues d'un autre appareil (ajouts/màj + suppressions) */
   applyRemoteDocs(upserts, removedIds) {
@@ -9776,12 +9806,15 @@ window.AlixoApp = {
       if (remoteAt && remoteAt >= localAt) {
         // réglages datés et plus récents que les nôtres : ils remplacent les nôtres (une police remise
         // par défaut là-bas est bien remise par défaut ici) ; la version installée reste celle de cet appareil
-        const lastVersion = state.settings.lastVersion;
+        const lastVersion = state.settings.lastVersion, profil = state.settings.profil;
         state.settings = Object.assign({}, settings);
         if (lastVersion) state.settings.lastVersion = lastVersion;
+        /* 1.29 : des réglages distants sans profil ne doivent pas effacer le profil de cet appareil — sinon toutes les
+           spécialités redevenaient disponibles (blocs de médecine proposés à un étudiant en droit) */
+        if (!state.settings.profil && profil) state.settings.profil = profil;
         state.settingsAt = remoteAt;
         lastSettingsJson = JSON.stringify(state.settings);
-        applyTheme();
+        applyTheme(); syncHealthUI();
       } else if (!remoteAt && !localAt) {
         // anciennes versions (réglages non datés) des deux côtés : fusion comme avant 1.16
         state.settings = Object.assign({}, state.settings, settings);
@@ -9823,7 +9856,7 @@ setTimeout(() => {
     if (prev !== ALIXO_VERSION) {
       state.settings.lastVersion = ALIXO_VERSION; save();
       if (prev && !wn) showWhatsNew(ALIXO_VERSION);
-      if (prev && window.AlixoNotify) AlixoNotify.push({ id: 'ver_' + ALIXO_VERSION, kind: 'update', title: `Alixo ${ALIXO_VERSION} installé`, text: 'Correction : dans un quiz, Apparence › Musique, le bouton « Choisir… » d’un fichier audio personnalisé et l’écoute ▶ des musiques fonctionnent à nouveau. Pour mémoire, depuis la 1.28 : la correction par IA tourne sur Qwen3.8-27B, un modèle ouvert — vous choisissez où il tourne dans Paramètres › Correction par IA.', action: (window.AlixoWhatsNew && AlixoWhatsNew.has(ALIXO_VERSION)) ? { type: 'whatsnew', version: ALIXO_VERSION } : { type: 'url', url: ALIXO_VERSIONS_URL } });
+      if (prev && window.AlixoNotify) AlixoNotify.push({ id: 'ver_' + ALIXO_VERSION, kind: 'update', title: `Alixo ${ALIXO_VERSION} installé`, text: 'Alixo Mail arrive : une messagerie indépendante avec votre adresse @alixoapp.com (en ligne dès que le serveur sera ouvert). L’adresse e-mail est confirmée à l’inscription. Dans l’éditeur : le double-clic entre deux blocs ou sous le dernier insère de nouveau un paragraphe, les blocs d’une spécialité non choisie ne sont plus insérables, et une faute mineure repérée plus tard par l’IA se corrige seule comme une faute de frappe.', action: (window.AlixoWhatsNew && AlixoWhatsNew.has(ALIXO_VERSION)) ? { type: 'whatsnew', version: ALIXO_VERSION } : { type: 'url', url: ALIXO_VERSIONS_URL } });
     }
   } catch { /* stockage indisponible */ }
   if (window.AlixoStats) AlixoStats.maybeOpen();

@@ -37,6 +37,19 @@ window.AlixoAuth = (() => {
     } catch { /* facultatif */ }
   }
 
+  /* 1.29 : vérification de l'adresse e-mail à la création du compte. Les comptes « e-mail + mot de passe » créés à partir
+     de cette date doivent confirmer leur adresse (lien reçu par e-mail) avant d'entrer dans Alixo ; les comptes plus
+     anciens ne sont pas bloqués (un rappel leur est fait dans l'application). Google et Apple sont déjà vérifiés. */
+  const VERIFY_SINCE = Date.parse('2026-10-10T00:00:00Z');
+  const VERIFY_RETURN_URL = 'https://alixoapp.com/docs/';
+  const isPasswordUser = u => !!u && (u.providerData || []).some(p => p && p.providerId === 'password') && !(u.providerData || []).some(p => p && p.providerId !== 'password');
+  const createdAt = u => { const t = u && u.metadata && Date.parse(u.metadata.creationTime || ''); return isNaN(t) ? 0 : t; };
+  /* le compte doit-il confirmer son adresse avant d'entrer ? */
+  const mustVerify = u => !!u && isPasswordUser(u) && !u.emailVerified && createdAt(u) >= VERIFY_SINCE;
+  /* compte ancien non confirmé : simple rappel */
+  const shouldVerify = u => !!u && isPasswordUser(u) && !u.emailVerified;
+  async function sendVerification(u) { await u.sendEmailVerification({ url: VERIFY_RETURN_URL }); }
+
   let cached = null;
   try { cached = JSON.parse(localStorage.getItem(SESSION_KEY)); } catch { cached = null; }
   if (cached && !cached.uid) cached = null;
@@ -150,6 +163,18 @@ window.AlixoAuth = (() => {
         <div class="auth-foot">
           <button id="auth-offline" class="auth-link subtle">Continuer sans compte (local uniquement)</button>
         </div>
+
+        <div id="auth-verify" class="auth-verify" hidden>
+          <div class="auth-verify-ico" aria-hidden="true">✉️</div>
+          <h3 class="auth-verify-title">Confirmez votre adresse e-mail</h3>
+          <p class="auth-verify-text">Un e-mail vient d’être envoyé à <b id="auth-verify-email"></b>. Ouvrez-le et cliquez sur le lien de confirmation, puis revenez ici : Alixo s’ouvrira tout seul.</p>
+          <div class="auth-verify-hint" id="auth-verify-hint">Pas reçu ? Regardez dans les indésirables, ou renvoyez-le.</div>
+          <button id="auth-verify-check" class="cta auth-cta" type="button">J’ai confirmé mon adresse</button>
+          <div class="auth-links">
+            <button id="auth-verify-resend" class="auth-link" type="button">Renvoyer l’e-mail</button>
+            <button id="auth-verify-back" class="auth-link subtle" type="button">Changer d’adresse</button>
+          </div>
+        </div>
         <div class="auth-legal">En continuant, vous acceptez les <a href="https://alixoapp.com/conditions.html" target="_blank" rel="noopener">conditions d’utilisation</a> et la <a href="https://alixoapp.com/confidentialite.html" target="_blank" rel="noopener">politique de confidentialité</a>.</div>
       </div>`;
     document.body.appendChild(ov);
@@ -173,6 +198,50 @@ window.AlixoAuth = (() => {
 
     async function done(user) { setSession(user); location.reload(); }
 
+    /* ---- vérification de l'adresse (1.29) ---- */
+    let verifyTimer = null, verifyUser = null;
+    const mainParts = ['.auth-sub', '.auth-providers', '.auth-or', '#auth-form', '.auth-links:not(#auth-verify .auth-links)', '.auth-foot'];
+    function showVerify(user, { send = true } = {}) {
+      verifyUser = user;
+      for (const sel of mainParts) ov.querySelectorAll(sel).forEach(el => { if (!el.closest('#auth-verify')) el.hidden = true; });
+      $a('#auth-verify').hidden = false;
+      $a('#auth-verify-email').textContent = user.email || '';
+      $a('.auth-title').textContent = 'Presque fini';
+      err('');
+      if (send) resend(true);
+      clearInterval(verifyTimer);
+      verifyTimer = setInterval(() => check(true), 5000);   // le lien cliqué dans un autre onglet est détecté sans rien faire
+    }
+    function hideVerify() {
+      clearInterval(verifyTimer); verifyTimer = null; verifyUser = null;
+      $a('#auth-verify').hidden = true;
+      for (const sel of mainParts) ov.querySelectorAll(sel).forEach(el => { if (!el.closest('#auth-verify')) el.hidden = false; });
+      $a('.auth-title').textContent = 'Bienvenue sur Alixo';
+      setMode(mode);
+    }
+    let lastSend = 0;
+    async function resend(first) {
+      if (!verifyUser) return;
+      if (!first && Date.now() - lastSend < 30000) { $a('#auth-verify-hint').textContent = 'E-mail déjà envoyé il y a moins de 30 secondes : patientez un peu, puis vérifiez les indésirables.'; return; }
+      try {
+        await sendVerification(verifyUser); lastSend = Date.now();
+        $a('#auth-verify-hint').textContent = first ? 'Pas reçu ? Regardez dans les indésirables, ou renvoyez-le.' : 'E-mail renvoyé à ' + (verifyUser.email || '') + '.';
+      } catch (ex) {
+        $a('#auth-verify-hint').textContent = ex && ex.code === 'auth/too-many-requests' ? 'Trop d’envois : attendez quelques minutes avant de renvoyer l’e-mail.' : frError(ex);
+      }
+    }
+    async function check(silent) {
+      if (!verifyUser) return;
+      try { await verifyUser.reload(); } catch { /* hors ligne : on réessaie au prochain tour */ }
+      const u = auth.currentUser || verifyUser;
+      if (u && u.emailVerified) { clearInterval(verifyTimer); await done(u); return; }
+      if (!silent) $a('#auth-verify-hint').textContent = 'Adresse pas encore confirmée : cliquez sur le lien de l’e-mail, puis réessayez.';
+    }
+    ov.addEventListener('alixo-verify', e => showVerify(e.detail, { send: false }));
+    $a('#auth-verify-check').addEventListener('click', () => check(false));
+    $a('#auth-verify-resend').addEventListener('click', () => resend(false));
+    $a('#auth-verify-back').addEventListener('click', async () => { try { await auth.signOut(); } catch { /* */ } hideVerify(); setMode('signup'); });
+
     $a('#auth-form').addEventListener('submit', async e => {
       e.preventDefault(); err('');
       if (!auth) { err('Service en ligne non configuré (voir SETUP-COMPTES.md).'); return; }
@@ -188,8 +257,10 @@ window.AlixoAuth = (() => {
           markNewAccount(cred.user);
           const name = $a('#auth-name').value.trim();
           if (name) { await cred.user.updateProfile({ displayName: name }); }
+          busy(false); showVerify(cred.user); return;        // 1.29 : l'adresse doit être confirmée avant d'entrer
         } else {
           cred = await auth.signInWithEmailAndPassword(email, pass);
+          if (mustVerify(cred.user)) { busy(false); showVerify(cred.user); return; }
         }
         await done(cred.user);
       } catch (ex) { err(frError(ex)); }
@@ -303,7 +374,10 @@ window.AlixoAuth = (() => {
       if (!first) return;
       first = false;
       if (redirectPending) return;   // finishRedirect s'en charge (nom Apple, nouveau compte)
-      if (user && (!cached || cached.uid !== user.uid)) { setSession(user); location.reload(); return; }
+      if (user && (!cached || cached.uid !== user.uid)) {
+        if (mustVerify(user)) { const show = () => { showOverlay(); ov.dispatchEvent(new CustomEvent('alixo-verify', { detail: user })); }; if (document.body) show(); else document.addEventListener('DOMContentLoaded', show); return; }
+        setSession(user); location.reload(); return;
+      }
       if (!user && cached) {
         // session expirée ou déconnectée ailleurs
         localStorage.removeItem(SESSION_KEY);
@@ -330,6 +404,9 @@ window.AlixoAuth = (() => {
     user: () => (auth ? auth.currentUser : null),
     firebaseAuth: () => auth,
     openAuthOverlay: () => { localStorage.removeItem(LOCAL_MODE_KEY); showOverlay(); },
+    /* 1.29 : compte ancien dont l'adresse n'est pas confirmée (rappel dans l'application) + envoi du lien */
+    needsVerification: () => shouldVerify(auth && auth.currentUser),
+    sendVerification: async () => { const u = auth && auth.currentUser; if (!u) throw new Error('Aucun compte connecté.'); await sendVerification(u); return u.email || ''; },
     signOut: async () => {
       try { if (auth) await auth.signOut(); } catch { /* hors ligne : on déconnecte quand même localement */ }
       localStorage.removeItem(SESSION_KEY);
