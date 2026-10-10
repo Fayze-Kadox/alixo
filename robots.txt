@@ -1,0 +1,90 @@
+# alixoapp.com — robots.txt
+# Cahier des charges « Protection du site contre l'aspiration par les IA », T-01 et T-04 (option A : le site reste
+# indexé par les moteurs de recherche classiques ; les robots d'intelligence artificielle sont interdits partout).
+# Liste des robots IA à mettre à jour chaque mois (source suivie : projet ai-robots-txt, github.com/ai-robots-txt/ai.robots.txt).
+# Dernière mise à jour : 2026-10-10.
+
+User-agent: GPTBot
+User-agent: ChatGPT-User
+User-agent: OAI-SearchBot
+User-agent: ClaudeBot
+User-agent: Claude-User
+User-agent: Claude-SearchBot
+User-agent: anthropic-ai
+User-agent: Google-Extended
+User-agent: Google-CloudVertexBot
+User-agent: Applebot-Extended
+User-agent: CCBot
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: Bytespider
+User-agent: TikTokSpider
+User-agent: Meta-ExternalAgent
+User-agent: Meta-ExternalFetcher
+User-agent: FacebookBot
+User-agent: Amazonbot
+User-agent: cohere-ai
+User-agent: cohere-training-data-crawler
+User-agent: Diffbot
+User-agent: YouBot
+User-agent: omgili
+User-agent: omgilibot
+User-agent: webzio-extended
+User-agent: ImagesiftBot
+User-agent: img2dataset
+User-agent: AI2Bot
+User-agent: Ai2Bot-Dolma
+User-agent: DuckAssistBot
+User-agent: PetalBot
+User-agent: Timpibot
+User-agent: VelenPublicWebCrawler
+User-agent: Kangaroo Bot
+User-agent: Scrapy
+User-agent: SemrushBot-OCOB
+User-agent: Sidetrade indexer bot
+User-agent: iaskspider/2.0
+User-agent: ISSCyberRiskCrawler
+User-agent: MistralAI-User
+User-agent: Brightbot 1.0
+User-agent: Crawlspace
+User-agent: Factset_spyderbot
+User-agent: FirecrawlAgent
+User-agent: FriendlyCrawler
+User-agent: GoogleOther
+User-agent: GoogleOther-Image
+User-agent: GoogleOther-Video
+User-agent: ICC-Crawler
+User-agent: Meta-WebIndexer
+User-agent: NovaAct
+User-agent: Operator
+User-agent: PanguBot
+User-agent: Poseidon Research Crawler
+User-agent: QualifiedBot
+User-agent: SBIntuitionsBot
+User-agent: Thinkbot
+User-agent: TurnitinBot
+User-agent: Webzio
+User-agent: wpbot
+User-agent: YandexAdditional
+User-agent: YandexAdditionalBot
+User-agent: bedrockbot
+User-agent: Devin
+User-agent: Echobot Bot
+User-agent: EchoboxBot
+User-agent: Gemini-Deep-Research
+User-agent: Manus
+User-agent: Nova
+Disallow: /
+
+# Moteurs classiques et tout le reste : autorisés, sauf les pages à données obligatoires, l'application, et le piège.
+User-agent: *
+Disallow: /mentions-legales.html
+Disallow: /contact.html
+Disallow: /piege/
+Disallow: /docs/
+Disallow: /quiz/
+Disallow: /404.html
+Disallow: /maintenance.html
+Allow: /
+
+Sitemap: https://alixoapp.com/sitemap.xml

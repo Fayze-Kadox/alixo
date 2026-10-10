@@ -1,0 +1,10 @@
+{
+  "denomination": "[Prénom NOM, ou dénomination sociale — à compléter]",
+  "forme": "[entrepreneur individuel (micro-entreprise), SAS, association… — à compléter]",
+  "adresse": "[adresse postale — société de domiciliation ou boîte postale professionnelle conseillée]",
+  "siren": "[000 000 000 — à compléter]",
+  "tva": "[numéro intracommunautaire, ou « TVA non applicable, art. 293 B du CGI »]",
+  "telephone": "[à compléter, ou numéro de redirection]",
+  "email": "contact@alixoapp.com",
+  "directeur": "[Prénom NOM — à compléter]"
+}

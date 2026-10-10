@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Pages publiques seulement : ni mentions légales, ni contact (données obligatoires protégées), ni application, ni piège (F-08). -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://alixoapp.com/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://alixoapp.com/documentation.html</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://alixoapp.com/versions/</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://alixoapp.com/telecharger/windows/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://alixoapp.com/telecharger/windows-portable/</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://alixoapp.com/telecharger/mac/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://alixoapp.com/confidentialite.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://alixoapp.com/conditions.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://alixoapp.com/cgv.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+</urlset>
