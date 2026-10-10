@@ -1,0 +1,130 @@
+{
+  "base": "http://127.0.0.1:43909",
+  "date": "2026-10-10T09:15:56.412Z",
+  "results": [
+    {
+      "n": "robots.txt : tous les robots IA de T-01 sont interdits",
+      "ok": true,
+      "x": ""
+    },
+    {
+      "n": "robots.txt : pot de miel, mentions légales et contact interdits",
+      "ok": true
+    },
+    {
+      "n": "tdmrep.json présent et valide",
+      "ok": true
+    },
+    {
+      "n": "page / : balises TDM + noai, aucun mailto/tel, aucune donnée d’identification, protection.js",
+      "ok": true,
+      "x": ""
+    },
+    {
+      "n": "page /documentation.html : balises TDM + noai, aucun mailto/tel, aucune donnée d’identification, protection.js",
+      "ok": true,
+      "x": ""
+    },
+    {
+      "n": "page /cgv.html : balises TDM + noai, aucun mailto/tel, aucune donnée d’identification, protection.js",
+      "ok": true,
+      "x": ""
+    },
+    {
+      "n": "page /conditions.html : balises TDM + noai, aucun mailto/tel, aucune donnée d’identification, protection.js",
+      "ok": true,
+      "x": ""
+    },
+    {
+      "n": "page /confidentialite.html : balises TDM + noai, aucun mailto/tel, aucune donnée d’identification, protection.js",
+      "ok": true,
+      "x": ""
+    },
+    {
+      "n": "page /mentions-legales.html : balises TDM + noai, aucun mailto/tel, aucune donnée d’identification, protection.js",
+      "ok": true,
+      "x": ""
+    },
+    {
+      "n": "page /mentions-legales.html : noindex",
+      "ok": true
+    },
+    {
+      "n": "page /contact.html : balises TDM + noai, aucun mailto/tel, aucune donnée d’identification, protection.js",
+      "ok": true,
+      "x": ""
+    },
+    {
+      "n": "page /contact.html : noindex",
+      "ok": true
+    },
+    {
+      "n": "page /maintenance.html : balises TDM + noai, aucun mailto/tel, aucune donnée d’identification, protection.js",
+      "ok": true,
+      "x": ""
+    },
+    {
+      "n": "page /404.html : balises TDM + noai, aucun mailto/tel, aucune donnée d’identification, protection.js",
+      "ok": true,
+      "x": ""
+    },
+    {
+      "n": "page /versions/ : balises TDM + noai, aucun mailto/tel, aucune donnée d’identification, protection.js",
+      "ok": true,
+      "x": ""
+    },
+    {
+      "n": "page /telecharger/windows/ : balises TDM + noai, aucun mailto/tel, aucune donnée d’identification, protection.js",
+      "ok": true,
+      "x": ""
+    },
+    {
+      "n": "page /telecharger/windows-portable/ : balises TDM + noai, aucun mailto/tel, aucune donnée d’identification, protection.js",
+      "ok": true,
+      "x": ""
+    },
+    {
+      "n": "page /telecharger/mac/ : balises TDM + noai, aucun mailto/tel, aucune donnée d’identification, protection.js",
+      "ok": true,
+      "x": ""
+    },
+    {
+      "n": "sitemap : ni mentions légales, ni contact, ni piège, ni application",
+      "ok": true
+    },
+    {
+      "n": "mentions-data.js : rien de lisible (chiffré)",
+      "ok": true
+    },
+    {
+      "n": "défi : navigateur automatisé refusé (navigator.webdriver)",
+      "ok": true
+    },
+    {
+      "n": "pot de miel : lien invisible présent",
+      "ok": true
+    },
+    {
+      "n": "mentions légales : HTML initial sans donnée obligatoire",
+      "ok": true
+    },
+    {
+      "n": "défi : données affichées après la preuve de travail",
+      "ok": true
+    },
+    {
+      "n": "contact : adresse révélée après défi, construite côté client",
+      "ok": true
+    },
+    {
+      "n": "tatouage : marqueurs invisibles présents dans la documentation",
+      "ok": true,
+      "x": "16 marqueur(s)"
+    },
+    {
+      "n": "images : aucune métadonnée EXIF / XMP dans img/",
+      "ok": true,
+      "x": "0 fichier(s)"
+    }
+  ]
+}

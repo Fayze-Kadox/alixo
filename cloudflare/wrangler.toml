@@ -1,0 +1,8 @@
+name = "alixoapp-protection"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+routes = [{ pattern = "alixoapp.com/*", zone_name = "alixoapp.com" }, { pattern = "www.alixoapp.com/*", zone_name = "alixoapp.com" }]
+
+[[kv_namespaces]]
+binding = "BANS"
+id = "REMPLACER_PAR_L_ID_KV"

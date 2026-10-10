@@ -11,6 +11,8 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://alixoapp.com/mentions-legales.html">
 <meta name="theme-color" content="#33658a">
+<meta name="robots" content="noindex, nofollow, noai, noimageai">
+<meta name="tdm-reservation" content="1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
@@ -19,6 +21,7 @@
 <link rel="stylesheet" href="/documentation.css">
 <link rel="stylesheet" href="/systeme.css">
 <link rel="icon" type="image/png" href="/img/logo.png">
+<script defer src="/protection.js"></script>
 </head>
 <body class="sys-page sys-legal-page">
 
@@ -57,25 +60,25 @@
   <div style="position:relative">
     <div class="eyebrow">Mentions légales</div>
     <h1>Qui fait <em>Alixo.</em></h1>
-    <p>Informations légales sur le site alixoapp.com et l’application Alixo. Dernière mise à jour : 9 octobre 2026.</p>
+    <p>Informations légales sur le site alixoapp.com et l’application Alixo. Dernière mise à jour : 10 octobre 2026.</p>
   </div>
 </section>
 
 <div class="sys-layout">
   <main class="doc-main sys-main">
-    <!-- À COMPLÉTER AVANT MISE EN LIGNE : Alixo+ étant vendu, l’éditeur est un professionnel au sens de la LCEN (art. 6-III)
-         et doit s’identifier (nom, adresse, SIREN, TVA, téléphone, directeur de la publication). Les champs <mark> sont à remplir. -->
+    <!-- Données obligatoires (LCEN art. 6-III) : elles ne sont PAS dans ce HTML. Elles sont livrées chiffrées
+         (mentions-data.js) et affichées en texte accessible après un défi anti-robot (defi.js) — cahier des charges
+         « Protection du site contre l'aspiration par les IA », T-19 à T-21. Pour les mettre à jour : tools/mentions.json
+         puis node tools/encode-mentions.js tools/mentions.json > mentions-data.js. -->
     <section id="editeur">
       <h2>Éditeur</h2>
-      <p>Le site alixoapp.com, l’application Alixo et l’offre Alixo+ sont édités par :</p>
-      <ul>
-        <li><strong>Dénomination</strong> : <mark>[Prénom NOM, ou dénomination sociale — à compléter]</mark></li>
-        <li><strong>Forme</strong> : <mark>[entrepreneur individuel (micro-entreprise), SAS, association… — à compléter]</mark></li>
-        <li><strong>Adresse</strong> : <mark>[adresse postale — à compléter]</mark></li>
-        <li><strong>SIREN</strong> : <mark>[000 000 000 — à compléter]</mark> · <strong>TVA</strong> : <mark>[numéro intracommunautaire, ou « TVA non applicable, art. 293 B du CGI » — à compléter]</mark></li>
-        <li><strong>Téléphone</strong> : <mark>[à compléter]</mark> · <strong>E-mail</strong> : <a href="mailto:contact@alixoapp.com">contact@alixoapp.com</a></li>
-        <li><strong>Directeur de la publication</strong> : <mark>[Prénom NOM — à compléter]</mark></li>
-      </ul>
+      <p>Le site alixoapp.com, l’application Alixo et l’offre Alixo+ sont édités par la personne identifiée ci-dessous. Pour protéger ces informations contre la collecte automatisée, elles s’affichent après une courte vérification (aucun cookie, aucune donnée transmise).</p>
+      <div id="defi-zone" class="defi-zone" aria-live="polite">
+        <button id="defi-btn" class="btn primary small" type="button">Afficher l’identité de l’éditeur</button>
+        <p id="defi-status" class="defi-status"></p>
+        <noscript><p>Ces informations nécessitent JavaScript. Sans lui, elles vous seront communiquées sur demande écrite à l’hébergeur du site (coordonnées ci-dessous), qui détient l’identité de l’éditeur, ou par la page Contact.</p></noscript>
+      </div>
+      <ul id="editeur-data" hidden></ul>
       <p>Mentions prévues par l’article 6-III de la loi n° 2004-575 du 21 juin 2004 pour la confiance dans l’économie numérique et par l’article L. 111-1 du Code de la consommation. Les conditions de vente d’Alixo+ figurent dans les <a href="/cgv.html">conditions générales de vente</a>.</p>
     </section>
     <section id="hebergeur">
@@ -133,11 +136,24 @@
       <a href="/conditions.html">Conditions</a>
       <a href="/cgv.html">CGV</a>
       <a href="/mentions-legales.html">Mentions légales</a>
+      <a href="/contact.html">Contact</a>
     </nav>
     <div class="foot-copy">© 2026 Alixo · Windows, macOS, web et mobile.</div>
   </div>
 </footer>
 
+<script src="/mentions-data.js"></script>
+<script src="/defi.js"></script>
+<script>
+(function () {
+  var esc = function (t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  AlixoDefi.run({ data: window.ALIXO_MENTIONS, button: document.getElementById('defi-btn'), status: document.getElementById('defi-status'), onPass: function (f) {
+    var ul = document.getElementById('editeur-data');
+    ul.innerHTML = '<li><strong>Dénomination</strong> : ' + esc(f.denomination) + '</li><li><strong>Forme</strong> : ' + esc(f.forme) + '</li><li><strong>Adresse</strong> : ' + esc(f.adresse) + '</li><li><strong>SIREN</strong> : ' + esc(f.siren) + ' · <strong>TVA</strong> : ' + esc(f.tva) + '</li><li><strong>Téléphone</strong> : ' + esc(f.telephone) + ' · <strong>E-mail</strong> : <a href="/contact.html">page Contact</a></li><li><strong>Directeur de la publication</strong> : ' + esc(f.directeur) + '</li>';
+    ul.hidden = false;
+  } });
+})();
+</script>
 <script>
 (function () {
   var b = document.getElementById('btn-theme');

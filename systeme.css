@@ -42,3 +42,11 @@
 .sys-versions .vs-notes { padding: 0 18px 16px; border-top: 1px solid var(--border); }
 .sys-versions .vs-notes h4 { margin: 16px 0 6px; }
 .sys-versions .vs-notes li, .sys-versions .vs-notes p { font-size: 14.5px; line-height: 1.6; }
+
+/* ---- défi anti-robot (mentions légales, contact) : defi.js ---- */
+.defi-zone { margin: 14px 0; padding: 14px 16px; border: 1px dashed var(--border, #d7dde6); border-radius: 12px; background: color-mix(in srgb, var(--tint, #33658a) 6%, transparent); }
+.defi-status { margin: 10px 0 0; font-size: 13px; color: var(--ink-2, #4a5563); min-height: 1.2em; }
+#editeur-data, #contact-data { animation: defi-in .25s ease-out; }
+#contact-data .btn { margin: 6px 0; }
+@keyframes defi-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+html[data-automation="1"] .defi-zone { opacity: .6; }
